@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+.npm/
+
+# Build / cache
+dist/
+build/
+unpackage/
+.miniprogram/
+.cache/
+*.local
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+**/cloudbaserc.local.json
+
+# IDE / OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+*.swp
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# WeChat / CloudBase
+miniprogram_npm/
+project.private.config.json
+cloud/functions/**/node_modules/
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# Temp
+tmp/
+temp/
+*.tmp
