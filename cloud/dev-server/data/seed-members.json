@@ -1,0 +1,28 @@
+[
+  {
+    "id": "seed-001",
+    "characterName": "示例·愚者",
+    "powerScore": 12580,
+    "fashionScore": 320,
+    "pathway": "愚者途径",
+    "title": "会长",
+    "remark": "种子数据，可删可改",
+    "status": "active",
+    "joinedAt": "2026-10-01T00:00:00.000Z",
+    "createdAt": "2026-10-01T00:00:00.000Z",
+    "updatedAt": "2026-10-01T00:00:00.000Z"
+  },
+  {
+    "id": "seed-002",
+    "characterName": "示例·观众",
+    "powerScore": 9800,
+    "fashionScore": 210,
+    "pathway": "观众途径",
+    "title": "成员",
+    "remark": "",
+    "status": "active",
+    "joinedAt": "2026-10-05T00:00:00.000Z",
+    "createdAt": "2026-10-05T00:00:00.000Z",
+    "updatedAt": "2026-10-05T00:00:00.000Z"
+  }
+]

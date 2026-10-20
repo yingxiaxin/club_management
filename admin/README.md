@@ -1,35 +1,37 @@
 # PC 管理后台（Web）
 
-面向超管与管理员：成员维护、邀请码、活动与公告、提醒配置、数据导出等。
+Vue 3 + Vite + Element Plus。样式主题在 `src/styles/tokens.css`，换肤优先改该文件。
 
-## 技术预期
+## 本地运行（P0-b）
 
-- Vue 3 + Vite + Element Plus + TypeScript（推荐）
-- 调用 `cloud/` 云函数 HTTP 访问或 CloudBase Web SDK（实现阶段二选一，优先与小程序同一云环境）
-
-## 目录约定（实现后）
-
-```
-admin/
-├── src/
-│   ├── views/
-│   ├── components/
-│   ├── api/
-│   ├── router/
-│   └── stores/
-├── index.html
-├── package.json
-└── vite.config.ts
-```
-
-## 本地开发（实现后）
+先启动 API（P0-a），再启动本前端：
 
 ```bash
+# 终端 1
+cd cloud/dev-server
+npm install
+npm run dev
+
+# 终端 2
 cd admin
 npm install
 npm run dev
 ```
 
-登录：微信扫码（管理员 openid）；超管应急账号密码作备份入口。
+浏览器打开：http://127.0.0.1:5173  
 
-> P0 编码尚未开始；权限与页面以 `docs/功能说明书.md` 为准。
+应急账号：`superadmin` / `club-change-me`（或 `admin` / `club-change-me`）
+
+> 建议 Node **18+**。若为 Node 16，本仓库已锁定 Vite 4 以便运行。
+
+## 当前能力
+
+- 应急账号登录
+- 成员手动增删改查、筛选排序、导出 CSV
+- Design Tokens 主题抽离
+
+## 尚未做
+
+- 微信扫码登录（P0-c）
+- 截图 OCR 导入（P0-ocr）
+- 接微信云数据库（当前走本地 `cloud/dev-server`）

@@ -43,10 +43,20 @@
 ## 当前进度
 
 - [x] 需求梳理与功能定稿
-- [ ] P0 MVP：成员录入与花名册查看
+- [x] P0-a / P0-b：本地 API + PC 管理端成员手录（可浏览器验收）
+- [ ] P0-ocr / 小程序等（见 `docs/进度与交接.md`）
 - [ ] P1 活动日程 / RSVP / 订阅提醒
 - [ ] P2 组队 LFG
 - [ ] P3 出勤、请假、审计等打磨
+
+## 本地快速启动（管理端）
+
+```bash
+cd cloud/dev-server && npm install && npm run dev
+cd admin && npm install && npm run dev
+```
+
+浏览器：http://127.0.0.1:5173 ，账号 `superadmin` / `club-change-me`
 
 ## Git / GitHub
 

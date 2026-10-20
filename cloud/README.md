@@ -7,33 +7,33 @@
 - 微信云开发 CloudBase：云函数、云数据库、定时触发器
 - 小程序与 `admin` 共用同一云环境
 
-## 目录约定（实现后）
+## 目录
 
 ```
 cloud/
-├── functions/           # 云函数
-│   ├── login/
-│   ├── member/
-│   ├── activity/
-│   ├── team/
-│   └── reminder/
-├── database/            # 可选：初始化规则、索引说明
-└── cloudbaserc.json     # 环境配置（勿提交含密钥的本地覆盖文件）
+├── env.json             # AppID + 云环境 ID
+├── api-contract.md      # 管理端 API 契约
+├── dev-server/          # P0 本地 API（admin 默认联调）
+├── functions/adminApi/  # 微信云函数占位（后续接云库）
+└── README.md
 ```
-
-## 原则
-
-- 写操作与权限校验放在云函数，避免客户端直写敏感字段
-- 订阅消息发送由定时触发器扫描待提醒任务
-- 密钥、环境 ID 私密配置走本地文件 + `.gitignore`
 
 ## 环境配置
 
 | 文件 | 说明 |
 |------|------|
 | `env.json` | AppID + 云环境 ID（已入库） |
-| `appid.local.json.example` | 仅作本地覆盖模板（可选，已 gitignore） |
+| `appid.local.json.example` | 本地覆盖模板（可选） |
 
 当前：`appId=wx0a3fc7a2aee9f66f`，`envId=cloud1-d6gjqx2kd2f3765f4`。
 
-> P0 业务编码尚未开始；骨架初始化待用户确认「开始 P0」。
+## P0 联调方式
+
+1. 跑 `dev-server`（见 `dev-server/README.md`）
+2. 跑 `admin` 前端
+3. 云函数 `functions/adminApi` 待接入云数据库后再切换；接口形状以 `api-contract.md` 为准
+
+## 原则
+
+- 写操作与权限校验放在服务端（本地 API / 云函数）
+- 密钥勿提交；应急密码仅用于开发，上线前必须更换

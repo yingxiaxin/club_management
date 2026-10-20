@@ -38,6 +38,10 @@ yarn-error.log*
 miniprogram_npm/
 project.private.config.json
 cloud/functions/**/node_modules/
+cloud/dev-server/node_modules/
+cloud/dev-server/data/members.json
+admin/node_modules/
+admin/dist/
 
 # Test / coverage
 coverage/
