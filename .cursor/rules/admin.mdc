@@ -1,0 +1,11 @@
+---
+description: PC 管理后台约定
+globs: admin/**
+alwaysApply: false
+---
+
+# admin
+
+- 仅 `super_admin` / `admin` 可使用；登录默认微信扫码，另保留超管应急账号
+- 所有写操作调用云函数并校验角色
+- 页面以 `docs/功能说明书.md` §4.2 为准；技术栈预期 Vue3 + Element Plus（见 `admin/README.md`）

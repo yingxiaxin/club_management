@@ -1,0 +1,11 @@
+---
+description: 微信小程序成员端约定
+globs: miniprogram/**
+alwaysApply: false
+---
+
+# miniprogram
+
+- 仅成员端 UI；业务写权限经云函数，勿直写敏感集合字段
+- 页面与阶段以 `docs/功能说明书.md` §4.1 为准
+- 与 `cloud/` 同一云环境；配置中的密钥/私有项勿提交（见根 `.gitignore`）

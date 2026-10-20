@@ -1,0 +1,12 @@
+---
+description: 云开发后端约定
+globs: cloud/**
+alwaysApply: false
+---
+
+# cloud
+
+- 集合与字段以 `docs/数据模型草案.md` 为准；变更先改文档
+- 权限：管理写与入会/入队审批在云函数内校验 role
+- 订阅消息用定时触发器；提醒提前量来自俱乐部/活动配置
+- 勿提交含密钥的本地 cloudbaserc 覆盖文件
