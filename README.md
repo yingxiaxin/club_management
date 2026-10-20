@@ -27,10 +27,11 @@
 
 ## 跨机器持续开发
 
-1. 本仓库推送到 GitHub，其他电脑 `git pull`
-2. 用 Cursor 打开本仓库；项目规则在 `.cursor/rules/`，会随仓库生效
-3. 新 Agent 会话先读 `AGENTS.md` → `docs/进度与交接.md`
-4. **不要依赖聊天历史**；稳定结论写入 `docs/`，临时状态写入进度文件
+1. 本仓库已托管于 GitHub：`git@github.com:yingxiaxin/club_management.git`
+2. 其他电脑：`git clone` 或 `git pull` 后用 Cursor 打开本仓库
+3. 项目规则在 `.cursor/rules/`，会随仓库生效
+4. 新 Agent 会话先读 `AGENTS.md` → `docs/进度与交接.md`
+5. **不要依赖聊天历史**；稳定结论写入 `docs/`，临时状态写入进度文件
 
 ## 技术选型（摘要）
 
@@ -49,9 +50,9 @@
 
 ## Git / GitHub
 
-本仓库已纳入 Git 管理。推送到 GitHub 时在本目录执行：
+远程：`origin` → `git@github.com:yingxiaxin/club_management.git`（分支 `main`）
 
 ```bash
-git remote add origin <你的仓库 URL>
-git push -u origin main
+git pull
+git push
 ```
