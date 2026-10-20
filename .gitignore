@@ -16,6 +16,7 @@ unpackage/
 .env.*
 !.env.example
 **/cloudbaserc.local.json
+cloud/appid.local.json
 
 # IDE / OS
 .idea/
