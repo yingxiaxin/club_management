@@ -27,12 +27,22 @@
   --color-text-muted: #a09078;
   --color-text-inverse: #1a140a;
 
-  /* Status — 偏古铜/暗金语义，避免 Element 默认艳蓝艳红 */
-  --color-success: #6a9e6d;
-  --color-warning: #d4a017;
-  --color-danger: #b07060;
-  --color-danger-hover: #c48878;
-  --color-info: #6b8a9e;
+  /*
+   * Status — 游戏风（奇幻 UI），非后台绿/橙/红：
+   * 成功=幽荧古玉 · 警告=烛火琥珀 · 危险=干血锈红 · 信息=月辉钢蓝
+   */
+  --color-success: #7aab76;
+  --color-success-hover: #93c28e;
+  --color-success-glow: rgba(122, 171, 118, 0.35);
+  --color-warning: #d4a04a;
+  --color-warning-hover: #e0b86a;
+  --color-warning-glow: rgba(212, 160, 74, 0.38);
+  --color-danger: #b86558;
+  --color-danger-hover: #d08476;
+  --color-danger-glow: rgba(184, 101, 88, 0.38);
+  --color-info: #7d9ab0;
+  --color-info-hover: #9ab4c6;
+  --color-info-glow: rgba(125, 154, 176, 0.32);
 
   /* Layout */
   --radius-sm: 4px;

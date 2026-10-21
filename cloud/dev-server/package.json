@@ -5,11 +5,19 @@
   "type": "module",
   "scripts": {
     "dev": "node src/index.js",
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "test:ocr-parse": "node scripts/test-parse.mjs",
+    "test:ocr-e2e": "node scripts/e2e-ocr.mjs"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.21.2",
+    "multer": "^2.4.0",
+    "sharp": "^0.32.6",
+    "tesseract.js": "^7.0.0",
     "uuid": "^11.0.5"
+  },
+  "devDependencies": {
+    "form-data": "^4.0.6"
   }
 }

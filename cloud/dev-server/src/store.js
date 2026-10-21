@@ -7,6 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const dataDir = path.join(__dirname, '../data')
 const membersFile = path.join(dataDir, 'members.json')
 const seedFile = path.join(dataDir, 'seed-members.json')
+const ocrJobsFile = path.join(dataDir, 'ocr-jobs.json')
 
 function ensureMembersFile() {
   if (!fs.existsSync(membersFile)) {
@@ -137,6 +138,131 @@ export function batchUpdateScores(items) {
   }
   writeMembers(list)
   return updated
+}
+
+function readOcrJobs() {
+  if (!fs.existsSync(ocrJobsFile)) return []
+  return JSON.parse(fs.readFileSync(ocrJobsFile, 'utf8'))
+}
+
+function writeOcrJobs(list) {
+  fs.mkdirSync(dataDir, { recursive: true })
+  fs.writeFileSync(ocrJobsFile, JSON.stringify(list, null, 2), 'utf8')
+}
+
+export function createOcrJob({ createdBy, imageNames, rawText, candidates }) {
+  const jobs = readOcrJobs()
+  const now = new Date().toISOString()
+  const job = {
+    id: uuid(),
+    imageFileIds: imageNames || [],
+    status: 'parsed',
+    rawText: rawText || null,
+    candidates: candidates || [],
+    committedAt: null,
+    createdBy: createdBy || '',
+    createdAt: now,
+  }
+  jobs.unshift(job)
+  // 仅保留最近 30 个任务，避免本地文件膨胀
+  writeOcrJobs(jobs.slice(0, 30))
+  return job
+}
+
+export function getOcrJob(id) {
+  return readOcrJobs().find((j) => j.id === id) || null
+}
+
+export function annotateCandidates(candidates) {
+  const list = readMembers().filter((m) => m.status !== 'left')
+  return (candidates || []).map((c, index) => {
+    const name = String(c.characterName || '').trim()
+    const matched = name ? list.find((m) => m.characterName === name) : null
+    return {
+      localId: `c-${index + 1}`,
+      characterName: name,
+      title: String(c.title || '').trim() || '成员',
+      pathway: String(c.pathway || '').trim() || '未填写',
+      powerScore: Number(c.powerScore) || 0,
+      fashionScore: Number(c.fashionScore) || 0,
+      confidence: typeof c.confidence === 'number' ? c.confidence : 0.5,
+      lowConfidence: Boolean(c.lowConfidence) || name.length < 2,
+      issues: c.issues || [],
+      action: matched ? 'update' : 'create',
+      matchedMemberId: matched?.id || null,
+      // 角色名受头像干扰时常见缺字，默认勾选但仍标红提醒核对
+      selected: Boolean(name),
+    }
+  })
+}
+
+/**
+ * 按角色名新增或更新（截图导入确认提交）
+ */
+export function upsertMembersByName(rows, { ocrJobId } = {}) {
+  const list = readMembers()
+  const now = new Date().toISOString()
+  const created = []
+  const updated = []
+  const skipped = []
+
+  for (const item of rows || []) {
+    if (item.selected === false) {
+      skipped.push({ characterName: item.characterName, reason: '未勾选' })
+      continue
+    }
+    const name = String(item.characterName || '').trim()
+    if (!name) {
+      skipped.push({ characterName: '', reason: '角色名为空' })
+      continue
+    }
+    const idx = list.findIndex((m) => m.characterName === name && m.status !== 'left')
+    const patch = {
+      characterName: name,
+      powerScore: Number(item.powerScore) || 0,
+      fashionScore: Number(item.fashionScore) || 0,
+      pathway: String(item.pathway || '').trim() || '未填写',
+      title: String(item.title || '').trim() || '成员',
+      updatedAt: now,
+    }
+    if (ocrJobId) patch.lastOcrJobId = ocrJobId
+
+    if (idx >= 0) {
+      list[idx] = {
+        ...list[idx],
+        ...patch,
+        remark: list[idx].remark || '',
+      }
+      updated.push(list[idx])
+    } else {
+      const row = {
+        id: uuid(),
+        ...patch,
+        remark: String(item.remark || '').trim(),
+        status: 'active',
+        joinedAt: now,
+        createdAt: now,
+        boundOpenid: null,
+        lastOcrJobId: ocrJobId || null,
+      }
+      list.push(row)
+      created.push(row)
+    }
+  }
+
+  writeMembers(list)
+
+  if (ocrJobId) {
+    const jobs = readOcrJobs()
+    const job = jobs.find((j) => j.id === ocrJobId)
+    if (job) {
+      job.status = 'committed'
+      job.committedAt = now
+      writeOcrJobs(jobs)
+    }
+  }
+
+  return { created, updated, skipped }
 }
 
 /** 应急账号：本地开发默认，上线务必修改 */

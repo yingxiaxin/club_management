@@ -153,6 +153,27 @@
   box-shadow: var(--shadow-md);
 }
 
+/* 截图导入：整窗限制在视口内；上传区固定，仅结果表滚动 */
+.el-dialog.ocr-dialog {
+  max-height: 92vh;
+  margin-top: 4vh !important;
+  margin-bottom: 4vh !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.el-dialog.ocr-dialog .el-dialog__body {
+  flex: 1 1 auto;
+  overflow: hidden;
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+}
+
+.el-dialog.ocr-dialog .el-dialog__header,
+.el-dialog.ocr-dialog .el-dialog__footer {
+  flex-shrink: 0;
+}
+
 .el-dialog__header {
   border-bottom: 1px solid var(--color-border);
   margin-right: 0;
@@ -230,6 +251,170 @@
 .el-message-box {
   background: var(--color-surface) !important;
   border: 1px solid var(--color-border-strong) !important;
+}
+
+/* —— 顶部操作提示：暗色面板 + 按状态分色（古玉 / 烛火 / 锈红 / 月钢） —— */
+.el-message {
+  --el-message-bg-color: var(--color-surface) !important;
+  --el-message-border-color: var(--color-border-strong) !important;
+  --el-message-text-color: var(--color-text) !important;
+  --el-message-padding: 14px 22px;
+  --el-message-close-size: 18px;
+  min-width: 300px;
+  padding: 14px 22px !important;
+  background: var(--color-surface) !important;
+  background-color: var(--color-surface) !important;
+  border: 1px solid var(--color-border-strong) !important;
+  border-left-width: 4px !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow:
+    var(--shadow-md),
+    inset 0 1px 0 var(--color-inset-highlight) !important;
+  backdrop-filter: blur(10px);
+}
+
+.el-message .el-message__content {
+  color: var(--color-text) !important;
+  font-size: 20px !important;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.35;
+}
+
+/* ElIcon 以 1em 绘 SVG；必须抬 host 的 font-size，不能只写 width */
+.el-message .el-icon.el-message__icon {
+  --color: currentColor;
+  font-size: 28px !important;
+  width: 28px !important;
+  height: 28px !important;
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+
+.el-message .el-icon.el-message__icon svg {
+  width: 1em !important;
+  height: 1em !important;
+}
+
+/* 压掉 Element 按类型铺的浅绿/浅黄底 */
+.el-message--success,
+.el-message--warning,
+.el-message--error,
+.el-message--info {
+  background: var(--color-surface) !important;
+  background-color: var(--color-surface) !important;
+}
+
+/* 成功 → 幽荧古玉（游戏在线/完成感，非后台艳绿） */
+.el-message--success {
+  --el-message-bg-color: var(--color-surface) !important;
+  border-color: var(--color-success) !important;
+  box-shadow:
+    var(--shadow-md),
+    0 0 26px var(--color-success-glow),
+    inset 0 1px 0 rgba(180, 210, 170, 0.08) !important;
+}
+
+.el-message--success .el-icon.el-message__icon,
+.el-message--success .el-message-icon--success {
+  color: var(--color-success-hover) !important;
+  --color: var(--color-success-hover) !important;
+}
+
+/* 警告 → 烛火琥珀（比品牌金更偏暖橙） */
+.el-message--warning {
+  border-color: var(--color-warning) !important;
+  box-shadow:
+    var(--shadow-md),
+    0 0 26px var(--color-warning-glow),
+    inset 0 1px 0 rgba(255, 220, 150, 0.1) !important;
+}
+
+.el-message--warning .el-icon.el-message__icon,
+.el-message--warning .el-message-icon--warning {
+  color: var(--color-warning-hover) !important;
+  --color: var(--color-warning-hover) !important;
+}
+
+/* 错误 → 干血锈红（氧化铜感，非 Element 艳红） */
+.el-message--error {
+  border-color: var(--color-danger) !important;
+  box-shadow:
+    var(--shadow-md),
+    0 0 26px var(--color-danger-glow),
+    inset 0 1px 0 rgba(220, 180, 160, 0.1) !important;
+}
+
+.el-message--error .el-icon.el-message__icon,
+.el-message--error .el-message-icon--error {
+  color: var(--color-danger-hover) !important;
+  --color: var(--color-danger-hover) !important;
+}
+
+/* 信息 → 月辉钢蓝 */
+.el-message--info {
+  border-color: var(--color-info) !important;
+  box-shadow:
+    var(--shadow-md),
+    0 0 22px var(--color-info-glow),
+    inset 0 1px 0 var(--color-inset-highlight) !important;
+}
+
+.el-message--info .el-icon.el-message__icon,
+.el-message--info .el-message-icon--info {
+  color: var(--color-info-hover) !important;
+  --color: var(--color-info-hover) !important;
+}
+
+/* 确认框标题/正文字号略提，与提示风格一致 */
+.el-message-box__title {
+  color: var(--color-text) !important;
+  font-size: var(--font-size-lg) !important;
+  letter-spacing: 0.02em;
+}
+
+.el-message-box__message {
+  color: var(--color-text-secondary) !important;
+  font-size: var(--font-size-md) !important;
+}
+
+/* 确认框左侧状态图标：覆盖 Element 的 font-size:inherit */
+.el-message-box__status,
+.el-message-box__status.el-icon {
+  font-size: 32px !important;
+  width: 32px !important;
+  height: 32px !important;
+  flex-shrink: 0;
+}
+
+.el-message-box__status svg {
+  width: 1em !important;
+  height: 1em !important;
+}
+
+.el-message-box__status.el-message-box-icon--success {
+  color: var(--color-success-hover) !important;
+  --el-messagebox-color: var(--color-success-hover) !important;
+}
+
+.el-message-box__status.el-message-box-icon--warning {
+  color: var(--color-warning-hover) !important;
+  --el-messagebox-color: var(--color-warning-hover) !important;
+}
+
+.el-message-box__status.el-message-box-icon--error {
+  color: var(--color-danger-hover) !important;
+  --el-messagebox-color: var(--color-danger-hover) !important;
+}
+
+.el-message-box__status.el-message-box-icon--info {
+  color: var(--color-info-hover) !important;
+  --el-messagebox-color: var(--color-info-hover) !important;
+}
+
+.el-message-box__status.el-message-box-icon--primary {
+  color: var(--color-brand-hover) !important;
+  --el-messagebox-color: var(--color-brand-hover) !important;
 }
 
 .el-popper.is-light,
