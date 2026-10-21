@@ -17,7 +17,7 @@ function logout() {
     <aside class="sidebar">
       <div class="brand">俱乐部管理</div>
       <nav class="nav">
-        <router-link class="nav-item" to="/members">成员花名册</router-link>
+        <router-link class="nav-item" to="/members">成员列表</router-link>
       </nav>
     </aside>
     <div class="main">
@@ -25,7 +25,7 @@ function logout() {
         <div class="topbar-title">P0 管理后台</div>
         <div class="topbar-user">
           <span>{{ user?.displayName || user?.username }}</span>
-          <el-button text type="primary" @click="logout">退出</el-button>
+          <el-button class="logout-btn" text type="primary" @click="logout">退出</el-button>
         </div>
       </header>
       <main class="content">
@@ -44,16 +44,19 @@ function logout() {
 
 .sidebar {
   width: var(--sidebar-width);
-  background: var(--color-surface);
-  border-right: 1px solid var(--color-border);
+  background: linear-gradient(180deg, var(--color-surface) 0%, var(--color-bg) 100%);
+  border-right: 1px solid var(--color-border-strong);
   padding: var(--space-5) var(--space-4);
+  box-shadow: inset -1px 0 0 var(--color-inset-highlight);
 }
 
 .brand {
   font-size: var(--font-size-lg);
   font-weight: 700;
-  color: var(--color-text);
+  color: var(--color-brand-hover);
+  letter-spacing: 0.04em;
   margin-bottom: var(--space-5);
+  text-shadow: 0 0 24px var(--color-brand-glow);
 }
 
 .nav {
@@ -69,10 +72,16 @@ function logout() {
   border-radius: var(--radius-sm);
 }
 
+.nav-item:hover {
+  color: var(--color-text);
+  background: var(--color-brand-muted);
+}
+
 .nav-item.router-link-active {
   background: var(--color-brand-muted);
-  color: var(--color-brand);
+  color: var(--color-brand-hover);
   font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--color-brand);
 }
 
 .main {
@@ -88,8 +97,9 @@ function logout() {
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--space-5);
-  background: var(--color-surface);
+  background: var(--color-surface-topbar);
   border-bottom: 1px solid var(--color-border);
+  backdrop-filter: blur(8px);
 }
 
 .topbar-title {
@@ -102,6 +112,15 @@ function logout() {
   align-items: center;
   gap: var(--space-2);
   color: var(--color-text);
+}
+
+.logout-btn {
+  color: var(--color-brand-hover) !important;
+  font-weight: 600;
+}
+
+.logout-btn:hover {
+  color: var(--color-brand) !important;
 }
 
 .content {

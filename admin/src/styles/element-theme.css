@@ -1,0 +1,253 @@
+/**
+ * Element Plus 主题适配（把组件库默认样式接到我们的 tokens 上）。
+ * 业务色只来自 tokens.css；强制覆盖默认蓝/红「后台感」。
+ */
+
+/* —— 实心主按钮：古铜金，弱化光晕 —— */
+.el-button--primary:not(.is-link):not(.is-text) {
+  --el-button-bg-color: var(--color-brand);
+  --el-button-border-color: var(--color-border-strong);
+  --el-button-text-color: var(--color-text-inverse);
+  --el-button-hover-bg-color: var(--color-brand-hover);
+  --el-button-hover-border-color: var(--color-brand-hover);
+  --el-button-hover-text-color: var(--color-text-inverse);
+  --el-button-active-bg-color: #a8861c;
+  --el-button-active-border-color: #a8861c;
+  --el-button-active-text-color: var(--color-text-inverse);
+  background-color: var(--color-brand) !important;
+  border-color: var(--color-border-strong) !important;
+  color: var(--color-text-inverse) !important;
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 rgba(255, 240, 200, 0.18);
+}
+
+.el-button--primary:not(.is-link):not(.is-text):hover,
+.el-button--primary:not(.is-link):not(.is-text):focus {
+  background-color: var(--color-brand-hover) !important;
+  border-color: var(--color-brand-hover) !important;
+  color: var(--color-text-inverse) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 240, 200, 0.22), 0 0 0 1px var(--color-border-strong);
+}
+
+.el-button--primary:not(.is-link):not(.is-text):active {
+  background-color: #a8861c !important;
+  border-color: #a8861c !important;
+}
+
+/* —— 次要按钮：暗面 + 金边 —— */
+.el-button--default {
+  --el-button-bg-color: var(--color-surface-elevated);
+  --el-button-border-color: var(--color-border-strong);
+  --el-button-text-color: var(--color-text);
+  --el-button-hover-bg-color: var(--color-brand-muted);
+  --el-button-hover-border-color: var(--color-brand);
+  --el-button-hover-text-color: var(--color-brand-hover);
+  background-color: var(--color-surface-elevated) !important;
+  border-color: var(--color-border-strong) !important;
+  color: var(--color-text) !important;
+  box-shadow: none;
+}
+
+.el-button--default:hover,
+.el-button--default:focus {
+  background-color: var(--color-brand-muted) !important;
+  border-color: var(--color-brand) !important;
+  color: var(--color-brand-hover) !important;
+}
+
+/* —— 危险实心（少用）：暗铜红 —— */
+.el-button--danger:not(.is-link):not(.is-text) {
+  background-color: var(--color-danger) !important;
+  border-color: #8f584a !important;
+  color: var(--color-text) !important;
+  box-shadow: none;
+}
+
+.el-button--danger:not(.is-link):not(.is-text):hover,
+.el-button--danger:not(.is-link):not(.is-text):focus {
+  background-color: var(--color-danger-hover) !important;
+  border-color: var(--color-danger-hover) !important;
+}
+
+/* —— 表格内 link：金 / 铜红，无蓝框无艳红 —— */
+.el-button.is-link {
+  padding: 0 2px;
+  height: auto;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.el-button.is-link.el-button--primary {
+  color: var(--color-brand-hover) !important;
+}
+
+.el-button.is-link.el-button--primary:hover,
+.el-button.is-link.el-button--primary:focus {
+  color: var(--color-brand) !important;
+  background: var(--color-brand-muted) !important;
+}
+
+.el-button.is-link.el-button--danger {
+  color: var(--color-danger) !important;
+}
+
+.el-button.is-link.el-button--danger:hover,
+.el-button.is-link.el-button--danger:focus {
+  color: var(--color-danger-hover) !important;
+  background: rgba(176, 112, 96, 0.14) !important;
+}
+
+/* —— 顶栏文字按钮 —— */
+.el-button.is-text.el-button--primary {
+  color: var(--color-brand-hover) !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.el-button.is-text.el-button--primary:hover,
+.el-button.is-text.el-button--primary:focus {
+  color: var(--color-brand) !important;
+  background: var(--color-brand-muted) !important;
+}
+
+.el-table .cell {
+  overflow: visible;
+}
+
+.el-input__wrapper,
+.el-textarea__inner,
+.el-select__wrapper {
+  background-color: var(--color-surface-elevated) !important;
+  box-shadow: 0 0 0 1px var(--color-border) inset !important;
+}
+
+.el-input__wrapper:hover,
+.el-input__wrapper.is-focus,
+.el-select__wrapper:hover,
+.el-select__wrapper.is-focused {
+  box-shadow: 0 0 0 1px var(--color-brand) inset !important;
+}
+
+.el-table {
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-bg-color: rgba(0, 0, 0, 0.25);
+  --el-table-row-hover-bg-color: var(--color-brand-muted);
+  --el-table-border-color: var(--color-border);
+  --el-table-text-color: var(--color-text);
+  --el-table-header-text-color: var(--color-text-secondary);
+  background: transparent;
+}
+
+.el-table th.el-table__cell {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.el-dialog {
+  --el-dialog-bg-color: var(--color-surface);
+  --el-dialog-title-font-size: var(--font-size-lg);
+  border: 1px solid var(--color-border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.el-dialog__header {
+  border-bottom: 1px solid var(--color-border);
+  margin-right: 0;
+  padding-bottom: var(--space-3);
+}
+
+.el-form-item__label {
+  color: var(--color-text-secondary);
+}
+
+.el-dialog__title {
+  color: var(--color-text);
+}
+
+.el-dialog__body {
+  color: var(--color-text);
+}
+
+.el-input__inner,
+.el-textarea__inner {
+  color: var(--color-text) !important;
+}
+
+.el-input__inner::placeholder,
+.el-textarea__inner::placeholder,
+.el-input__wrapper input::placeholder {
+  color: var(--color-text-muted) !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: var(--color-text-muted) !important;
+}
+
+/*
+ * 下拉闭合态展示色：与输入框 placeholder（--color-text-muted）统一。
+ * Element 常把占位写在 .el-select__selected-item / placeholder 上，并带 opacity，需一并压住。
+ */
+.el-select__wrapper {
+  --el-input-text-color: var(--color-text-muted);
+  --el-text-color-placeholder: var(--color-text-muted);
+}
+
+.el-select__placeholder,
+.el-select__placeholder.is-transparent,
+.el-select__placeholder span,
+.el-select__selected-item.el-select__placeholder,
+.el-select__selected-item.el-select__placeholder span {
+  color: var(--color-text-muted) !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: var(--color-text-muted) !important;
+}
+
+/* 筛选栏内已选项也用同一弱字色，避免比左侧输入框 placeholder 更亮 */
+.filters .el-select__wrapper .el-select__selected-item,
+.filters .el-select__wrapper .el-select__selection-text,
+.filters .el-select__wrapper .el-select__selected-item span {
+  color: var(--color-text-muted) !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: var(--color-text-muted) !important;
+}
+
+/* 弹窗等表单里：已选中项用主文字色，仅空态占位保持弱字 */
+.el-dialog .el-select__wrapper {
+  --el-input-text-color: var(--color-text);
+}
+
+.el-dialog .el-select__wrapper .el-select__selected-item:not(.el-select__placeholder),
+.el-dialog .el-select__wrapper .el-select__selected-item:not(.el-select__placeholder) span {
+  color: var(--color-text) !important;
+  -webkit-text-fill-color: var(--color-text) !important;
+}
+
+.el-select__caret {
+  color: var(--color-text-muted) !important;
+}
+
+.el-message-box {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border-strong) !important;
+}
+
+.el-popper.is-light,
+.el-select-dropdown {
+  background: var(--color-surface-elevated) !important;
+  border: 1px solid var(--color-border) !important;
+}
+
+.el-select-dropdown__item {
+  color: var(--color-text);
+}
+
+.el-select-dropdown__item.is-hovering,
+.el-select-dropdown__item:hover {
+  background: var(--color-brand-muted) !important;
+}
+
+.el-select-dropdown__item.is-selected {
+  color: var(--color-brand-hover);
+  font-weight: 600;
+}

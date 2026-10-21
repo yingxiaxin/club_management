@@ -1,44 +1,51 @@
 /**
- * 主题 Design Tokens —— 换整体配色/风格只改本文件（及可选 Element 覆盖）。
- * 业务组件请使用 var(--*)，禁止写死色值。
+ * 诡秘风 Design Tokens —— 对齐游戏截图（暗色 + 古铜金）
+ * 色板说明见 docs/视觉风格指南.md
+ * 换肤只改本文件；业务组件只用 var(--*)。
  */
 :root {
-  /* Brand */
-  --color-brand: #1f6feb;
-  --color-brand-hover: #1a5fd0;
-  --color-brand-muted: #dbe8fb;
+  /* Brand — antique gold */
+  --color-brand: #c9a227;
+  --color-brand-hover: #e0bc4a;
+  --color-brand-muted: rgba(201, 162, 39, 0.16);
+  --color-brand-glow: rgba(201, 162, 39, 0.35);
 
-  /* Surface */
-  --color-bg: #f4f6f9;
-  --color-surface: #ffffff;
-  --color-surface-elevated: #ffffff;
-  --color-border: #e5eaf0;
-  --color-border-strong: #cfd8e3;
+  /* Surface — deep charcoal */
+  --color-bg: #0e0f14;
+  --color-bg-glow: #2a2218;
+  --color-surface: #1a1c22;
+  --color-surface-elevated: #22252e;
+  --color-surface-glass: rgba(26, 28, 34, 0.92);
+  --color-surface-topbar: rgba(26, 28, 34, 0.88);
+  --color-border: #3a3428;
+  --color-border-strong: #6b5a32;
+  --color-inset-highlight: rgba(201, 162, 39, 0.06);
 
-  /* Text */
-  --color-text: #1c2430;
-  --color-text-secondary: #5b6b7c;
-  --color-text-muted: #8a97a8;
-  --color-text-inverse: #ffffff;
+  /* Text — warm cream（次级/弱字略提亮，保证暗底可读） */
+  --color-text: #f5ecdc;
+  --color-text-secondary: #d4c4a8;
+  --color-text-muted: #a09078;
+  --color-text-inverse: #1a140a;
 
-  /* Status */
-  --color-success: #2f9e6b;
-  --color-warning: #c9851a;
-  --color-danger: #d94848;
-  --color-info: #3a7ca5;
+  /* Status — 偏古铜/暗金语义，避免 Element 默认艳蓝艳红 */
+  --color-success: #6a9e6d;
+  --color-warning: #d4a017;
+  --color-danger: #b07060;
+  --color-danger-hover: #c48878;
+  --color-info: #6b8a9e;
 
   /* Layout */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
   --space-5: 24px;
   --space-6: 32px;
-  --shadow-sm: 0 1px 2px rgba(28, 36, 48, 0.06);
-  --shadow-md: 0 8px 24px rgba(28, 36, 48, 0.08);
+  --shadow-sm: 0 1px 0 rgba(201, 162, 39, 0.08);
+  --shadow-md: 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(107, 90, 50, 0.25);
   --font-sans: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-size-sm: 13px;
   --font-size-md: 14px;
@@ -49,11 +56,54 @@
 
   /* Element Plus bridge */
   --el-color-primary: var(--color-brand);
+  --el-color-primary-light-3: #d4b44a;
+  --el-color-primary-light-5: #c9a227aa;
+  --el-color-primary-light-7: var(--color-brand-muted);
+  --el-color-primary-light-9: rgba(201, 162, 39, 0.08);
+  --el-color-primary-dark-2: #a8861c;
   --el-color-success: var(--color-success);
   --el-color-warning: var(--color-warning);
   --el-color-danger: var(--color-danger);
+  --el-color-info: var(--color-info);
+  --el-bg-color: var(--color-surface);
+  --el-bg-color-overlay: var(--color-surface-elevated);
+  --el-bg-color-page: var(--color-bg);
+  --el-text-color-primary: var(--color-text);
+  --el-text-color-regular: var(--color-text);
+  --el-text-color-secondary: var(--color-text-secondary);
+  --el-text-color-placeholder: var(--color-text-muted);
+  --el-border-color: var(--color-border);
+  --el-border-color-light: var(--color-border);
+  --el-border-color-lighter: #2c2830;
+  --el-border-color-extra-light: #25222a;
+  --el-fill-color: var(--color-surface-elevated);
+  --el-fill-color-light: #1e2028;
+  --el-fill-color-blank: var(--color-surface-elevated);
+  --el-mask-color: rgba(8, 8, 12, 0.72);
   --el-border-radius-base: var(--radius-sm);
   --el-font-family: var(--font-sans);
+  --el-box-shadow: var(--shadow-md);
+  --el-box-shadow-light: var(--shadow-sm);
+}
+
+/* Element 暗色包会写 html.dark 下的主色；在此覆盖，避免回到默认蓝 */
+html.dark {
+  --el-color-primary: var(--color-brand);
+  --el-color-primary-light-3: #d4b44a;
+  --el-color-primary-light-5: rgba(201, 162, 39, 0.65);
+  --el-color-primary-light-7: var(--color-brand-muted);
+  --el-color-primary-light-8: rgba(201, 162, 39, 0.12);
+  --el-color-primary-light-9: rgba(201, 162, 39, 0.08);
+  --el-color-primary-dark-2: #a8861c;
+  --el-color-danger: var(--color-danger);
+  --el-color-danger-light-3: var(--color-danger-hover);
+  --el-color-danger-light-5: rgba(176, 112, 96, 0.55);
+  --el-color-danger-light-7: rgba(176, 112, 96, 0.2);
+  --el-color-danger-light-9: rgba(176, 112, 96, 0.1);
+  --el-color-danger-dark-2: #8f584a;
+  --el-color-success: var(--color-success);
+  --el-color-warning: var(--color-warning);
+  --el-color-info: var(--color-info);
 }
 
 html,
@@ -62,10 +112,19 @@ body,
   margin: 0;
   min-height: 100%;
   font-family: var(--font-sans);
-  background: var(--color-bg);
   color: var(--color-text);
+  background-color: var(--color-bg);
+  background-image:
+    radial-gradient(900px 420px at 12% -8%, var(--color-bg-glow), transparent 55%),
+    radial-gradient(700px 380px at 90% 100%, rgba(60, 40, 20, 0.35), transparent 50%);
+  background-attachment: fixed;
 }
 
 * {
   box-sizing: border-box;
+}
+
+::selection {
+  background: var(--color-brand-muted);
+  color: var(--color-text);
 }

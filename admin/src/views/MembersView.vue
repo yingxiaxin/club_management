@@ -67,27 +67,39 @@ function openCreate() {
 function openEdit(row: Member) {
   editingId.value = row.id
   Object.assign(form, {
-    characterName: row.characterName,
-    powerScore: row.powerScore,
-    fashionScore: row.fashionScore,
-    pathway: row.pathway,
-    title: row.title,
-    remark: row.remark,
+    characterName: row.characterName ?? '',
+    powerScore: Number(row.powerScore) || 0,
+    fashionScore: Number(row.fashionScore) || 0,
+    pathway: row.pathway ?? '',
+    title: row.title ?? '成员',
+    remark: row.remark ?? '',
   })
   dialogVisible.value = true
 }
 
+function buildPayload(): MemberInput {
+  return {
+    characterName: String(form.characterName ?? '').trim(),
+    powerScore: Number(form.powerScore) || 0,
+    fashionScore: Number(form.fashionScore) || 0,
+    pathway: String(form.pathway ?? '').trim(),
+    title: String(form.title ?? '').trim() || '成员',
+    remark: String(form.remark ?? '').trim(),
+  }
+}
+
 async function save() {
   try {
-    if (!form.characterName.trim()) {
+    const payload = buildPayload()
+    if (!payload.characterName) {
       ElMessage.warning('请填写角色名')
       return
     }
     if (editingId.value) {
-      await updateMember(editingId.value, form)
+      await updateMember(editingId.value, payload)
       ElMessage.success('已更新')
     } else {
-      await createMember(form)
+      await createMember(payload)
       ElMessage.success('已创建')
     }
     dialogVisible.value = false
@@ -132,7 +144,7 @@ onMounted(load)
   <section class="page">
     <div class="page-head">
       <div>
-        <h2 class="page-title">成员花名册</h2>
+        <h2 class="page-title">成员列表</h2>
         <p class="page-desc">手动录入 / 编辑。截图 OCR 导入将在 P0-ocr 提供。</p>
       </div>
       <div class="actions">
@@ -161,17 +173,26 @@ onMounted(load)
     </div>
 
     <div class="card table-wrap">
-      <el-table v-loading="loading" :data="rows" stripe empty-text="暂无成员">
-        <el-table-column prop="characterName" label="角色名" min-width="120" />
-        <el-table-column prop="powerScore" label="非凡评分" width="110" sortable />
-        <el-table-column prop="fashionScore" label="风尚度" width="100" />
-        <el-table-column prop="pathway" label="序列/途径" min-width="120" />
-        <el-table-column prop="title" label="职位" width="100" />
-        <el-table-column prop="remark" label="备注" min-width="140" show-overflow-tooltip />
-        <el-table-column label="操作" width="160" fixed="right">
+      <el-table
+        v-loading="loading"
+        :data="rows"
+        stripe
+        table-layout="fixed"
+        style="width: 100%"
+        empty-text="暂无成员"
+      >
+        <el-table-column prop="characterName" label="角色名" min-width="1" />
+        <el-table-column prop="powerScore" label="非凡评分" min-width="1" sortable />
+        <el-table-column prop="fashionScore" label="风尚度" min-width="1" />
+        <el-table-column prop="pathway" label="序列/途径" min-width="1" show-overflow-tooltip />
+        <el-table-column prop="title" label="职位" min-width="1" />
+        <el-table-column prop="remark" label="备注" min-width="1" show-overflow-tooltip />
+        <el-table-column label="操作" min-width="1">
           <template #default="{ row }">
-            <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
-            <el-button link type="danger" @click="onDelete(row)">移出</el-button>
+            <div class="row-actions">
+              <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
+              <el-button link type="danger" @click="onDelete(row)">移出</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -225,7 +246,8 @@ onMounted(load)
 .page-title {
   margin: 0 0 var(--space-2);
   font-size: var(--font-size-xl);
-  color: var(--color-text);
+  color: var(--color-brand-hover);
+  letter-spacing: 0.04em;
 }
 
 .page-desc {
@@ -240,10 +262,10 @@ onMounted(load)
 }
 
 .card {
-  background: var(--color-surface);
+  background: var(--color-surface-glass);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-sm), inset 0 1px 0 var(--color-inset-highlight);
 }
 
 .filters {
@@ -264,5 +286,14 @@ onMounted(load)
 
 .table-wrap {
   padding: var(--space-2);
+  overflow: visible;
+}
+
+.row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: nowrap;
+  line-height: 1.4;
 }
 </style>

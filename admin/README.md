@@ -1,6 +1,6 @@
 # PC 管理后台（Web）
 
-Vue 3 + Vite + Element Plus。样式主题在 `src/styles/tokens.css`，换肤优先改该文件。
+Vue 3 + Vite + Element Plus。样式主题在 `src/styles/tokens.css`（暗色+古铜金，对齐游戏截图），换肤优先改该文件；色板说明见 `docs/视觉风格指南.md`。
 
 ## 本地运行（P0-b）
 

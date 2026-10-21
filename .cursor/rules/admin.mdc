@@ -9,5 +9,5 @@ alwaysApply: false
 - 仅 `super_admin` / `admin` 可使用；登录默认微信扫码，另保留超管应急账号
 - 所有写操作调用云函数并校验角色
 - 页面以 `docs/功能说明书.md` §4.2 为准；技术栈预期 Vue3 + Element Plus（见 `admin/README.md`）
-- 样式：独立 `tokens`（CSS 变量），禁止在业务组件散落硬编码色值
+- 样式：独立 `tokens`（CSS 变量），禁止在业务组件散落硬编码色值；视觉对齐 `docs/视觉风格指南.md`（暗色+古铜金）
 - 成员录入：手录 CRUD + 截图 OCR 导入（确认后按角色名新增/更新）

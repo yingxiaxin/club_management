@@ -60,24 +60,22 @@ async function onSubmit() {
   display: grid;
   place-items: center;
   padding: var(--space-5);
-  background:
-    radial-gradient(1200px 500px at 10% -10%, var(--color-brand-muted), transparent 60%),
-    var(--color-bg);
 }
 
 .panel {
   width: min(420px, 100%);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: linear-gradient(165deg, var(--color-surface) 0%, var(--color-bg) 100%);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-md), 0 0 48px var(--color-brand-glow);
   padding: var(--space-6);
 }
 
 .title {
   margin: 0 0 var(--space-2);
   font-size: var(--font-size-xl);
-  color: var(--color-text);
+  color: var(--color-brand-hover);
+  letter-spacing: 0.06em;
 }
 
 .hint,

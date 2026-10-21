@@ -82,8 +82,10 @@ export function updateMember(id, payload) {
   const idx = list.findIndex((m) => m.id === id)
   if (idx < 0) throw Object.assign(new Error('成员不存在'), { status: 404 })
   const current = list[idx]
-  if (payload.characterName != null) {
-    const name = String(payload.characterName).trim()
+  const body = payload || {}
+
+  if (body.characterName !== undefined) {
+    const name = String(body.characterName ?? '').trim()
     if (!name) throw Object.assign(new Error('角色名必填'), { status: 400 })
     if (list.some((m) => m.id !== id && m.characterName === name && m.status !== 'left')) {
       throw Object.assign(new Error('角色名已存在'), { status: 409 })
@@ -91,12 +93,20 @@ export function updateMember(id, payload) {
     current.characterName = name
   }
   for (const key of ['powerScore', 'fashionScore']) {
-    if (payload[key] != null) current[key] = Number(payload[key]) || 0
+    if (body[key] !== undefined && body[key] !== null && body[key] !== '') {
+      current[key] = Number(body[key]) || 0
+    } else if (body[key] === null || body[key] === '') {
+      current[key] = 0
+    }
   }
   for (const key of ['pathway', 'title', 'remark']) {
-    if (payload[key] != null) current[key] = String(payload[key]).trim()
+    if (body[key] !== undefined) {
+      current[key] = String(body[key] ?? '').trim()
+    }
   }
-  if (payload.status != null) current.status = payload.status
+  if (body.status !== undefined && body.status !== null) {
+    current.status = body.status
+  }
   current.updatedAt = new Date().toISOString()
   list[idx] = current
   writeMembers(list)
