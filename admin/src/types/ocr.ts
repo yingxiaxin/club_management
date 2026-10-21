@@ -3,6 +3,7 @@ export type OcrCandidate = {
   characterName: string
   title: string
   pathway: string
+  level: number
   powerScore: number
   fashionScore: number
   confidence: number

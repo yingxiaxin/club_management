@@ -1,6 +1,7 @@
 export interface Member {
   id: string
   characterName: string
+  level: number
   powerScore: number
   fashionScore: number
   pathway: string
@@ -14,6 +15,7 @@ export interface Member {
 
 export type MemberInput = {
   characterName: string
+  level?: number
   powerScore: number
   fashionScore: number
   pathway: string

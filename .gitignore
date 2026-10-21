@@ -44,8 +44,10 @@ cloud/dev-server/data/ocr-jobs.json
 cloud/dev-server/data/_ocr-*
 cloud/dev-server/data/_dbg-*
 cloud/dev-server/data/_name-bands/
+cloud/dev-server/data/_enhance-probe/
 cloud/dev-server/data/_sweep-*
 cloud/dev-server/data/_rows-preview.png
+cloud/dev-server/data/_name-rows/
 cloud/dev-server/tessdata/
 cloud/dev-server/**/*.traineddata
 cloud/dev-server/uploads/

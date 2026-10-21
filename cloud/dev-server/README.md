@@ -14,12 +14,34 @@ npm run dev
 
 ## 截图 OCR（P0-ocr）
 
-- 依赖：`tesseract.js` + `sharp`（预处理）+ `multer`（上传）
-- 语言包 `chi_sim`：优先用目录内 `tessdata/`；若无则首次识别时下载到 `%LOCALAPPDATA%/club-management-tessdata`（已 gitignore，勿提交大文件）
+引擎优先级（自动选择）：
+
+1. **腾讯云 OCR**（若配置了 `TENCENTCLOUD_SECRET_ID/KEY`）
+2. **本地 RapidOCR**（本机 Python 已装 `rapidocr_onnxruntime` 时；角色名明显更准）
+3. **Tesseract**（兜底；统计列 + 整表双通道）
+
+其它：
+
+- 图像预处理：`sharp`；上传：`multer`
+- 语言包 `chi_sim`：仅 Tesseract 需要；优先 `tessdata/`，否则下载到 `%LOCALAPPDATA%/club-management-tessdata`
 - 流程：`POST /api/ocr/parse`（多图）→ 预览编辑 → `POST /api/ocr/commit`
-- 解析自测：`npm run test:ocr-parse`
+- 自测：`npm run test:ocr-parse` / `npm run test:ocr-rapid`
 - 样例图：仓库根目录 `游戏截图/俱乐部成员列表.png`
-- **可选腾讯云 OCR**（角色名更准）：复制 `.env.example` 为 `.env` 填入密钥，并 `npm i tencentcloud-sdk-nodejs-ocr`；用 `dotenv` 或系统环境变量加载后重启。未配置时回退本地 Tesseract。
+
+### 启用 RapidOCR（推荐，免费本地）
+
+```bash
+pip install rapidocr-onnxruntime
+# 可选：指定解释器
+# set OCR_PYTHON=C:\Path\to\python.exe
+```
+
+强制只用 Tesseract：`set OCR_ENGINE=tesseract`
+
+### 可选腾讯云 OCR
+
+复制 `.env.example` 为 `.env` 填入密钥，并 `npm i tencentcloud-sdk-nodejs-ocr`；重启服务。
 
 > Node 建议 18+；当前亦兼容 Node 16（`sharp@0.32`）。  
-> 游戏头像会挡住角色名首字，本地引擎很难认全，导入前请人工核对角色名。
+> 改代码后需**手动重启** dev-server（无 watch）。  
+> 即使 RapidOCR，个别角色名仍可能缺字，导入前请扫一眼确认表。

@@ -31,6 +31,7 @@ const dialogVisible = ref(false)
 const editingId = ref<string | null>(null)
 const form = reactive<MemberInput>({
   characterName: '',
+  level: 0,
   powerScore: 0,
   fashionScore: 0,
   pathway: '',
@@ -108,10 +109,25 @@ async function load() {
   }
 }
 
+const SORTABLE_PROPS = new Set(['level', 'powerScore', 'fashionScore', 'pathway'])
+
+function onSortChange(payload: { prop: string; order: 'ascending' | 'descending' | null }) {
+  const { prop, order } = payload
+  if (!prop || !order || !SORTABLE_PROPS.has(prop)) {
+    query.sort = 'powerScore'
+    query.order = 'desc'
+  } else {
+    query.sort = prop
+    query.order = order === 'ascending' ? 'asc' : 'desc'
+  }
+  void load()
+}
+
 function openCreate() {
   editingId.value = null
   Object.assign(form, {
     characterName: '',
+    level: 0,
     powerScore: 0,
     fashionScore: 0,
     pathway: '',
@@ -125,6 +141,7 @@ function openEdit(row: Member) {
   editingId.value = row.id
   Object.assign(form, {
     characterName: row.characterName ?? '',
+    level: Number(row.level) || 0,
     powerScore: Number(row.powerScore) || 0,
     fashionScore: Number(row.fashionScore) || 0,
     pathway: row.pathway ?? '',
@@ -137,6 +154,7 @@ function openEdit(row: Member) {
 function buildPayload(): MemberInput {
   return {
     characterName: String(form.characterName ?? '').trim(),
+    level: Number(form.level) || 0,
     powerScore: Number(form.powerScore) || 0,
     fashionScore: Number(form.fashionScore) || 0,
     pathway: String(form.pathway ?? '').trim(),
@@ -302,6 +320,7 @@ async function runOcrCommit() {
         characterName: String(r.characterName || '').trim(),
         title: String(r.title || '').trim() || '成员',
         pathway: String(r.pathway || '').trim() || '未填写',
+        level: Number(r.level) || 0,
         powerScore: Number(r.powerScore) || 0,
         fashionScore: Number(r.fashionScore) || 0,
         selected: Boolean(r.selected),
@@ -347,6 +366,8 @@ onUnmounted(() => window.removeEventListener('paste', onOcrPaste))
       <el-select v-model="query.sort" class="filter-item">
         <el-option label="按非凡评分" value="powerScore" />
         <el-option label="按风尚度" value="fashionScore" />
+        <el-option label="按等级" value="level" />
+        <el-option label="按序列/途径" value="pathway" />
         <el-option label="按角色名" value="characterName" />
         <el-option label="按入会时间" value="joinedAt" />
       </el-select>
@@ -365,14 +386,24 @@ onUnmounted(() => window.removeEventListener('paste', onOcrPaste))
         table-layout="fixed"
         style="width: 100%"
         empty-text="暂无成员"
+        :default-sort="{
+          prop: query.sort,
+          order: query.order === 'asc' ? 'ascending' : 'descending',
+        }"
+        @sort-change="onSortChange"
       >
         <el-table-column prop="characterName" label="角色名" min-width="1" />
-        <el-table-column prop="powerScore" label="非凡评分" min-width="1" sortable />
-        <el-table-column prop="fashionScore" label="风尚度" min-width="1" />
-        <el-table-column prop="pathway" label="序列/途径" min-width="1" show-overflow-tooltip />
+        <el-table-column prop="level" label="等级" min-width="1" sortable="custom">
+          <template #default="{ row }">
+            {{ row.level || '—' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="powerScore" label="非凡评分" min-width="1" sortable="custom" />
+        <el-table-column prop="fashionScore" label="风尚度" min-width="1" sortable="custom" />
+        <el-table-column prop="pathway" label="序列/途径" min-width="1" sortable="custom" show-overflow-tooltip />
         <el-table-column prop="title" label="职位" min-width="1" />
         <el-table-column prop="remark" label="备注" min-width="1" show-overflow-tooltip />
-        <el-table-column label="操作" min-width="1">
+        <el-table-column label="操作" width="100" align="center">
           <template #default="{ row }">
             <div class="row-actions">
               <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
@@ -392,6 +423,9 @@ onUnmounted(() => window.removeEventListener('paste', onOcrPaste))
       <el-form label-width="96px">
         <el-form-item label="角色名" required>
           <el-input v-model="form.characterName" maxlength="40" />
+        </el-form-item>
+        <el-form-item label="等级">
+          <el-input-number v-model="form.level" :min="0" :max="999" :step="1" style="width: 100%" />
         </el-form-item>
         <el-form-item label="非凡评分">
           <el-input-number v-model="form.powerScore" :min="0" :step="10" style="width: 100%" />
@@ -483,29 +517,41 @@ onUnmounted(() => window.removeEventListener('paste', onOcrPaste))
                 />
               </template>
             </el-table-column>
-            <el-table-column label="职位" min-width="120">
+            <el-table-column label="职位" min-width="110">
               <template #default="{ row }">
                 <el-select v-model="row.title" size="small" filterable allow-create style="width: 100%">
                   <el-option v-for="t in TITLE_OPTIONS" :key="t" :label="t" :value="t" />
                 </el-select>
               </template>
             </el-table-column>
-            <el-table-column label="途径" min-width="100">
+            <el-table-column label="等级" width="88">
+              <template #default="{ row }">
+                <el-input-number
+                  v-model="row.level"
+                  size="small"
+                  :min="0"
+                  :max="999"
+                  controls-position="right"
+                  style="width: 100%"
+                />
+              </template>
+            </el-table-column>
+            <el-table-column label="途径" min-width="96">
               <template #default="{ row }">
                 <el-input v-model="row.pathway" size="small" />
               </template>
             </el-table-column>
-            <el-table-column label="非凡评分" min-width="110">
+            <el-table-column label="非凡评分" min-width="104">
               <template #default="{ row }">
                 <el-input-number v-model="row.powerScore" size="small" :min="0" controls-position="right" style="width: 100%" />
               </template>
             </el-table-column>
-            <el-table-column label="风尚度" min-width="110">
+            <el-table-column label="风尚度" min-width="104">
               <template #default="{ row }">
                 <el-input-number v-model="row.fashionScore" size="small" :min="0" controls-position="right" style="width: 100%" />
               </template>
             </el-table-column>
-            <el-table-column label="动作" width="72" align="center">
+            <el-table-column label="动作" width="64" align="center">
               <template #default="{ row }">
                 <span :class="row.action === 'update' ? 'tag-update' : 'tag-create'">
                   {{ row.action === 'update' ? '更新' : '新增' }}
@@ -589,7 +635,8 @@ onUnmounted(() => window.removeEventListener('paste', onOcrPaste))
 .row-actions {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  justify-content: center;
+  gap: 2px;
   flex-wrap: nowrap;
   line-height: 1.4;
 }

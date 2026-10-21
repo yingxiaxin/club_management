@@ -25,6 +25,7 @@
 
 - `parse` 返回 `{ jobId, candidates, rawText?, tip? }`；`candidates` 含 `selected / action(create|update) / lowConfidence` 等，供预览表编辑。
 - `commit` 仅处理 `selected !== false` 的行；匹配键为 **角色名**；新建成员 `status=active`，并写 `lastOcrJobId`。
-- 本地 OCR 使用 Tesseract（`chi_sim`）；首次运行会下载语言包到用户缓存目录。游戏头像旁角色名易缺字，**必须人工确认**。
+- 成员字段含可选 `level`（等级）；OCR 预览与 CSV 导出一并带出。
+- 本地引擎：优先 RapidOCR（Python `rapidocr_onnxruntime` + 坐标版面解析），否则 Tesseract（`chi_sim`）。可选腾讯云。返回 `provider` / `tip` 供前端提示。**必须人工确认**后再 commit。
 
 统一响应：`{ ok: boolean, data?: any, message?: string }`

@@ -2,6 +2,7 @@ import sharp from 'sharp'
 import { createWorker } from 'tesseract.js'
 import { ensureTessdata } from './ensureTessdata.js'
 import { parseMemberListText } from './parseMemberList.js'
+import { isRapidOcrAvailable, recognizeWithRapid } from './rapidOcr.js'
 import { isTencentOcrConfigured, recognizeWithTencent } from './tencentOcr.js'
 
 let workerPromise = null
@@ -58,18 +59,23 @@ async function enhance(image, targetWidth) {
     .toBuffer()
 }
 
-async function makeTableCrop(buffer, w, h) {
+function tableBox(w, h) {
   const left = Math.round(w * 0.145)
   const top = Math.round(h * 0.175)
   const width = Math.max(100, Math.round(w * 0.83))
   const height = Math.max(100, Math.round(h * 0.68))
-  const cropped = sharp(buffer).extract({
+  return {
     left: Math.min(left, w - 10),
     top: Math.min(top, h - 10),
     width: Math.min(width, w - left),
     height: Math.min(height, h - top),
-  })
-  return enhance(cropped, width * 2)
+  }
+}
+
+async function makeTableCrop(buffer, w, h) {
+  const box = tableBox(w, h)
+  const cropped = sharp(buffer).extract(box)
+  return enhance(cropped, box.width * 2)
 }
 
 async function recognizeBuffer(prepared) {
@@ -92,63 +98,144 @@ function mergeCandidate(map, row) {
   }
   const prevName = prev.characterName || ''
   const nextName = row.characterName || ''
-  const prevScore = (prevName.length >= 2 ? 10 : 0) + prevName.length + (prev.confidence || 0) * 5
-  const nextScore = (nextName.length >= 2 ? 10 : 0) + nextName.length + (row.confidence || 0) * 5
-  if (nextScore > prevScore) map.set(key, { ...prev, ...row })
-}
-
-function markNameReview(row) {
-  return {
-    ...row,
-    lowConfidence: true,
-    issues: Array.from(
-      new Set([...(row.issues || []), '角色名易受头像遮挡，请人工核对']),
-    ),
+  const nameScore = (n) => (n.length >= 2 ? 10 : 0) + n.length + (/[\u4e00-\u9fff]/.test(n) ? 3 : 0)
+  const prevScore = nameScore(prevName) + (prev.confidence || 0) * 5 + (prev.level ? 1 : 0)
+  const nextScore = nameScore(nextName) + (row.confidence || 0) * 5 + (row.level ? 1 : 0)
+  if (nextScore > prevScore) {
+    map.set(key, {
+      ...prev,
+      ...row,
+      // 保留更完整姓名；结构字段取非空更优值
+      characterName: nameScore(nextName) >= nameScore(prevName) ? nextName : prevName,
+      level: row.level || prev.level || 0,
+      title: row.title && row.title !== '成员' ? row.title : prev.title,
+      pathway: row.pathway && row.pathway !== '未填写' ? row.pathway : prev.pathway,
+    })
+  } else {
+    map.set(key, {
+      ...prev,
+      level: prev.level || row.level || 0,
+      characterName: nameScore(prevName) >= nameScore(nextName) ? prevName : nextName,
+    })
   }
 }
 
-async function recognizeLocal(buf, meta) {
+function markNameReview(row, provider) {
+  const name = row.characterName || ''
+  const weakName = !name || name.length < 2
+  const forceReview = provider === 'tesseract' || provider === 'tesseract-fallback'
+  const low = Boolean(row.lowConfidence) || weakName || forceReview
+  const issues = [...(row.issues || [])]
+  if (forceReview || weakName) {
+    issues.push('角色名易受头像遮挡，请人工核对')
+  }
+  return {
+    ...row,
+    lowConfidence: low,
+    issues: Array.from(new Set(issues)),
+  }
+}
+
+/** Tesseract：整表 + 统计列（职位起）双通道，结构更稳 */
+async function recognizeLocalTesseract(buf, meta) {
   const w = meta.width || 1920
   const h = meta.height || 1080
-  const passes = []
   const rawParts = []
   const merged = new Map()
 
   if (isFullGameUi(w, h)) {
-    passes.push({ name: 'table-crop', buffer: await makeTableCrop(buf, w, h) })
+    const box = tableBox(w, h)
+    const tableBuf = await sharp(buf).extract(box).png().toBuffer()
+    const tw = box.width
+    const th = box.height
+
+    // 统计列：从职位附近起，避免头像干扰职称/评分
+    const statsLeft = Math.round(tw * 0.1)
+    const statsBuf = await enhance(
+      sharp(tableBuf).extract({ left: statsLeft, top: 0, width: tw - statsLeft, height: th }),
+      (tw - statsLeft) * 2,
+    )
+    const stats = await recognizeBuffer(statsBuf)
+    rawParts.push(`[tess-stats]\n${stats.rawText}`)
+    for (const row of stats.candidates) mergeCandidate(merged, row)
+
+    // 整表裁切：补角色名
+    const fullTable = await enhance(sharp(tableBuf), tw * 2)
+    const names = await recognizeBuffer(fullTable)
+    rawParts.push(`[tess-table]\n${names.rawText}`)
+    for (const row of names.candidates) mergeCandidate(merged, row)
+
+    if (merged.size < 5) {
+      const extra = await recognizeBuffer(await enhance(sharp(buf), w * 2))
+      rawParts.push(`[tess-full-fallback]\n${extra.rawText}`)
+      for (const row of extra.candidates) mergeCandidate(merged, row)
+    }
   } else {
-    passes.push({ name: 'full', buffer: await enhance(sharp(buf), w * 2.5) })
-    passes.push({ name: 'boost', buffer: await enhance(sharp(buf), w * 3.5) })
+    for (const [name, scale] of [
+      ['full', 2.5],
+      ['boost', 3.5],
+    ]) {
+      const result = await recognizeBuffer(await enhance(sharp(buf), w * scale))
+      rawParts.push(`[tess-${name}]\n${result.rawText}`)
+      for (const row of result.candidates) mergeCandidate(merged, row)
+    }
+    if (merged.size < 2) {
+      const alt = await sharp(buf)
+        .greyscale()
+        .normalize()
+        .linear(2.0, -60)
+        .negate()
+        .resize({ width: Math.min(w * 4, 3600), kernel: 'lanczos3' })
+        .sharpen()
+        .png()
+        .toBuffer()
+      const extra = await recognizeBuffer(alt)
+      rawParts.push(`[tess-alt]\n${extra.rawText}`)
+      for (const row of extra.candidates) mergeCandidate(merged, row)
+    }
   }
 
-  for (const v of passes) {
-    const result = await recognizeBuffer(v.buffer)
-    rawParts.push(`[${v.name}]\n${result.rawText}`)
-    for (const row of result.candidates) mergeCandidate(merged, row)
-  }
+  return { rawParts, merged, provider: 'tesseract' }
+}
 
-  if (isFullGameUi(w, h) && merged.size < 5) {
-    const extra = await recognizeBuffer(await enhance(sharp(buf), w * 2))
-    rawParts.push(`[full-fallback]\n${extra.rawText}`)
-    for (const row of extra.candidates) mergeCandidate(merged, row)
-  }
+async function recognizeLocal(buf, meta) {
+  // 优先 RapidOCR（中文角色名明显更准）
+  if (await isRapidOcrAvailable()) {
+    try {
+      const rapid = await recognizeWithRapid(buf, meta)
+      const merged = new Map()
+      for (const row of rapid.candidates) mergeCandidate(merged, row)
 
-  if (!isFullGameUi(w, h) && merged.size < 2) {
-    const alt = await sharp(buf)
-      .greyscale()
-      .normalize()
-      .linear(2.0, -60)
-      .negate()
-      .resize({ width: Math.min(w * 4, 3600), kernel: 'lanczos3' })
-      .sharpen()
-      .png()
-      .toBuffer()
-    const extra = await recognizeBuffer(alt)
-    rawParts.push(`[alt]\n${extra.rawText}`)
-    for (const row of extra.candidates) mergeCandidate(merged, row)
+      // 行数偏少时用 Tesseract 补洞
+      if (merged.size < 3) {
+        const tess = await recognizeLocalTesseract(buf, meta)
+        for (const row of tess.merged.values()) mergeCandidate(merged, row)
+        return {
+          rawParts: [`[rapidocr]\n${rapid.rawText}`, ...tess.rawParts],
+          merged,
+          provider: 'rapidocr+tesseract',
+        }
+      }
+      return {
+        rawParts: [`[rapidocr]\n${rapid.rawText}`],
+        merged,
+        provider: 'rapidocr',
+      }
+    } catch (err) {
+      console.warn('[ocr] RapidOCR 失败，回退 Tesseract:', err.message)
+    }
   }
+  return recognizeLocalTesseract(buf, meta)
+}
 
-  return { rawParts, merged }
+function tipFor(provider) {
+  if (provider.startsWith('tencent')) {
+    return '已使用腾讯云 OCR。请仍核对角色名后再导入。'
+  }
+  if (provider.startsWith('rapidocr')) {
+    return '已使用本地 RapidOCR（坐标版面解析）。角色名通常较准，请仍快速扫一眼再导入。'
+  }
+  return '本地 Tesseract 角色名常被游戏头像遮挡认错，请人工改全后再导入。评分/职位通常较可信。可安装 Python 包 rapidocr_onnxruntime，或配置腾讯云 OCR 密钥以提升准确率。'
 }
 
 /**
@@ -170,32 +257,30 @@ export async function recognizeMemberScreenshots(buffers) {
         rawParts.push(`[tencent:${t.provider}]\n${t.rawText}`)
         list = parseMemberListText(t.rawText)
       } catch (err) {
-        console.warn('[ocr] 腾讯云 OCR 失败，回退本地 Tesseract:', err.message)
+        console.warn('[ocr] 腾讯云 OCR 失败，回退本地引擎:', err.message)
         const local = await recognizeLocal(buf, meta)
         rawParts.push(...local.rawParts)
         list = [...local.merged.values()]
-        provider = 'tesseract-fallback'
+        provider = local.provider.includes('rapid') ? 'rapidocr-fallback' : 'tesseract-fallback'
       }
     } else {
       const local = await recognizeLocal(buf, meta)
       rawParts.push(...local.rawParts)
       list = [...local.merged.values()]
+      provider = local.provider
     }
 
     for (const row of list) mergeCandidate(merged, row)
   }
 
   const candidates = [...merged.values()]
-    .map(markNameReview)
+    .map((row) => markNameReview(row, provider))
     .sort((a, b) => b.powerScore - a.powerScore)
 
   return {
     rawText: rawParts.join('\n\n'),
     candidates,
     provider,
-    tip:
-      provider.startsWith('tencent')
-        ? '已使用腾讯云 OCR。请仍核对角色名后再导入。'
-        : '本地 OCR 角色名常被游戏头像遮挡认错，请人工改全后再导入。评分/职位通常较可信。配置 TENCENTCLOUD_SECRET_ID/KEY 可启用腾讯云识别以提升准确率。',
+    tip: tipFor(provider),
   }
 }

@@ -2,6 +2,7 @@
   {
     "id": "seed-001",
     "characterName": "示例·愚者",
+    "level": 70,
     "powerScore": 12580,
     "fashionScore": 320,
     "pathway": "愚者途径",
@@ -15,6 +16,7 @@
   {
     "id": "seed-002",
     "characterName": "示例·观众",
+    "level": 70,
     "powerScore": 9800,
     "fashionScore": 210,
     "pathway": "观众途径",

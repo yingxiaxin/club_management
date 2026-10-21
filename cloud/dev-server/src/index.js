@@ -95,11 +95,12 @@ app.get('/api/members', requireAdmin, (req, res) => {
 
 app.get('/api/members/export.csv', requireAdmin, (req, res) => {
   const list = listMembers(req.query)
-  const header = ['角色名', '非凡评分', '风尚度', '序列途径', '职位', '备注', '入会时间']
+  const header = ['角色名', '等级', '非凡评分', '风尚度', '序列途径', '职位', '备注', '入会时间']
   const lines = [header.join(',')]
   for (const m of list) {
     const cells = [
       m.characterName,
+      m.level || '',
       m.powerScore,
       m.fashionScore,
       m.pathway,

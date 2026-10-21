@@ -39,10 +39,13 @@ export function listMembers({ sort = 'powerScore', order = 'desc', pathway, titl
     )
   }
   const dir = order === 'asc' ? 1 : -1
+  const numericSorts = new Set(['level', 'powerScore', 'fashionScore'])
   list.sort((a, b) => {
     const av = a[sort]
     const bv = b[sort]
-    if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir
+    if (numericSorts.has(sort) || (typeof av === 'number' && typeof bv === 'number')) {
+      return ((Number(av) || 0) - (Number(bv) || 0)) * dir
+    }
     return String(av ?? '').localeCompare(String(bv ?? ''), 'zh') * dir
   })
   return list
@@ -63,6 +66,7 @@ export function createMember(payload) {
   const row = {
     id: uuid(),
     characterName: name,
+    level: Number(payload.level) || 0,
     powerScore: Number(payload.powerScore) || 0,
     fashionScore: Number(payload.fashionScore) || 0,
     pathway: String(payload.pathway || '').trim() || '未填写',
@@ -93,7 +97,7 @@ export function updateMember(id, payload) {
     }
     current.characterName = name
   }
-  for (const key of ['powerScore', 'fashionScore']) {
+  for (const key of ['level', 'powerScore', 'fashionScore']) {
     if (body[key] !== undefined && body[key] !== null && body[key] !== '') {
       current[key] = Number(body[key]) || 0
     } else if (body[key] === null || body[key] === '') {
@@ -183,6 +187,7 @@ export function annotateCandidates(candidates) {
       characterName: name,
       title: String(c.title || '').trim() || '成员',
       pathway: String(c.pathway || '').trim() || '未填写',
+      level: Number(c.level) || 0,
       powerScore: Number(c.powerScore) || 0,
       fashionScore: Number(c.fashionScore) || 0,
       confidence: typeof c.confidence === 'number' ? c.confidence : 0.5,
@@ -219,6 +224,7 @@ export function upsertMembersByName(rows, { ocrJobId } = {}) {
     const idx = list.findIndex((m) => m.characterName === name && m.status !== 'left')
     const patch = {
       characterName: name,
+      level: Number(item.level) || 0,
       powerScore: Number(item.powerScore) || 0,
       fashionScore: Number(item.fashionScore) || 0,
       pathway: String(item.pathway || '').trim() || '未填写',
