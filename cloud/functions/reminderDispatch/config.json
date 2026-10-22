@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "openapi": ["subscribeMessage.send"]
+  },
+  "triggers": [
+    {
+      "name": "reminderTick",
+      "type": "timer",
+      "config": "0 */1 * * * * *"
+    }
+  ]
+}

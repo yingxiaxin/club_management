@@ -18,6 +18,10 @@ Page({
     canViewMembers: false,
     joinPending: false,
     isAdmin: false,
+    scheduleLoading: false,
+    todayPreview: [],
+    todayCount: 0,
+    weekCount: 0,
   },
 
   onShow() {
@@ -29,16 +33,26 @@ Page({
     try {
       const data = await callMemberApi('whoami')
       const joinPending = data.joinApplication?.status === 'pending'
+      const canViewMembers = Boolean(data.canViewMembers)
       this.setData({
         loading: false,
         role: data.role || 'guest',
         roleLabel: ROLE_LABELS[data.role] || data.role || '访客',
         displayName: data.displayName || data.member?.characterName || '',
         memberId: data.memberId || '',
-        canViewMembers: Boolean(data.canViewMembers),
+        canViewMembers,
         joinPending,
         isAdmin: Boolean(data.isAdmin),
       })
+      if (canViewMembers) {
+        this.loadSchedulePreview()
+      } else {
+        this.setData({
+          todayPreview: [],
+          todayCount: 0,
+          weekCount: 0,
+        })
+      }
     } catch (e) {
       this.setData({
         loading: false,
@@ -47,8 +61,40 @@ Page({
     }
   },
 
+  async loadSchedulePreview() {
+    this.setData({ scheduleLoading: true })
+    try {
+      const data = await callMemberApi('listSchedule')
+      const today = Array.isArray(data.today) ? data.today : []
+      const week = Array.isArray(data.week) ? data.week : []
+      this.setData({
+        scheduleLoading: false,
+        todayPreview: today.slice(0, 3),
+        todayCount: today.length,
+        weekCount: week.length,
+      })
+    } catch {
+      this.setData({
+        scheduleLoading: false,
+        todayPreview: [],
+        todayCount: 0,
+        weekCount: 0,
+      })
+    }
+  },
+
   goMembers() {
     wx.navigateTo({ url: '/pages/members/index' })
+  },
+
+  goActivities() {
+    wx.navigateTo({ url: '/pages/activities/index' })
+  },
+
+  goActivityDetail(e) {
+    const id = e.currentTarget.dataset.id
+    if (!id) return
+    wx.navigateTo({ url: `/pages/activity-detail/index?id=${id}` })
   },
 
   goJoin() {

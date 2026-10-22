@@ -23,6 +23,7 @@ import * as cloudMembers from './cloudMembers.js'
 import * as cloudAuth from './cloudAuth.js'
 import * as cloudInvites from './cloudInvites.js'
 import * as cloudActivities from './cloudActivities.js'
+import * as cloudClub from './cloudClub.js'
 import { recognizeMemberScreenshots } from './ocr/recognize.js'
 
 // 加载 cloud/dev-server/.env（可选腾讯云 OCR / 云开发密钥），不覆盖已有环境变量
@@ -105,7 +106,7 @@ app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
     service: 'club-dev-server',
-    stage: 'P1-a-activities',
+    stage: 'P1-d-reminders',
     membersBackend: useCloudMembers() ? 'cloud' : 'json',
     qrLogin: cloudAuth.isQrLoginConfigured(),
     /** 本机 AppSecret 是否已配（不返回密钥本身） */
@@ -324,6 +325,30 @@ app.post('/api/join-applications/:id/review', requireAdmin, async (req, res) => 
       decision,
       reviewer: req.user?.username || req.user?.displayName,
     })
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+/** —— P1-d 俱乐部提醒设置 —— */
+app.get('/api/club-profile', requireAdmin, async (_req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const data = await cloudClub.getClubProfile()
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.put('/api/club-profile', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const data = await cloudClub.updateClubProfile(
+      req.body || {},
+      req.user?.username || req.user?.displayName,
+    )
     res.json({ ok: true, data })
   } catch (err) {
     res.status(err.status || 500).json({ ok: false, message: err.message })

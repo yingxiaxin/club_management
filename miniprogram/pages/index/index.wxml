@@ -22,10 +22,51 @@
       <text class="muted" wx:else>尚未关联游戏角色</text>
     </view>
 
+    <view class="panel schedule" wx:if="{{canViewMembers}}">
+      <view class="schedule-head">
+        <text class="schedule-title">今日活动</text>
+        <text class="schedule-link" bindtap="goActivities">全部日程</text>
+      </view>
+      <view wx:if="{{scheduleLoading}}">
+        <text class="muted">加载日程…</text>
+      </view>
+      <view class="schedule-empty" wx:elif="{{!todayPreview.length}}">
+        <text class="muted">今日暂无活动</text>
+        <text class="muted tiny" wx:if="{{weekCount}}">本周还有 {{weekCount}} 场 · 点「全部日程」查看</text>
+      </view>
+      <view class="schedule-list" wx:else>
+        <view
+          class="schedule-row"
+          wx:for="{{todayPreview}}"
+          wx:key="id"
+          data-id="{{item.id}}"
+          bindtap="goActivityDetail"
+        >
+          <view class="schedule-main">
+            <text class="schedule-name {{item.urgencyClass}}">{{item.title}}</text>
+            <text wx:if="{{item.typeLabel}}" class="tag {{item.urgencyClass}}">
+              <text wx:if="{{item.urgencyIcon}}" class="tag-icon">{{item.urgencyIcon}}</text>{{item.typeLabel}}
+            </text>
+          </view>
+          <text class="schedule-time">{{item.startText}}</text>
+        </view>
+        <text class="muted tiny" wx:if="{{todayCount > todayPreview.length}}">
+          今日共 {{todayCount}} 场
+        </text>
+      </view>
+    </view>
+
     <view class="actions">
       <button
         wx:if="{{canViewMembers}}"
         class="btn-primary"
+        bindtap="goActivities"
+      >
+        活动日程
+      </button>
+      <button
+        wx:if="{{canViewMembers}}"
+        class="btn-ghost"
         bindtap="goMembers"
       >
         查看成员列表
@@ -55,7 +96,7 @@
     </view>
 
     <text class="hint">
-      成员名单由管理员维护。需邀请码且角色名与名单一致才能关联微信；未关联前不可查看俱乐部成员信息。
+      成员名单由管理员维护。需邀请码且角色名与名单一致才能关联微信；未关联前不可查看俱乐部成员信息与活动细节。
     </text>
   </block>
 </view>

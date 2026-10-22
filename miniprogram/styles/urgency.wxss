@@ -1,0 +1,43 @@
+/**
+ * 活动紧迫度样式（列表标题 + 类型 label）
+ * hot ≤10min/已开始 · soon ≤1h · calm >1h
+ */
+.name.urgency-hot,
+.schedule-name.urgency-hot,
+.title.urgency-hot {
+  color: var(--color-text-urgency-hot);
+}
+
+.name.urgency-soon,
+.schedule-name.urgency-soon,
+.title.urgency-soon {
+  color: var(--color-text-urgency-soon);
+}
+
+.name.urgency-calm,
+.schedule-name.urgency-calm,
+.title.urgency-calm {
+  color: var(--color-text-urgency-calm);
+}
+
+.tag.urgency-hot {
+  color: var(--color-urgency-hot);
+  border-color: var(--color-urgency-hot-border);
+  background: var(--color-urgency-hot-muted);
+}
+
+.tag.urgency-soon {
+  color: var(--color-urgency-soon);
+  border-color: var(--color-urgency-soon-border);
+  background: var(--color-urgency-soon-muted);
+}
+
+.tag.urgency-calm {
+  color: var(--color-urgency-calm);
+  border-color: var(--color-urgency-calm-border);
+  background: var(--color-urgency-calm-muted);
+}
+
+.tag-icon {
+  margin-right: 4rpx;
+}

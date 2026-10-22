@@ -31,6 +31,22 @@ page {
   --color-danger: #b86558;
   --color-info: #7d9ab0;
 
+  /* 活动紧迫度：类型 label（在品牌金/状态色基础上偏红/黄/绿） */
+  --color-urgency-hot: #d4785a;
+  --color-urgency-hot-muted: rgba(212, 120, 90, 0.18);
+  --color-urgency-hot-border: #8a4a3a;
+  --color-urgency-soon: #d4a04a;
+  --color-urgency-soon-muted: rgba(212, 160, 74, 0.18);
+  --color-urgency-soon-border: #8a6a32;
+  --color-urgency-calm: #7aab76;
+  --color-urgency-calm-muted: rgba(122, 171, 118, 0.16);
+  --color-urgency-calm-border: #4a6a48;
+
+  /* 标题字：奶油白微偏橙红 / 琥珀 / 苔绿 */
+  --color-text-urgency-hot: #f0c4b0;
+  --color-text-urgency-soon: #efe0b0;
+  --color-text-urgency-calm: #d4e0c8;
+
   /* Layout */
   --radius-sm: 4px;
   --radius-md: 8px;

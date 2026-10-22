@@ -1,0 +1,126 @@
+@import "../../styles/urgency.wxss";
+
+.page {
+  min-height: 100vh;
+  padding: 24rpx 24rpx 64rpx;
+  box-sizing: border-box;
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 36rpx;
+}
+
+.state {
+  padding: 80rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.muted {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.danger {
+  color: var(--color-danger);
+  text-align: center;
+}
+
+.retry {
+  width: auto !important;
+  padding: 0 32rpx;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.section-head {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 0 4rpx;
+}
+
+.section-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.section-meta {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.empty {
+  padding: 40rpx 24rpx;
+  border-radius: var(--radius-md);
+  border: 1rpx dashed var(--color-border);
+  background: var(--color-surface);
+  text-align: center;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.row {
+  padding: 24rpx 28rpx;
+  border-radius: var(--radius-md);
+  border: 1rpx solid var(--color-border);
+  background: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.row:active {
+  background: var(--color-brand-muted);
+  border-color: var(--color-border-strong);
+}
+
+.row-main {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.name {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.tag {
+  font-size: 22rpx;
+  padding: 4rpx 12rpx;
+  border-radius: var(--radius-sm);
+  border: 1rpx solid var(--color-border-strong);
+  color: var(--color-brand);
+  background: var(--color-brand-muted);
+}
+
+.time {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.status {
+  font-size: 22rpx;
+  color: var(--color-success);
+}
+
+.rsvp-brief {
+  font-size: 22rpx;
+  color: var(--color-text-muted);
+}

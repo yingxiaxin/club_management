@@ -1,7 +1,8 @@
-# 管理端 API 契约（P0 + P1-a）
+# API 契约（P0 + P1-a/b）
 
 本地实现：`cloud/dev-server`（默认 `http://127.0.0.1:3789`）  
 云函数：`cloud/functions/adminApi`（`action=listMembers|createMember|...|importMembers`，见 `docs/云数据库接入.md`）  
+成员端云函数：`cloud/functions/memberApi`（小程序 `wx.cloud.callFunction`）  
 成员 / 活动存储：`DATA_BACKEND=cloud` 时走云库（`members`、`activities` 等）
 
 除登录与 health 外，请求头需：`Authorization: Bearer <token>`
@@ -28,6 +29,8 @@
 | PATCH | `/api/invites/:id` | 更新启用/次数/过期 |
 | GET | `/api/join-applications` | query: `status`；入会申请 |
 | POST | `/api/join-applications/:id/review` | body: `{ decision: approved\|rejected }` |
+| GET | `/api/club-profile` | P1-d：俱乐部资料 / 默认提醒 / 订阅模板 |
+| PUT | `/api/club-profile` | 更新；body 可含 `reminderOffsetsMinutes` / `subscribeTemplateId` / `subscribeMiniprogramState` |
 | GET | `/api/activities` | query: status/from/to/q |
 | GET | `/api/activities/:id` | 详情 |
 | POST | `/api/activities` | 创建；body 含 `startSchedule` / `endSchedule?` / `reminderCycle` / `reminderOffsetsMinutes`；status: draft\|published |
@@ -35,6 +38,25 @@
 | POST | `/api/activities/:id/transition` | body: `{ action: publish\|cancel\|start\|end }` |
 
 日程分量 `*Schedule`：`{ year, month, day, weekday(1–7), time:"HH:mm" }`（均可 null）。开始至少一项非空。`reminderCycle`：无 time→`none`；年月日+time→仅`once`；日+time→`once|daily`；weekday+time→`once|weekly`；仅 time→`daily`。
+
+### 成员端云函数 `memberApi`（P0-e + P1-b）
+
+调用：`{ action, ... }` → `{ ok, data?, message?, status? }`。须微信登录（`OPENID`）。查看类 action 需已绑定成员或管理员（同 `canViewMembers`）。
+
+| action | 说明 |
+|--------|------|
+| `health` / `whoami` | 健康检查 / 当前身份 |
+| `bindByCharacterName` / `submitJoinApplication` / `getMyJoinApplication` / `unbindSelfForTest` | 入会关联（P0-e） |
+| `listMembers` / `getMember` | 成员只读 |
+| `listSchedule` | P1-b/c：`{ today[], week[], meta }`；条目含 `rsvpCounts`；仅 `published`/`ongoing` |
+| `getActivity` | 详情 + RSVP + `subscribeTemplateId` / `myReminderSubscribed` / `canSubscribeReminder` |
+| `getReminderConfig` | P1-d：俱乐部默认提前量与模板 ID |
+| `subscribeActivityReminder` | P1-d：body `id` + `accepted`；写入 `subscriptions` |
+| `setRsvp` | P1-c：body `id` + `status(going\|maybe\|decline)`；须绑定成员；开始前可改；返回更新后的详情 |
+
+定时云函数 `reminderDispatch`：每分钟扫描到期提醒并 `subscribeMessage.send`（见 `docs/P1-d提醒与订阅消息.md`）。
+
+日程匹配冒烟（不连库）：`node cloud/dev-server/scripts/smoke-p1b-schedule.mjs`
 
 ### OCR 约定
 

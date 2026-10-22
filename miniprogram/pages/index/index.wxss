@@ -1,3 +1,5 @@
+@import "../../styles/urgency.wxss";
+
 .page {
   min-height: 100vh;
   padding: 48rpx 40rpx 80rpx;
@@ -77,4 +79,80 @@
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
   line-height: 1.6;
+}
+
+.schedule-head {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.schedule-title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.schedule-link {
+  font-size: var(--font-size-sm);
+  color: var(--color-brand);
+}
+
+.schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-top: 8rpx;
+}
+
+.schedule-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  padding: 12rpx 0;
+  border-bottom: 1rpx solid var(--color-border);
+}
+
+.schedule-row:last-child {
+  border-bottom: none;
+}
+
+.schedule-main {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+  flex-wrap: wrap;
+}
+
+.schedule-name {
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+}
+
+.tag {
+  font-size: 22rpx;
+  padding: 4rpx 12rpx;
+  border-radius: var(--radius-sm);
+  border: 1rpx solid var(--color-border-strong);
+  color: var(--color-brand);
+  background: var(--color-brand-muted);
+}
+
+.schedule-time {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.schedule-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  margin-top: 4rpx;
+}
+
+.tiny {
+  font-size: 22rpx;
 }

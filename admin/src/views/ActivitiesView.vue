@@ -180,7 +180,7 @@ function openEdit(row: Activity) {
   Object.assign(form.end, scheduleFromActivity(row, 'end'))
   form.description = row.description || ''
   form.enableTeam = Boolean(row.enableTeam)
-  form.reminderCycle = (row.reminderCycle as ReminderCycle) || 'none'
+  form.reminderCycle = resolveReminderCycle(row)
   form.reminderMinutes = row.reminderOffsetsMinutes?.[0] || 10
   form.publishNow = false
   dialogOpen.value = true
@@ -290,8 +290,23 @@ function formatSchedule(row: Activity, which: 'start' | 'end') {
   return parts.join(' ') || '—'
 }
 
+/** 旧活动可能只有提前量、无 reminderCycle；与小程序推断规则对齐 */
+function resolveReminderCycle(row: Activity): ReminderCycle {
+  const raw = row.reminderCycle
+  if (raw === 'none') return 'none'
+  if (raw && ['once', 'daily', 'weekly', 'monthly'].includes(raw)) return raw
+  if (!row.reminderOffsetsMinutes?.length) return 'none'
+  const s = scheduleFromActivity(row, 'start')
+  if (!s.time) return 'none'
+  const full = s.year != null && s.month != null && s.day != null
+  if (full) return 'once'
+  if (s.day != null) return 'once'
+  if (s.weekday != null) return 'weekly'
+  return 'daily'
+}
+
 function formatCycle(row: Activity) {
-  const c = (row.reminderCycle || 'none') as ReminderCycle
+  const c = resolveReminderCycle(row)
   if (c === 'none' || !row.reminderOffsetsMinutes?.length) return CYCLE_LABEL.none
   const mins = row.reminderOffsetsMinutes[0]
   return `${CYCLE_LABEL[c] || c}（提前${mins}分）`
@@ -506,7 +521,7 @@ onMounted(load)
             {{
               form.reminderCycle === 'none'
                 ? '当前为「不提醒」时，提前量不会发送。'
-                : '将按所选周期与提前量发送提醒（订阅链路在后续阶段接通）。'
+                : '将按所选周期与提前量发送提醒；成员需在小程序点「提醒我」授权。俱乐部默认提前量见「提醒设置」。'
             }}
           </p>
         </el-form-item>
