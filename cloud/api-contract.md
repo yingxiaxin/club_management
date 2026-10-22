@@ -1,7 +1,8 @@
 # P0 API 契约（管理端）
 
 本地实现：`cloud/dev-server`（默认 `http://127.0.0.1:3789`）  
-云函数占位：`cloud/functions/adminApi`（稍后接云库）
+云函数：`cloud/functions/adminApi`（`action=listMembers|createMember|...|importMembers`，见 `docs/云数据库接入.md`）  
+成员存储：`DATA_BACKEND=json|cloud`（cloud 时读写集合 `members`）
 
 除登录与 health 外，请求头需：`Authorization: Bearer <token>`
 

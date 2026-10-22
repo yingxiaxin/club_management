@@ -40,6 +40,8 @@ project.private.config.json
 cloud/functions/**/node_modules/
 cloud/dev-server/node_modules/
 cloud/dev-server/data/members.json
+cloud/dev-server/data/members-cloud-import.json
+cloud/dev-server/data/members-cloud-import.jsonl
 cloud/dev-server/data/ocr-jobs.json
 cloud/dev-server/data/_ocr-*
 cloud/dev-server/data/_dbg-*

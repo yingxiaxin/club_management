@@ -13,8 +13,8 @@
 cloud/
 ├── env.json             # AppID + 云环境 ID
 ├── api-contract.md      # 管理端 API 契约
-├── dev-server/          # P0 本地 API（admin 默认联调）
-├── functions/adminApi/  # 微信云函数占位（后续接云库）
+├── dev-server/          # 本地 API（admin 联调；可切云库）
+├── functions/adminApi/  # 云函数（members 读写）
 └── README.md
 ```
 
@@ -23,15 +23,25 @@ cloud/
 | 文件 | 说明 |
 |------|------|
 | `env.json` | AppID + 云环境 ID（已入库） |
-| `appid.local.json.example` | 本地覆盖模板（可选） |
+| `dev-server/.env` | 本地密钥（gitignore；见 `.env.example`） |
 
 当前：`appId=wx0a3fc7a2aee9f66f`，`envId=cloud1-d6gjqx2kd2f3765f4`。
 
-## P0 联调方式
+## 成员数据源
+
+| `DATA_BACKEND` | 行为 |
+|----------------|------|
+| `json`（默认） | `dev-server/data/members.json` |
+| `cloud` | 云数据库 `members`（需 `CLOUDBASE_SECRET_ID/KEY`） |
+
+接入步骤详见 **`docs/云数据库接入.md`**。
+
+## P0 联调
 
 1. 跑 `dev-server`（见 `dev-server/README.md`）
 2. 跑 `admin` 前端
-3. 云函数 `functions/adminApi` 待接入云数据库后再切换；接口形状以 `api-contract.md` 为准
+3. 导入成员：`npm run prepare:cloud-import` 后控制台导入，或配密钥 `npm run import:cloud-members`
+4. 云函数：开发者工具上传 `functions/adminApi`
 
 ## 原则
 

@@ -18,9 +18,10 @@ import {
   updateMember,
   upsertMembersByName,
 } from './store.js'
+import * as cloudMembers from './cloudMembers.js'
 import { recognizeMemberScreenshots } from './ocr/recognize.js'
 
-// 加载 cloud/dev-server/.env（可选腾讯云 OCR 密钥），不覆盖已有环境变量
+// 加载 cloud/dev-server/.env（可选腾讯云 OCR / 云开发密钥），不覆盖已有环境变量
 ;(() => {
   try {
     const envFile = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../.env')
@@ -45,6 +46,36 @@ import { recognizeMemberScreenshots } from './ocr/recognize.js'
   }
 })()
 
+cloudMembers.loadEnvDefaultsFromRepo()
+
+/** DATA_BACKEND=cloud 且配齐密钥时，成员读写走云数据库 */
+function useCloudMembers() {
+  return process.env.DATA_BACKEND === 'cloud' && cloudMembers.isCloudMembersConfigured()
+}
+
+const membersApi = {
+  list: (q) => (useCloudMembers() ? cloudMembers.listMembers(q) : Promise.resolve(listMembers(q))),
+  get: (id) => (useCloudMembers() ? cloudMembers.getMember(id) : Promise.resolve(getMember(id))),
+  create: (body) =>
+    useCloudMembers() ? cloudMembers.createMember(body) : Promise.resolve(createMember(body)),
+  update: (id, body) =>
+    useCloudMembers() ? cloudMembers.updateMember(id, body) : Promise.resolve(updateMember(id, body)),
+  remove: (id) =>
+    useCloudMembers() ? cloudMembers.deleteMember(id) : Promise.resolve(deleteMember(id)),
+  batchScores: (items) =>
+    useCloudMembers()
+      ? cloudMembers.batchUpdateScores(items)
+      : Promise.resolve(batchUpdateScores(items)),
+  annotate: (cands) =>
+    useCloudMembers()
+      ? cloudMembers.annotateCandidates(cands)
+      : Promise.resolve(annotateCandidates(cands)),
+  upsert: (rows, opts) =>
+    useCloudMembers()
+      ? cloudMembers.upsertMembersByName(rows, opts)
+      : Promise.resolve(upsertMembersByName(rows, opts)),
+}
+
 const app = express()
 const PORT = Number(process.env.PORT) || 3789
 const upload = multer({
@@ -67,7 +98,12 @@ function requireAdmin(req, res, next) {
 }
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'club-dev-server', stage: 'P0-ocr' })
+  res.json({
+    ok: true,
+    service: 'club-dev-server',
+    stage: 'P0-cloud-db',
+    membersBackend: useCloudMembers() ? 'cloud' : 'json',
+  })
 })
 
 app.post('/api/auth/login', (req, res) => {
@@ -84,75 +120,83 @@ app.get('/api/auth/me', requireAdmin, (req, res) => {
   res.json({ ok: true, data: req.user })
 })
 
-app.get('/api/members', requireAdmin, (req, res) => {
+app.get('/api/members', requireAdmin, async (req, res) => {
   try {
-    const data = listMembers(req.query)
+    const data = await membersApi.list(req.query)
     res.json({ ok: true, data })
   } catch (err) {
     res.status(err.status || 500).json({ ok: false, message: err.message })
   }
 })
 
-app.get('/api/members/export.csv', requireAdmin, (req, res) => {
-  const list = listMembers(req.query)
-  const header = ['角色名', '等级', '非凡评分', '风尚度', '序列途径', '职位', '备注', '入会时间']
-  const lines = [header.join(',')]
-  for (const m of list) {
-    const cells = [
-      m.characterName,
-      m.level || '',
-      m.powerScore,
-      m.fashionScore,
-      m.pathway,
-      m.title,
-      m.remark,
-      m.joinedAt,
-    ].map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`)
-    lines.push(cells.join(','))
-  }
-  res.setHeader('Content-Type', 'text/csv; charset=utf-8')
-  res.setHeader('Content-Disposition', 'attachment; filename="members.csv"')
-  res.send('\uFEFF' + lines.join('\n'))
-})
-
-app.get('/api/members/:id', requireAdmin, (req, res) => {
-  const row = getMember(req.params.id)
-  if (!row || row.status === 'left') {
-    return res.status(404).json({ ok: false, message: '成员不存在' })
-  }
-  res.json({ ok: true, data: row })
-})
-
-app.post('/api/members', requireAdmin, (req, res) => {
+app.get('/api/members/export.csv', requireAdmin, async (req, res) => {
   try {
-    const data = createMember(req.body || {})
+    const list = await membersApi.list(req.query)
+    const header = ['角色名', '等级', '非凡评分', '风尚度', '序列途径', '职位', '备注', '入会时间']
+    const lines = [header.join(',')]
+    for (const m of list) {
+      const cells = [
+        m.characterName,
+        m.level || '',
+        m.powerScore,
+        m.fashionScore,
+        m.pathway,
+        m.title,
+        m.remark,
+        m.joinedAt,
+      ].map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`)
+      lines.push(cells.join(','))
+    }
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+    res.setHeader('Content-Disposition', 'attachment; filename="members.csv"')
+    res.send('\uFEFF' + lines.join('\n'))
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.get('/api/members/:id', requireAdmin, async (req, res) => {
+  try {
+    const row = await membersApi.get(req.params.id)
+    if (!row || row.status === 'left') {
+      return res.status(404).json({ ok: false, message: '成员不存在' })
+    }
+    res.json({ ok: true, data: row })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.post('/api/members', requireAdmin, async (req, res) => {
+  try {
+    const data = await membersApi.create(req.body || {})
     res.status(201).json({ ok: true, data })
   } catch (err) {
     res.status(err.status || 500).json({ ok: false, message: err.message })
   }
 })
 
-app.put('/api/members/:id', requireAdmin, (req, res) => {
+app.put('/api/members/:id', requireAdmin, async (req, res) => {
   try {
-    const data = updateMember(req.params.id, req.body || {})
+    const data = await membersApi.update(req.params.id, req.body || {})
     res.json({ ok: true, data })
   } catch (err) {
     res.status(err.status || 500).json({ ok: false, message: err.message })
   }
 })
 
-app.delete('/api/members/:id', requireAdmin, (req, res) => {
+app.delete('/api/members/:id', requireAdmin, async (req, res) => {
   try {
-    const data = deleteMember(req.params.id)
+    const data = await membersApi.remove(req.params.id)
     res.json({ ok: true, data })
   } catch (err) {
     res.status(err.status || 500).json({ ok: false, message: err.message })
   }
 })
 
-app.post('/api/members/batch-scores', requireAdmin, (req, res) => {
+app.post('/api/members/batch-scores', requireAdmin, async (req, res) => {
   try {
-    const data = batchUpdateScores(req.body?.items || [])
+    const data = await membersApi.batchScores(req.body?.items || [])
     res.json({ ok: true, data })
   } catch (err) {
     res.status(err.status || 500).json({ ok: false, message: err.message })
@@ -168,7 +212,7 @@ app.post('/api/ocr/parse', requireAdmin, upload.array('images', 12), async (req,
     }
     const buffers = files.map((f) => f.buffer)
     const { rawText, candidates, tip, provider } = await recognizeMemberScreenshots(buffers)
-    const annotated = annotateCandidates(candidates)
+    const annotated = await membersApi.annotate(candidates)
     if (!annotated.length) {
       return res.status(422).json({
         ok: false,
@@ -227,7 +271,7 @@ app.post('/api/ocr/commit', requireAdmin, (req, res) => {
         return res.status(400).json({ ok: false, message: '存在空角色名，请补全或取消勾选' })
       }
     }
-    const data = upsertMembersByName(selected, { ocrJobId: jobId })
+    const data = await membersApi.upsert(selected, { ocrJobId: jobId })
     res.json({ ok: true, data })
   } catch (err) {
     res.status(err.status || 500).json({ ok: false, message: err.message })
@@ -236,5 +280,8 @@ app.post('/api/ocr/commit', requireAdmin, (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`[club-dev-server] http://127.0.0.1:${PORT}`)
+  console.log(
+    `成员数据源: ${useCloudMembers() ? '云数据库 members' : '本地 JSON'}（DATA_BACKEND=${process.env.DATA_BACKEND || 'json'}）`,
+  )
   console.log('应急账号: superadmin / club-change-me  或  admin / club-change-me')
 })

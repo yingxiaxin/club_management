@@ -42,6 +42,15 @@ pip install rapidocr-onnxruntime
 
 复制 `.env.example` 为 `.env` 填入密钥，并 `npm i tencentcloud-sdk-nodejs-ocr`；重启服务。
 
+## 云数据库（成员）
+
+默认仍用本地 `data/members.json`。切到云库：
+
+1. 见仓库 `docs/云数据库接入.md`
+2. `.env` 设 `DATA_BACKEND=cloud` + `CLOUDBASE_SECRET_*`
+3. 导入：`npm run prepare:cloud-import`（控制台）或 `npm run import:cloud-members`（脚本）
+4. 重启后 `/api/health` 的 `membersBackend` 应为 `cloud`
+
 > Node 建议 18+；当前亦兼容 Node 16（`sharp@0.32`）。  
 > 改代码后需**手动重启** dev-server（无 watch）。  
 > 即使 RapidOCR，个别角色名仍可能缺字，导入前请扫一眼确认表。

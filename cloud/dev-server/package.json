@@ -8,9 +8,12 @@
     "start": "node src/index.js",
     "test:ocr-parse": "node scripts/test-parse.mjs",
     "test:ocr-rapid": "node scripts/test-rapid-ocr.mjs",
-    "test:ocr-e2e": "node scripts/e2e-ocr.mjs"
+    "test:ocr-e2e": "node scripts/e2e-ocr.mjs",
+    "prepare:cloud-import": "node scripts/prepare-cloud-import.mjs",
+    "import:cloud-members": "node scripts/prepare-cloud-import.mjs --upload"
   },
   "dependencies": {
+    "@cloudbase/node-sdk": "^3.18.7",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "multer": "^2.4.0",
