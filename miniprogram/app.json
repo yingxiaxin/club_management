@@ -4,6 +4,7 @@
     "pages/members/index",
     "pages/member-detail/index",
     "pages/bind/index",
+    "pages/join/index",
     "pages/admin-login/index"
   ],
   "window": {

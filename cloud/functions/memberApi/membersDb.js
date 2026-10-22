@@ -116,8 +116,20 @@ async function bindByCharacterName(openid, characterName) {
   }
 }
 
+async function clearBoundOpenid(memberId, openid) {
+  const member = await getMember(memberId)
+  if (!member) return null
+  if (member.boundOpenid && member.boundOpenid !== openid) return member
+  const now = new Date().toISOString()
+  await db().collection(COLLECTION).doc(String(memberId)).update({
+    data: { boundOpenid: null, updatedAt: now },
+  })
+  return { ...member, boundOpenid: null, updatedAt: now }
+}
+
 module.exports = {
   listMembers,
   getMember,
   bindByCharacterName,
+  clearBoundOpenid,
 }

@@ -18,6 +18,7 @@ function logout() {
       <div class="brand">俱乐部管理</div>
       <nav class="nav">
         <router-link class="nav-item" to="/members">成员列表</router-link>
+        <router-link class="nav-item" to="/invites">邀请码 / 入会</router-link>
       </nav>
     </aside>
     <div class="main">

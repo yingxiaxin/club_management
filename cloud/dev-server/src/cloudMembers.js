@@ -100,7 +100,7 @@ export async function getMember(id) {
   }
 }
 
-async function findActiveByName(name) {
+export async function findActiveByName(name) {
   const res = await getDb()
     .collection(COLLECTION)
     .where({ characterName: name, status: 'active' })
@@ -167,13 +167,71 @@ export async function updateMember(id, payload) {
       patch[key] = typeof body[key] === 'string' ? String(body[key]).trim() : body[key]
     }
   }
+  if (body.boundOpenid !== undefined) {
+    patch.boundOpenid = body.boundOpenid || null
+  }
   patch.updatedAt = new Date().toISOString()
   await getDb().collection(COLLECTION).doc(String(id)).update(patch)
   return { ...current, ...patch }
 }
 
+/**
+ * 移出成员：status=left，并解除微信关联（boundOpenid + users.memberId）
+ */
 export async function deleteMember(id) {
-  return updateMember(id, { status: 'left' })
+  const current = await getMember(id)
+  if (!current) throw err('成员不存在', 404)
+  const openid = current.boundOpenid || null
+  const updated = await updateMember(id, { status: 'left', boundOpenid: null })
+  await clearUsersLinkedToMember(String(id), openid)
+  await rejectPendingAppsForMember(String(id))
+  return updated
+}
+
+async function clearUsersLinkedToMember(memberId, openid) {
+  const col = getDb().collection('users')
+  const ids = new Set()
+  try {
+    const byMember = await col.where({ memberId }).limit(20).get()
+    for (const row of byMember.data || []) ids.add(row._id)
+  } catch {
+    /* ignore */
+  }
+  if (openid) {
+    try {
+      let res = await col.where({ openid }).limit(5).get()
+      for (const row of res.data || []) ids.add(row._id)
+      res = await col.where({ _openid: openid }).limit(5).get()
+      for (const row of res.data || []) ids.add(row._id)
+    } catch {
+      /* ignore */
+    }
+  }
+  for (const uid of ids) {
+    try {
+      await col.doc(uid).update({ memberId: null, lastLoginAt: new Date() })
+    } catch (e) {
+      console.warn('[cloudMembers] clear user memberId', uid, e?.message || e)
+    }
+  }
+}
+
+async function rejectPendingAppsForMember(memberId) {
+  try {
+    const col = getDb().collection('join_applications')
+    const res = await col.where({ memberId, status: 'pending' }).limit(50).get()
+    const now = new Date().toISOString()
+    for (const row of res.data || []) {
+      await col.doc(row._id).update({
+        status: 'rejected',
+        reviewedBy: 'system',
+        reviewedAt: now,
+        rejectReason: '成员已移出，关联申请自动关闭',
+      })
+    }
+  } catch (e) {
+    console.warn('[cloudMembers] reject pending apps', e?.message || e)
+  }
 }
 
 export async function batchUpdateScores(items) {

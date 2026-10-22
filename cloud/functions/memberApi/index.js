@@ -1,10 +1,11 @@
 /**
- * 成员端云函数：登录身份、角色名绑定、成员列表只读。
+ * 成员端云函数：登录身份、角色名绑定、入会申请、成员列表只读。
  * 调用：cloud.callFunction({ name: 'memberApi', data: { action, ... } })
  */
 const cloud = require('wx-server-sdk')
 const membersDb = require('./membersDb')
 const usersDb = require('./usersDb')
+const invitesDb = require('./invitesDb')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
@@ -19,7 +20,7 @@ function fail(message, status = 400) {
 async function requireViewer(openid) {
   const user = await usersDb.ensureUser(openid)
   if (!usersDb.canViewMembers(user)) {
-    const e = new Error('请先绑定俱乐部角色后再查看成员列表')
+    const e = new Error('请先绑定俱乐部角色或完成入会后再查看成员列表')
     e.status = 403
     throw e
   }
@@ -34,7 +35,7 @@ exports.main = async (event) => {
   try {
     switch (action) {
       case 'health':
-        return ok({ service: 'memberApi', store: 'cloud-db', stage: 'P0-d' })
+        return ok({ service: 'memberApi', store: 'cloud-db', stage: 'P0-e' })
 
       case 'whoami': {
         if (!openid) return fail('无法获取微信身份', 401)
@@ -44,6 +45,10 @@ exports.main = async (event) => {
           member = await membersDb.getMember(user.memberId)
           if (member && member.status === 'left') member = null
         }
+        // 管理员也可查申请状态（联调）；已绑定 memberId 则不再需要
+        const joinApplication = user.memberId
+          ? null
+          : await invitesDb.getMyApplication(openid)
         return ok({
           openid,
           role: user.role,
@@ -52,6 +57,7 @@ exports.main = async (event) => {
           member,
           canViewMembers: usersDb.canViewMembers(user),
           isAdmin: usersDb.ADMIN_ROLES.has(user.role),
+          joinApplication,
         })
       }
 
@@ -83,6 +89,37 @@ exports.main = async (event) => {
         })
       }
 
+      case 'submitJoinApplication': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        const user = await usersDb.ensureUser(openid)
+        // 仅已绑定成员档案时拒绝；管理员未绑定时允许提交以便联调
+        if (user.memberId) {
+          return fail('你已绑定成员档案，无需再次申请', 409)
+        }
+        const application = await invitesDb.submitJoinApplication(openid, event)
+        return ok({ application })
+      }
+
+      /** 管理员解除自身绑定，便于联调邀请码入会 */
+      case 'unbindSelfForTest': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        const user = await usersDb.ensureUser(openid)
+        if (!usersDb.ADMIN_ROLES.has(user.role)) {
+          return fail('仅管理员可解除绑定（联调）', 403)
+        }
+        if (!user.memberId) {
+          return ok({ unbound: false, message: '当前未绑定成员' })
+        }
+        await membersDb.clearBoundOpenid(user.memberId, openid)
+        const next = await usersDb.detachMember(openid)
+        return ok({ unbound: true, prevMemberId: next.prevMemberId })
+      }
+
+      case 'getMyJoinApplication': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        return ok(await invitesDb.getMyApplication(openid))
+      }
+
       case 'listMembers': {
         await requireViewer(openid)
         const list = await membersDb.listMembers(event.query || event)
@@ -98,7 +135,7 @@ exports.main = async (event) => {
 
       default:
         return fail(
-          `未知 action: ${action || '(空)'}。支持 health/whoami/bindByCharacterName/listMembers/getMember`,
+          `未知 action: ${action || '(空)'}。支持 health/whoami/bindByCharacterName/submitJoinApplication/getMyJoinApplication/unbindSelfForTest/listMembers/getMember`,
           400,
         )
     }

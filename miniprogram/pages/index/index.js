@@ -16,6 +16,8 @@ Page({
     displayName: '',
     memberId: '',
     canViewMembers: false,
+    joinPending: false,
+    isAdmin: false,
   },
 
   onShow() {
@@ -26,6 +28,7 @@ Page({
     this.setData({ loading: true, error: '' })
     try {
       const data = await callMemberApi('whoami')
+      const joinPending = data.joinApplication?.status === 'pending'
       this.setData({
         loading: false,
         role: data.role || 'guest',
@@ -33,6 +36,8 @@ Page({
         displayName: data.displayName || data.member?.characterName || '',
         memberId: data.memberId || '',
         canViewMembers: Boolean(data.canViewMembers),
+        joinPending,
+        isAdmin: Boolean(data.isAdmin),
       })
     } catch (e) {
       this.setData({
@@ -46,8 +51,8 @@ Page({
     wx.navigateTo({ url: '/pages/members/index' })
   },
 
-  goBind() {
-    wx.navigateTo({ url: '/pages/bind/index' })
+  goJoin() {
+    wx.navigateTo({ url: '/pages/join/index' })
   },
 
   goAdminLogin() {

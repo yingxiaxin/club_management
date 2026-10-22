@@ -15,6 +15,7 @@ miniprogram/
 ├── pages/
 │   ├── index/           # 首页（身份 + 入口）
 │   ├── bind/            # 按角色名绑定
+│   ├── join/            # 邀请码入会（P0-e）
 │   ├── members/         # 成员列表只读
 │   ├── member-detail/   # 成员详情
 │   └── admin-login/     # 管理端扫码确认（P0-c）
@@ -36,4 +37,4 @@ miniprogram/
 
 - AppID：`wx0a3fc7a2aee9f66f`（仓库根 `project.config.json`）
 - 云环境：`cloud1-d6gjqx2kd2f3765f4`
-- 阶段：**P0-d**（tokens + 绑定 + 列表只读）；邀请码入会为 P0-e
+- 阶段：**P0-e**（邀请码入会）；说明见 `docs/P0-e邀请码入会.md`

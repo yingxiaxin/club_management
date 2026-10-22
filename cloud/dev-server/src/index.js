@@ -21,6 +21,7 @@ import {
 } from './store.js'
 import * as cloudMembers from './cloudMembers.js'
 import * as cloudAuth from './cloudAuth.js'
+import * as cloudInvites from './cloudInvites.js'
 import { recognizeMemberScreenshots } from './ocr/recognize.js'
 
 // 加载 cloud/dev-server/.env（可选腾讯云 OCR / 云开发密钥），不覆盖已有环境变量
@@ -103,13 +104,25 @@ app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
     service: 'club-dev-server',
-    stage: 'P0-c-qr-login',
+    stage: 'P0-e-invite',
     membersBackend: useCloudMembers() ? 'cloud' : 'json',
     qrLogin: cloudAuth.isQrLoginConfigured(),
     /** 本机 AppSecret 是否已配（不返回密钥本身） */
     wxacodeLocal: cloudAuth.canGenerateWxacodeLocally(),
+    invites: useCloudMembers(),
   })
 })
+
+function requireCloudInvites(res) {
+  if (!useCloudMembers()) {
+    res.status(503).json({
+      ok: false,
+      message: '邀请码需 DATA_BACKEND=cloud 并配置 CLOUDBASE_*',
+    })
+    return false
+  }
+  return true
+}
 
 app.post('/api/auth/login', (req, res) => {
   try {
@@ -244,6 +257,60 @@ app.delete('/api/members/:id', requireAdmin, async (req, res) => {
 app.post('/api/members/batch-scores', requireAdmin, async (req, res) => {
   try {
     const data = await membersApi.batchScores(req.body?.items || [])
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+/** —— P0-e 邀请码 / 入会申请（云库） —— */
+app.get('/api/invites', requireAdmin, async (_req, res) => {
+  try {
+    if (!requireCloudInvites(res)) return
+    res.json({ ok: true, data: await cloudInvites.listInviteCodes() })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.post('/api/invites', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudInvites(res)) return
+    const data = await cloudInvites.createInviteCode(req.body || {}, req.user?.username)
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.patch('/api/invites/:id', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudInvites(res)) return
+    const data = await cloudInvites.updateInviteCode(req.params.id, req.body || {})
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.get('/api/join-applications', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudInvites(res)) return
+    const data = await cloudInvites.listApplications({ status: req.query.status })
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.post('/api/join-applications/:id/review', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudInvites(res)) return
+    const decision = req.body?.decision || req.body?.status
+    const data = await cloudInvites.reviewApplication(req.params.id, {
+      decision,
+      reviewer: req.user?.username || req.user?.displayName,
+    })
     res.json({ ok: true, data })
   } catch (err) {
     res.status(err.status || 500).json({ ok: false, message: err.message })

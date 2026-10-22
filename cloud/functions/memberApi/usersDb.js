@@ -90,10 +90,26 @@ function canViewMembers(user) {
   return user.role === 'member' && Boolean(user.memberId)
 }
 
+/**
+ * 解除 users.memberId（保留 admin 角色）。仅供联调。
+ */
+async function detachMember(openid) {
+  const user = await ensureUser(openid)
+  const prevMemberId = user.memberId
+  await db().collection(USERS).doc(user.id).update({
+    data: {
+      memberId: null,
+      lastLoginAt: new Date(),
+    },
+  })
+  return { ...user, memberId: null, prevMemberId }
+}
+
 module.exports = {
   findByOpenid,
   ensureUser,
   attachMember,
+  detachMember,
   canViewMembers,
   VIEW_ROLES,
   ADMIN_ROLES,

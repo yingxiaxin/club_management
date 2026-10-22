@@ -18,7 +18,8 @@
       <text class="label">当前身份</text>
       <text class="value">{{roleLabel}}</text>
       <text class="meta" wx:if="{{displayName}}">{{displayName}}</text>
-      <text class="muted" wx:else>尚未绑定游戏角色</text>
+      <text class="muted" wx:elif="{{joinPending}}">关联申请审核中</text>
+      <text class="muted" wx:else>尚未关联游戏角色</text>
     </view>
 
     <view class="actions">
@@ -32,22 +33,29 @@
       <button
         wx:else
         class="btn-primary"
-        bindtap="goBind"
+        bindtap="goJoin"
       >
-        绑定我的角色
+        邀请码关联角色
       </button>
       <button
-        wx:if="{{canViewMembers && !memberId}}"
+        wx:if="{{isAdmin && !memberId}}"
         class="btn-ghost"
-        bindtap="goBind"
+        bindtap="goJoin"
       >
-        绑定游戏角色（可选）
+        邀请码关联（联调）
+      </button>
+      <button
+        wx:if="{{isAdmin && memberId}}"
+        class="btn-ghost"
+        bindtap="goJoin"
+      >
+        关联页 / 解除联调绑定
       </button>
       <button class="btn-ghost" bindtap="goAdminLogin">管理端扫码登录</button>
     </view>
 
     <text class="hint">
-      名单由管理员维护。未绑定前不可查看成员列表；邀请码入会将在后续版本开放。
+      成员名单由管理员维护。需邀请码且角色名与名单一致才能关联微信；未关联前不可查看俱乐部成员信息。
     </text>
   </block>
 </view>

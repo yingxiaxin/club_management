@@ -123,6 +123,7 @@ export function deleteMember(id) {
   const idx = list.findIndex((m) => m.id === id)
   if (idx < 0) throw Object.assign(new Error('成员不存在'), { status: 404 })
   list[idx].status = 'left'
+  list[idx].boundOpenid = null
   list[idx].updatedAt = new Date().toISOString()
   writeMembers(list)
   return list[idx]

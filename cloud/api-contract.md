@@ -18,11 +18,16 @@
 | GET | `/api/members/:id` | 详情 |
 | POST | `/api/members` | 创建 |
 | PUT | `/api/members/:id` | 更新 |
-| DELETE | `/api/members/:id` | 软删（status=left） |
+| DELETE | `/api/members/:id` | 软删（status=left）并解除微信关联（清空 boundOpenid / users.memberId） |
 | POST | `/api/members/batch-scores` | body: `{ items: [{ id, powerScore?, fashionScore? }] }` |
 | POST | `/api/ocr/parse` | multipart `images`（可多张）→ 识别预览，**不写库** |
 | GET | `/api/ocr/jobs/:id` | 识别任务详情 |
 | POST | `/api/ocr/commit` | body: `{ jobId, rows[] }` 确认后按角色名新增/更新 |
+| GET | `/api/invites` | 邀请码列表（需云库） |
+| POST | `/api/invites` | 创建邀请码 |
+| PATCH | `/api/invites/:id` | 更新启用/次数/过期 |
+| GET | `/api/join-applications` | query: `status`；入会申请 |
+| POST | `/api/join-applications/:id/review` | body: `{ decision: approved\|rejected }` |
 
 ### OCR 约定
 

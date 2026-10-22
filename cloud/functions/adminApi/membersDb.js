@@ -143,13 +143,71 @@ async function updateMember(id, payload) {
       patch[key] = typeof body[key] === 'string' ? String(body[key]).trim() : body[key]
     }
   }
+  if (body.boundOpenid !== undefined) {
+    patch.boundOpenid = body.boundOpenid || null
+  }
   patch.updatedAt = new Date().toISOString()
   await db().collection(COLLECTION).doc(String(id)).update({ data: patch })
   return { ...current, ...patch }
 }
 
+/** 移出成员：status=left，并解除微信关联 */
 async function deleteMember(id) {
-  return updateMember(id, { status: 'left' })
+  const current = await getMember(id)
+  if (!current) throw err('成员不存在', 404)
+  const openid = current.boundOpenid || null
+  const updated = await updateMember(id, { status: 'left', boundOpenid: null })
+  await clearUsersLinkedToMember(String(id), openid)
+  await rejectPendingAppsForMember(String(id))
+  return updated
+}
+
+async function clearUsersLinkedToMember(memberId, openid) {
+  const col = db().collection('users')
+  const ids = new Set()
+  try {
+    const byMember = await col.where({ memberId }).limit(20).get()
+    for (const row of byMember.data || []) ids.add(row._id)
+  } catch {
+    /* ignore */
+  }
+  if (openid) {
+    try {
+      let res = await col.where({ openid }).limit(5).get()
+      for (const row of res.data || []) ids.add(row._id)
+      res = await col.where({ _openid: openid }).limit(5).get()
+      for (const row of res.data || []) ids.add(row._id)
+    } catch {
+      /* ignore */
+    }
+  }
+  for (const uid of ids) {
+    try {
+      await col.doc(uid).update({ data: { memberId: null, lastLoginAt: new Date() } })
+    } catch (e) {
+      console.warn('[adminApi] clear user memberId', uid, e?.message || e)
+    }
+  }
+}
+
+async function rejectPendingAppsForMember(memberId) {
+  try {
+    const col = db().collection('join_applications')
+    const res = await col.where({ memberId, status: 'pending' }).limit(50).get()
+    const now = new Date().toISOString()
+    for (const row of res.data || []) {
+      await col.doc(row._id).update({
+        data: {
+          status: 'rejected',
+          reviewedBy: 'system',
+          reviewedAt: now,
+          rejectReason: '成员已移出，关联申请自动关闭',
+        },
+      })
+    }
+  } catch (e) {
+    console.warn('[adminApi] reject pending apps', e?.message || e)
+  }
 }
 
 async function batchUpdateScores(items) {

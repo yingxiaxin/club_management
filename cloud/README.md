@@ -42,7 +42,7 @@ cloud/
 1. 跑 `dev-server`（见 `dev-server/README.md`）
 2. 跑 `admin` 前端
 3. 导入成员：`npm run prepare:cloud-import` 后控制台导入，或配密钥 `npm run import:cloud-members`
-4. 云函数：开发者工具上传 `functions/adminApi`；成员端再上传 `functions/memberApi`（见 `docs/P0-d成员端.md`）
+4. 云函数：开发者工具上传 `functions/adminApi`；成员端上传 `functions/memberApi`（P0-d/P0-e，见 `docs/P0-d成员端.md` / `docs/P0-e邀请码入会.md`）
 
 ## 原则
 
