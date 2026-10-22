@@ -18,6 +18,12 @@ Page({
     canViewMembers: false,
     joinPending: false,
     isAdmin: false,
+    clubName: '诡秘之主',
+    clubIconUrl: '',
+    clubIntro: '',
+    announcements: [],
+    announceLoading: false,
+    expandedAnnounceId: '',
     scheduleLoading: false,
     todayPreview: [],
     todayCount: 0,
@@ -31,7 +37,10 @@ Page({
   async refresh() {
     this.setData({ loading: true, error: '' })
     try {
-      const data = await callMemberApi('whoami')
+      const [data, club] = await Promise.all([
+        callMemberApi('whoami'),
+        callMemberApi('getClubProfile').catch(() => null),
+      ])
       const joinPending = data.joinApplication?.status === 'pending'
       const canViewMembers = Boolean(data.canViewMembers)
       this.setData({
@@ -43,14 +52,19 @@ Page({
         canViewMembers,
         joinPending,
         isAdmin: Boolean(data.isAdmin),
+        clubName: (club && club.name) || '诡秘之主',
+        clubIconUrl: (club && club.iconUrl) || '',
+        clubIntro: (club && club.intro) || '',
       })
       if (canViewMembers) {
         this.loadSchedulePreview()
+        this.loadAnnouncements()
       } else {
         this.setData({
           todayPreview: [],
           todayCount: 0,
           weekCount: 0,
+          announcements: [],
         })
       }
     } catch (e) {
@@ -58,6 +72,19 @@ Page({
         loading: false,
         error: e.message || '加载失败，请确认已部署云函数 memberApi',
       })
+    }
+  },
+
+  async loadAnnouncements() {
+    this.setData({ announceLoading: true })
+    try {
+      const list = await callMemberApi('listAnnouncements', { limit: 5 })
+      this.setData({
+        announceLoading: false,
+        announcements: Array.isArray(list) ? list : [],
+      })
+    } catch {
+      this.setData({ announceLoading: false, announcements: [] })
     }
   },
 
@@ -81,6 +108,14 @@ Page({
         weekCount: 0,
       })
     }
+  },
+
+  toggleAnnounce(e) {
+    const id = e.currentTarget.dataset.id
+    if (!id) return
+    this.setData({
+      expandedAnnounceId: this.data.expandedAnnounceId === id ? '' : id,
+    })
   },
 
   goMembers() {

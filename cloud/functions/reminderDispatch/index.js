@@ -3,7 +3,8 @@
  * 触发：云函数定时器每分钟；亦可手动 callFunction({ name:'reminderDispatch' })
  *
  * 依赖 club_profile.subscribeTemplateId；未配置则只记 skip。
- * 模板字段约定：thing1=标题，time2=开始文案，thing3=提示（可按公众平台模板改本文件 map）
+ * 模板字段约定（当前「活动集合通知」67212）：
+ * thing1=活动名称，time3=集合时间，thing5=备注（换模板时改下方 data map）
  */
 const cloud = require('wx-server-sdk')
 
@@ -135,21 +136,17 @@ function resolveRelevantStartMs(activity, now = new Date()) {
   return Math.max(...candidates)
 }
 
+/** 微信 time.* 字段常用格式：yyyy年MM月dd日 HH:mm（勿夹「周一」等非标准片段） */
 function formatStartText(activity) {
+  const ms = resolveRelevantStartMs(activity)
+  if (ms != null) {
+    const p = shanghaiParts(new Date(ms))
+    return `${p.year}年${pad2(p.month)}月${pad2(p.day)}日 ${p.time}`
+  }
   const s = resolveStartSchedule(activity)
   if (!s) return '时间待定'
-  const WEEKDAY = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日']
-  const parts = []
-  if (s.year != null || s.month != null || s.day != null) {
-    parts.push(
-      `${s.year != null ? `${s.year}年` : ''}${s.month != null ? `${s.month}月` : ''}${
-        s.day != null ? `${s.day}日` : ''
-      }`,
-    )
-  }
-  if (s.weekday != null) parts.push(WEEKDAY[s.weekday] || '')
-  if (s.time) parts.push(s.time)
-  return parts.filter(Boolean).join(' ') || '时间待定'
+  if (s.time) return s.time
+  return '时间待定'
 }
 
 function truncate(str, max) {
@@ -200,7 +197,14 @@ async function listSubs(activityId) {
     .where({ activityId: String(activityId), status: 'active' })
     .limit(100)
     .get()
-  return (res.data || []).map((d) => ({ id: d._id, ...d }))
+  // 同一 openid 多条时只保留一条，避免同一次扫描连发
+  const byOpenid = new Map()
+  for (const d of res.data || []) {
+    const openid = String(d.openid || '')
+    if (!openid || byOpenid.has(openid)) continue
+    byOpenid.set(openid, { id: d._id, ...d })
+  }
+  return [...byOpenid.values()]
 }
 
 function resolveOffsets(activity, clubOffsets) {
@@ -221,22 +225,39 @@ function resolveOffsets(activity, clubOffsets) {
   return pick(clubOffsets, [10])
 }
 
+/** 必须用 set：云库对不存在文档的 update 常返回 updated:0 且不抛错，去重会失效导致连发 */
 async function markJob(jobId, patch) {
+  const now = new Date().toISOString()
+  let createdAt = now
   try {
-    await db().collection(JOBS).doc(jobId).update({ data: patch })
+    const prev = await db().collection(JOBS).doc(jobId).get()
+    if (prev.data?.createdAt) createdAt = prev.data.createdAt
   } catch {
-    await db()
-      .collection(JOBS)
-      .doc(jobId)
-      .set({ data: { ...patch, createdAt: new Date().toISOString() } })
+    /* 新文档 */
   }
+  await db()
+    .collection(JOBS)
+    .doc(jobId)
+    .set({
+      data: {
+        ...patch,
+        createdAt,
+        updatedAt: patch.updatedAt || now,
+      },
+    })
 }
 
 async function alreadySent(jobId) {
   try {
     const res = await db().collection(JOBS).doc(jobId).get()
     const row = res.data
-    return row && (row.status === 'sent' || row.status === 'skipped_no_template')
+    // sending：上一轮已占坑，避免窗口内（约 2 分钟）定时器连跑重复发
+    return (
+      row &&
+      (row.status === 'sent' ||
+        row.status === 'skipped_no_template' ||
+        row.status === 'sending')
+    )
   } catch {
     return false
   }
@@ -291,11 +312,19 @@ exports.main = async () => {
             offsetMinutes: offset,
             fireAt: fireKey,
             status: 'skipped_no_template',
-            updatedAt: new Date().toISOString(),
           })
           summary.skipped += 1
           continue
         }
+
+        // 先占坑再发送，缩小「已发但未记账」导致下一分钟再发的窗口
+        await markJob(jobId, {
+          activityId: activity.id,
+          openid: sub.openid,
+          offsetMinutes: offset,
+          fireAt: fireKey,
+          status: 'sending',
+        })
 
         try {
           await cloud.openapi.subscribeMessage.send({
@@ -305,8 +334,8 @@ exports.main = async () => {
             miniprogramState,
             data: {
               thing1: { value: truncate(activity.title || '俱乐部活动', 20) },
-              time2: { value: truncate(formatStartText(activity), 20) },
-              thing3: { value: truncate(`将于 ${offset} 分钟后开始`, 20) },
+              time3: { value: formatStartText(activity) },
+              thing5: { value: truncate(`将于 ${offset} 分钟后开始`, 20) },
             },
           })
           await markJob(jobId, {
@@ -316,7 +345,6 @@ exports.main = async () => {
             fireAt: fireKey,
             status: 'sent',
             sentAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
           })
           summary.sent += 1
         } catch (e) {
@@ -328,7 +356,6 @@ exports.main = async () => {
             fireAt: fireKey,
             status: 'failed',
             error: String(e.message || e).slice(0, 200),
-            updatedAt: new Date().toISOString(),
           })
           summary.failed += 1
         }

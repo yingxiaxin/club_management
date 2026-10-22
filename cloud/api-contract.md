@@ -29,8 +29,13 @@
 | PATCH | `/api/invites/:id` | 更新启用/次数/过期 |
 | GET | `/api/join-applications` | query: `status`；入会申请 |
 | POST | `/api/join-applications/:id/review` | body: `{ decision: approved\|rejected }` |
-| GET | `/api/club-profile` | P1-d：俱乐部资料 / 默认提醒 / 订阅模板 |
-| PUT | `/api/club-profile` | 更新；body 可含 `reminderOffsetsMinutes` / `subscribeTemplateId` / `subscribeMiniprogramState` |
+| GET | `/api/club-profile` | 俱乐部资料 / 默认提醒 / 订阅模板 |
+| PUT | `/api/club-profile` | 更新；body 可含 `name` / `iconUrl` / `intro` / `reminderOffsetsMinutes` / `subscribeTemplateId` / `subscribeMiniprogramState`；响应含 `iconDisplayUrl`（预览） |
+| POST | `/api/club-profile/icon` | multipart `file`：上传图标到云存储并写入 `iconUrl`；≤10MB，PNG/JPG/WebP/GIF |
+| GET | `/api/announcements` | P1-e：公告列表（置顶优先） |
+| POST | `/api/announcements` | 创建；body: `title` / `content` / `pinned?` / `publishedAt?` |
+| PUT | `/api/announcements/:id` | 更新 |
+| DELETE | `/api/announcements/:id` | 删除 |
 | GET | `/api/activities` | query: status/from/to/q |
 | GET | `/api/activities/:id` | 详情 |
 | POST | `/api/activities` | 创建；body 含 `startSchedule` / `endSchedule?` / `reminderCycle` / `reminderOffsetsMinutes`；status: draft\|published |
@@ -51,6 +56,8 @@
 | `listSchedule` | P1-b/c：`{ today[], week[], meta }`；条目含 `rsvpCounts`；仅 `published`/`ongoing` |
 | `getActivity` | 详情 + RSVP + `subscribeTemplateId` / `myReminderSubscribed` / `canSubscribeReminder` |
 | `getReminderConfig` | P1-d：俱乐部默认提前量与模板 ID |
+| `getClubProfile` | P1-e：`{ name, iconUrl, intro }`；未绑定也可调 |
+| `listAnnouncements` | P1-e：公告列表（须可查看成员）；可选 `limit` |
 | `subscribeActivityReminder` | P1-d：body `id` + `accepted`；写入 `subscriptions` |
 | `setRsvp` | P1-c：body `id` + `status(going\|maybe\|decline)`；须绑定成员；开始前可改；返回更新后的详情 |
 

@@ -101,8 +101,8 @@ onMounted(load)
           style="max-width: 520px"
         />
         <p class="tip">
-          未配置时，成员仍可点「提醒我」记账，但定时任务不会真正下发。建议选用含「活动名称 /
-          时间 / 备注」类字段的模板；发送字段默认 thing1 / time2 / thing3。
+          未配置时，成员仍可点「提醒我」记账，但定时任务不会真正下发。当前模板字段为 thing1 /
+          time3 / thing5（见「活动集合通知」）。
         </p>
       </el-form-item>
 

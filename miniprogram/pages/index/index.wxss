@@ -15,20 +15,44 @@
 .hero {
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
+  gap: 16rpx;
   padding: 24rpx 0 8rpx;
 }
 
+.brand-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.club-icon {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: var(--radius-md);
+  border: 1rpx solid var(--color-border-strong);
+  background: var(--color-surface);
+  flex-shrink: 0;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  min-width: 0;
+}
+
 .brand {
-  font-size: 52rpx;
+  font-size: 48rpx;
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--color-brand);
 }
 
 .subtitle {
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
+  line-height: 1.55;
 }
 
 .panel {
@@ -155,4 +179,61 @@
 
 .tiny {
   font-size: 22rpx;
+}
+
+.announce-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 8rpx;
+}
+
+.announce-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  padding: 12rpx 0;
+  border-bottom: 1rpx solid var(--color-border);
+}
+
+.announce-row:last-child {
+  border-bottom: none;
+}
+
+.announce-head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+  flex-wrap: wrap;
+}
+
+.announce-title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.pin {
+  font-size: 20rpx;
+  color: var(--color-brand);
+  border: 1rpx solid var(--color-brand);
+  border-radius: var(--radius-sm);
+  padding: 2rpx 10rpx;
+}
+
+.announce-body {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.announce-body.open {
+  -webkit-line-clamp: unset;
+  display: block;
+  color: var(--color-text);
 }

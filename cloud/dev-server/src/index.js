@@ -24,6 +24,7 @@ import * as cloudAuth from './cloudAuth.js'
 import * as cloudInvites from './cloudInvites.js'
 import * as cloudActivities from './cloudActivities.js'
 import * as cloudClub from './cloudClub.js'
+import * as cloudAnnouncements from './cloudAnnouncements.js'
 import { recognizeMemberScreenshots } from './ocr/recognize.js'
 
 // 加载 cloud/dev-server/.env（可选腾讯云 OCR / 云开发密钥），不覆盖已有环境变量
@@ -349,6 +350,76 @@ app.put('/api/club-profile', requireAdmin, async (req, res) => {
       req.body || {},
       req.user?.username || req.user?.displayName,
     )
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.post(
+  '/api/club-profile/icon',
+  requireAdmin,
+  upload.single('file'),
+  async (req, res) => {
+    try {
+      if (!requireCloudActivities(res)) return
+      if (!req.file) {
+        res.status(400).json({ ok: false, message: '请选择图片文件' })
+        return
+      }
+      const data = await cloudClub.uploadClubIcon(
+        {
+          buffer: req.file.buffer,
+          mimetype: req.file.mimetype,
+          originalname: req.file.originalname,
+        },
+        req.user?.username || req.user?.displayName,
+      )
+      res.json({ ok: true, data })
+    } catch (err) {
+      res.status(err.status || 500).json({ ok: false, message: err.message })
+    }
+  },
+)
+
+/** —— P1 公告 —— */
+app.get('/api/announcements', requireAdmin, async (_req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const data = await cloudAnnouncements.listAnnouncements()
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.post('/api/announcements', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const data = await cloudAnnouncements.createAnnouncement(
+      req.body || {},
+      req.user?.username || req.user?.displayName,
+    )
+    res.status(201).json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.put('/api/announcements/:id', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const data = await cloudAnnouncements.updateAnnouncement(req.params.id, req.body || {})
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.delete('/api/announcements/:id', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const data = await cloudAnnouncements.deleteAnnouncement(req.params.id)
     res.json({ ok: true, data })
   } catch (err) {
     res.status(err.status || 500).json({ ok: false, message: err.message })

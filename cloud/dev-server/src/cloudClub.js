@@ -14,7 +14,7 @@ const ALLOWED_OFFSETS = new Set([5, 10, 15, 30, 60, 120])
 let app = null
 let collectionsReady = false
 
-function getDb() {
+function getApp() {
   if (!cloudMembers.isCloudMembersConfigured()) {
     throw Object.assign(new Error('未配置云开发密钥'), { status: 500 })
   }
@@ -25,7 +25,70 @@ function getDb() {
       secretKey: process.env.CLOUDBASE_SECRET_KEY,
     })
   }
-  return app.database()
+  return app
+}
+
+function getDb() {
+  return getApp().database()
+}
+
+const ICON_MIME_EXT = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/jpg': 'jpg',
+  'image/webp': 'webp',
+  'image/gif': 'gif',
+}
+
+/** 管理端预览：cloud:// 换临时 HTTPS；普通 URL 原样返回 */
+export async function resolveIconDisplayUrl(iconUrl) {
+  const raw = String(iconUrl || '').trim()
+  if (!raw) return ''
+  if (!raw.startsWith('cloud://')) return raw
+  try {
+    const res = await getApp().getTempFileURL({ fileList: [raw] })
+    const item = (res.fileList || [])[0]
+    if (item && (item.tempFileURL || item.download_url)) {
+      return String(item.tempFileURL || item.download_url)
+    }
+  } catch (e) {
+    console.warn('[cloudClub] getTempFileURL', e?.message || e)
+  }
+  return raw
+}
+
+async function withDisplayUrl(profile) {
+  const iconDisplayUrl = await resolveIconDisplayUrl(profile.iconUrl)
+  return { ...profile, iconDisplayUrl }
+}
+
+/**
+ * 上传俱乐部图标到云存储，返回 fileID（写入 club_profile.iconUrl）
+ * @param {{ buffer: Buffer, mimetype?: string, originalname?: string }} file
+ */
+export async function uploadClubIcon(file, updatedBy = 'admin') {
+  if (!file?.buffer?.length) throw err('请选择图片文件', 400)
+  if (file.buffer.length > 10 * 1024 * 1024) throw err('图标不能超过 10MB', 400)
+  const mime = String(file.mimetype || '').toLowerCase()
+  const ext =
+    ICON_MIME_EXT[mime] ||
+    String(file.originalname || '')
+      .split('.')
+      .pop()
+      ?.toLowerCase()
+  if (!ext || !['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext === 'jpeg' ? 'jpg' : ext)) {
+    throw err('仅支持 PNG / JPG / WebP / GIF', 400)
+  }
+  const safeExt = ext === 'jpeg' ? 'jpg' : ext
+  const cloudPath = `club/icon-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${safeExt}`
+  const up = await getApp().uploadFile({
+    cloudPath,
+    fileContent: file.buffer,
+  })
+  const fileID = String(up.fileID || up.fileId || '').trim()
+  if (!fileID) throw err('上传失败：未返回 fileID', 500)
+  const saved = await updateClubProfile({ iconUrl: fileID }, updatedBy)
+  return withDisplayUrl(saved)
 }
 
 async function ensureCollection() {
@@ -104,7 +167,7 @@ async function getRawDoc() {
 
 export async function getClubProfile() {
   const row = await getRawDoc()
-  return toClient(row)
+  return withDisplayUrl(toClient(row))
 }
 
 export async function updateClubProfile(payload = {}, updatedBy = 'admin') {
@@ -158,5 +221,5 @@ export async function updateClubProfile(payload = {}, updatedBy = 'admin') {
   if (!saved) {
     throw err('保存失败：未能写入 club_profile', 500)
   }
-  return toClient(saved)
+  return withDisplayUrl(toClient(saved))
 }

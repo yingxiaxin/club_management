@@ -10,6 +10,7 @@ const activitiesDb = require('./activitiesDb')
 const rsvpsDb = require('./rsvpsDb')
 const clubDb = require('./clubDb')
 const subscriptionsDb = require('./subscriptionsDb')
+const announcementsDb = require('./announcementsDb')
 const { decorate } = require('./scheduleMatch')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
@@ -81,7 +82,7 @@ exports.main = async (event) => {
   try {
     switch (action) {
       case 'health':
-        return ok({ service: 'memberApi', store: 'cloud-db', stage: 'P1-d' })
+        return ok({ service: 'memberApi', store: 'cloud-db', stage: 'P1-announce' })
 
       case 'whoami': {
         if (!openid) return fail('无法获取微信身份', 401)
@@ -206,6 +207,26 @@ exports.main = async (event) => {
         })
       }
 
+      case 'getClubProfile': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        // 未绑定也可看名称/图标/简介（首页品牌）；不含订阅模板等运营字段
+        const club = await clubDb.getClubProfile()
+        return ok({
+          name: club.name || '',
+          iconUrl: club.iconUrl || '',
+          intro: club.intro || '',
+        })
+      }
+
+      case 'listAnnouncements': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        await requireViewer(openid)
+        const list = await announcementsDb.listAnnouncements({
+          limit: event.limit,
+        })
+        return ok(list)
+      }
+
       case 'subscribeActivityReminder': {
         if (!openid) return fail('无法获取微信身份', 401)
         const access = await requireBoundMember(openid)
@@ -258,7 +279,7 @@ exports.main = async (event) => {
 
       default:
         return fail(
-          `未知 action: ${action || '(空)'}。支持 health/whoami/bindByCharacterName/submitJoinApplication/getMyJoinApplication/unbindSelfForTest/listMembers/getMember/listSchedule/getActivity/getReminderConfig/subscribeActivityReminder/setRsvp`,
+          `未知 action: ${action || '(空)'}。支持 health/whoami/bindByCharacterName/submitJoinApplication/getMyJoinApplication/unbindSelfForTest/listMembers/getMember/listSchedule/getActivity/getReminderConfig/getClubProfile/listAnnouncements/subscribeActivityReminder/setRsvp`,
           400,
         )
     }

@@ -34,10 +34,14 @@ async function getClubProfile() {
         subscribeTemplateId: '',
         subscribeMiniprogramState: 'developer',
         name: '',
+        iconUrl: '',
+        intro: '',
       }
     }
     return {
       name: row.name || '',
+      iconUrl: String(row.iconUrl || '').trim(),
+      intro: String(row.intro || '').trim(),
       reminderOffsetsMinutes: normalizeOffsets(row.reminderOffsetsMinutes, [10]),
       subscribeTemplateId: String(row.subscribeTemplateId || '').trim(),
       subscribeMiniprogramState: ['developer', 'trial', 'formal'].includes(
@@ -52,6 +56,8 @@ async function getClubProfile() {
       subscribeTemplateId: '',
       subscribeMiniprogramState: 'developer',
       name: '',
+      iconUrl: '',
+      intro: '',
     }
   }
 }
