@@ -23,19 +23,22 @@
   color: var(--color-text-urgency-calm);
 }
 
-.tag.urgency-hot {
+.tag.urgency-hot,
+.chip-tag.urgency-hot {
   color: var(--color-urgency-hot);
   border-color: var(--color-urgency-hot-border);
   background: var(--color-urgency-hot-muted);
 }
 
-.tag.urgency-soon {
+.tag.urgency-soon,
+.chip-tag.urgency-soon {
   color: var(--color-urgency-soon);
   border-color: var(--color-urgency-soon-border);
   background: var(--color-urgency-soon-muted);
 }
 
-.tag.urgency-calm {
+.tag.urgency-calm,
+.chip-tag.urgency-calm {
   color: var(--color-urgency-calm);
   border-color: var(--color-urgency-calm-border);
   background: var(--color-urgency-calm-muted);

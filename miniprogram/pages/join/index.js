@@ -99,6 +99,6 @@ Page({
   },
 
   goMembers() {
-    wx.navigateTo({ url: '/pages/members/index' })
+    wx.switchTab({ url: '/pages/members/index' })
   },
 })

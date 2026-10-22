@@ -1,12 +1,12 @@
 <view class="page">
-  <view class="state" wx:if="{{loading}}">
+  <view class="page-state" wx:if="{{loading}}">
     <text class="muted">加载中…</text>
   </view>
-  <view class="state" wx:elif="{{error}}">
+  <view class="page-state" wx:elif="{{error}}">
     <text class="danger">{{error}}</text>
   </view>
   <block wx:elif="{{member}}">
-    <view class="hero">
+    <view class="hero panel-card framed">
       <text class="name">{{member.characterName}}</text>
       <view class="tags">
         <text class="tag">{{member.title}}</text>
@@ -16,17 +16,17 @@
     </view>
 
     <view class="scores">
-      <view class="score-card">
+      <view class="score-card panel-card">
         <text class="score-label">非凡评分</text>
         <text class="score-num">{{member.powerScore}}</text>
       </view>
-      <view class="score-card">
+      <view class="score-card panel-card">
         <text class="score-label">风尚度</text>
         <text class="score-num alt">{{member.fashionScore}}</text>
       </view>
     </view>
 
-    <view class="panel">
+    <view class="panel panel-card">
       <view class="field">
         <text class="label">备注</text>
         <text class="value">{{member.remark || '无'}}</text>

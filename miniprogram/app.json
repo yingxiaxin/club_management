@@ -2,8 +2,8 @@
   "pages": [
     "pages/index/index",
     "pages/activities/index",
-    "pages/activity-detail/index",
     "pages/members/index",
+    "pages/activity-detail/index",
     "pages/member-detail/index",
     "pages/bind/index",
     "pages/join/index",
@@ -15,6 +15,32 @@
     "navigationBarTextStyle": "white",
     "backgroundColor": "#0e0f14",
     "backgroundTextStyle": "light"
+  },
+  "tabBar": {
+    "color": "#a09078",
+    "selectedColor": "#c9a227",
+    "backgroundColor": "#1a1c22",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "assets/tab/home.png",
+        "selectedIconPath": "assets/tab/home-active.png"
+      },
+      {
+        "pagePath": "pages/activities/index",
+        "text": "活动",
+        "iconPath": "assets/tab/activity.png",
+        "selectedIconPath": "assets/tab/activity-active.png"
+      },
+      {
+        "pagePath": "pages/members/index",
+        "text": "成员",
+        "iconPath": "assets/tab/members.png",
+        "selectedIconPath": "assets/tab/members-active.png"
+      }
+    ]
   },
   "style": "v2",
   "sitemapLocation": "sitemap.json"

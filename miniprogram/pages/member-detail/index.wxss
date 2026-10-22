@@ -1,38 +1,21 @@
+@import "../../styles/shell.wxss";
+
 .page {
-  min-height: 100vh;
-  padding: 40rpx 32rpx 64rpx;
-  box-sizing: border-box;
-  background:
-    radial-gradient(ellipse 70% 40% at 50% 0%, var(--color-bg-glow), transparent),
-    var(--color-bg);
-  display: flex;
-  flex-direction: column;
-  gap: 28rpx;
-}
-
-.state {
-  padding: 80rpx 24rpx;
-  text-align: center;
-}
-
-.muted {
-  color: var(--color-text-muted);
-}
-
-.danger {
-  color: var(--color-danger);
+  padding-bottom: 64rpx;
 }
 
 .hero {
   display: flex;
   flex-direction: column;
   gap: 16rpx;
+  padding: 32rpx 28rpx;
 }
 
 .name {
   font-size: 48rpx;
   font-weight: 700;
-  color: var(--color-text);
+  color: var(--color-brand);
+  letter-spacing: 0.06em;
 }
 
 .tags {
@@ -54,7 +37,7 @@
 .muted-tag {
   color: var(--color-text-secondary);
   border-color: var(--color-border);
-  background: var(--color-surface);
+  background: var(--color-bg);
 }
 
 .scores {
@@ -66,9 +49,6 @@
 .score-card {
   flex: 1;
   padding: 28rpx 24rpx;
-  border-radius: var(--radius-md);
-  border: 1rpx solid var(--color-border);
-  background: var(--color-surface);
   display: flex;
   flex-direction: column;
   gap: 8rpx;
@@ -90,10 +70,6 @@
 }
 
 .panel {
-  padding: 8rpx 0;
-  border-radius: var(--radius-md);
-  border: 1rpx solid var(--color-border);
-  background: var(--color-surface);
   overflow: hidden;
 }
 

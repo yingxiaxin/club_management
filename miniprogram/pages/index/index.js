@@ -130,11 +130,11 @@ Page({
   },
 
   goMembers() {
-    wx.navigateTo({ url: '/pages/members/index' })
+    wx.switchTab({ url: '/pages/members/index' })
   },
 
   goActivities() {
-    wx.navigateTo({ url: '/pages/activities/index' })
+    wx.switchTab({ url: '/pages/activities/index' })
   },
 
   goActivityDetail(e) {

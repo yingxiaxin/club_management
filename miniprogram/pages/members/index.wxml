@@ -1,5 +1,5 @@
 <view class="page">
-  <view class="toolbar">
+  <view class="toolbar panel-card">
     <input
       class="search"
       value="{{q}}"
@@ -56,41 +56,44 @@
     </scroll-view>
   </view>
 
-  <view class="state" wx:if="{{loading}}">
+  <view class="page-state" wx:if="{{loading}}">
     <text class="muted">加载中…</text>
   </view>
-  <view class="state" wx:elif="{{error}}">
+  <view class="page-state" wx:elif="{{error}}">
     <text class="danger">{{error}}</text>
     <button class="btn-primary retry" size="mini" bindtap="load">重试</button>
   </view>
-  <view class="state" wx:elif="{{!list.length}}">
+  <view class="empty-panel" wx:elif="{{!list.length}}">
     <text class="muted">暂无成员</text>
   </view>
 
-  <view class="list" wx:else>
+  <view class="list-stack" wx:else>
     <view
-      class="row"
+      class="bar-row"
       wx:for="{{list}}"
       wx:key="id"
       data-id="{{item.id}}"
       bindtap="goDetail"
     >
-      <view class="row-main">
-        <text class="name">{{item.characterName}}</text>
-        <text class="tag">{{item.title}}</text>
-      </view>
-      <view class="row-sub">
-        <text class="pathway">{{item.pathway}}</text>
-        <text class="lv" wx:if="{{item.level}}">Lv.{{item.level}}</text>
-      </view>
-      <view class="scores">
-        <view class="score">
-          <text class="score-label">非凡</text>
-          <text class="score-num">{{item.powerScore}}</text>
+      <view class="bar accent" />
+      <view class="bar-main">
+        <view class="row-top">
+          <text class="name">{{item.characterName}}</text>
+          <text class="chip-tag">{{item.title}}</text>
         </view>
-        <view class="score">
-          <text class="score-label">风尚</text>
-          <text class="score-num secondary">{{item.fashionScore}}</text>
+        <view class="row-sub">
+          <text class="pathway">{{item.pathway}}</text>
+          <text class="lv" wx:if="{{item.level}}">Lv.{{item.level}}</text>
+        </view>
+        <view class="scores">
+          <view class="score">
+            <text class="score-label">非凡</text>
+            <text class="score-num">{{item.powerScore}}</text>
+          </view>
+          <view class="score">
+            <text class="score-label">风尚</text>
+            <text class="score-num secondary">{{item.fashionScore}}</text>
+          </view>
         </view>
       </view>
     </view>
