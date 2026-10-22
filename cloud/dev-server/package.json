@@ -10,7 +10,8 @@
     "test:ocr-rapid": "node scripts/test-rapid-ocr.mjs",
     "test:ocr-e2e": "node scripts/e2e-ocr.mjs",
     "prepare:cloud-import": "node scripts/prepare-cloud-import.mjs",
-    "import:cloud-members": "node scripts/prepare-cloud-import.mjs --upload"
+    "import:cloud-members": "node scripts/prepare-cloud-import.mjs --upload",
+    "smoke:p0e": "node scripts/smoke-p0e.mjs"
   },
   "dependencies": {
     "@cloudbase/node-sdk": "^3.18.7",

@@ -22,6 +22,7 @@ import {
 import * as cloudMembers from './cloudMembers.js'
 import * as cloudAuth from './cloudAuth.js'
 import * as cloudInvites from './cloudInvites.js'
+import * as cloudActivities from './cloudActivities.js'
 import { recognizeMemberScreenshots } from './ocr/recognize.js'
 
 // 加载 cloud/dev-server/.env（可选腾讯云 OCR / 云开发密钥），不覆盖已有环境变量
@@ -104,12 +105,13 @@ app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
     service: 'club-dev-server',
-    stage: 'P0-e-invite',
+    stage: 'P1-a-activities',
     membersBackend: useCloudMembers() ? 'cloud' : 'json',
     qrLogin: cloudAuth.isQrLoginConfigured(),
     /** 本机 AppSecret 是否已配（不返回密钥本身） */
     wxacodeLocal: cloudAuth.canGenerateWxacodeLocally(),
     invites: useCloudMembers(),
+    activities: useCloudMembers(),
   })
 })
 
@@ -118,6 +120,17 @@ function requireCloudInvites(res) {
     res.status(503).json({
       ok: false,
       message: '邀请码需 DATA_BACKEND=cloud 并配置 CLOUDBASE_*',
+    })
+    return false
+  }
+  return true
+}
+
+function requireCloudActivities(res) {
+  if (!useCloudMembers()) {
+    res.status(503).json({
+      ok: false,
+      message: '活动需 DATA_BACKEND=cloud 并配置 CLOUDBASE_*',
     })
     return false
   }
@@ -311,6 +324,67 @@ app.post('/api/join-applications/:id/review', requireAdmin, async (req, res) => 
       decision,
       reviewer: req.user?.username || req.user?.displayName,
     })
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+/** —— P1-a 活动实例 —— */
+app.get('/api/activities', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const data = await cloudActivities.listActivities({
+      status: req.query.status,
+      from: req.query.from,
+      to: req.query.to,
+      q: req.query.q,
+    })
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.get('/api/activities/:id', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const data = await cloudActivities.getActivity(req.params.id)
+    if (!data) return res.status(404).json({ ok: false, message: '活动不存在' })
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.post('/api/activities', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const data = await cloudActivities.createActivity(
+      req.body || {},
+      req.user?.username || req.user?.displayName,
+    )
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.put('/api/activities/:id', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const data = await cloudActivities.updateActivity(req.params.id, req.body || {})
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.post('/api/activities/:id/transition', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const action = req.body?.action || req.body?.status
+    const data = await cloudActivities.transitionActivity(req.params.id, action)
     res.json({ ok: true, data })
   } catch (err) {
     res.status(err.status || 500).json({ ok: false, message: err.message })

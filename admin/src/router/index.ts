@@ -25,6 +25,11 @@ const router = createRouter({
           name: 'invites',
           component: () => import('@/views/InvitesView.vue'),
         },
+        {
+          path: 'activities',
+          name: 'activities',
+          component: () => import('@/views/ActivitiesView.vue'),
+        },
       ],
     },
   ],

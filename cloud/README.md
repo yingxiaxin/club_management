@@ -43,6 +43,7 @@ cloud/
 2. 跑 `admin` 前端
 3. 导入成员：`npm run prepare:cloud-import` 后控制台导入，或配密钥 `npm run import:cloud-members`
 4. 云函数：开发者工具上传 `functions/adminApi`；成员端上传 `functions/memberApi`（P0-d/P0-e，见 `docs/P0-d成员端.md` / `docs/P0-e邀请码入会.md`）
+5. **P1-a 活动**：本机 API `cloudActivities.js`（集合 `activities`）；管理端 `/activities`；见 `docs/P1-a活动日程.md`
 
 ## 原则
 

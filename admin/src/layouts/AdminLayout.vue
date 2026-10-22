@@ -19,11 +19,12 @@ function logout() {
       <nav class="nav">
         <router-link class="nav-item" to="/members">成员列表</router-link>
         <router-link class="nav-item" to="/invites">邀请码 / 入会</router-link>
+        <router-link class="nav-item" to="/activities">活动日程</router-link>
       </nav>
     </aside>
     <div class="main">
       <header class="topbar">
-        <div class="topbar-title">P0 管理后台</div>
+        <div class="topbar-title">俱乐部管理后台</div>
         <div class="topbar-user">
           <span>{{ user?.displayName || user?.username }}</span>
           <el-button class="logout-btn" text type="primary" @click="logout">退出</el-button>

@@ -17,14 +17,44 @@ function fail(message, status = 400) {
   return { ok: false, message, status }
 }
 
+/**
+ * 解析查看权：
+ * - 管理员：始终可看（即使用测微信号做过邀请码关联，移出角色后仍可看——这是管理权限）
+ * - 普通用户：须挂着 active 成员档案；若档案已 left / 不存在 / 绑定被清，自动 detach 为 guest
+ */
+async function resolveAccess(openid) {
+  let user = await usersDb.ensureUser(openid)
+  const isAdmin = usersDb.ADMIN_ROLES.has(user.role)
+  let member = null
+  if (user.memberId) {
+    member = await membersDb.getMember(user.memberId)
+  }
+  const bindingOk =
+    member &&
+    member.status !== 'left' &&
+    (!member.boundOpenid || member.boundOpenid === openid)
+
+  if (user.memberId && !bindingOk) {
+    user = await usersDb.detachMember(openid)
+    member = null
+  }
+
+  return {
+    user,
+    member,
+    isAdmin,
+    canViewMembers: isAdmin || Boolean(user.memberId && bindingOk),
+  }
+}
+
 async function requireViewer(openid) {
-  const user = await usersDb.ensureUser(openid)
-  if (!usersDb.canViewMembers(user)) {
+  const access = await resolveAccess(openid)
+  if (!access.canViewMembers) {
     const e = new Error('请先绑定俱乐部角色或完成入会后再查看成员列表')
     e.status = 403
     throw e
   }
-  return user
+  return access.user
 }
 
 exports.main = async (event) => {
@@ -39,24 +69,21 @@ exports.main = async (event) => {
 
       case 'whoami': {
         if (!openid) return fail('无法获取微信身份', 401)
-        const user = await usersDb.ensureUser(openid)
-        let member = null
-        if (user.memberId) {
-          member = await membersDb.getMember(user.memberId)
-          if (member && member.status === 'left') member = null
-        }
-        // 管理员也可查申请状态（联调）；已绑定 memberId 则不再需要
-        const joinApplication = user.memberId
-          ? null
-          : await invitesDb.getMyApplication(openid)
+        const access = await resolveAccess(openid)
+        const { user, member, isAdmin, canViewMembers } = access
+        // 管理员也可查申请状态（联调）；已有效绑定则不再需要
+        const joinApplication =
+          user.memberId && member
+            ? null
+            : await invitesDb.getMyApplication(openid)
         return ok({
           openid,
           role: user.role,
           displayName: user.displayName || member?.characterName || '',
           memberId: user.memberId,
           member,
-          canViewMembers: usersDb.canViewMembers(user),
-          isAdmin: usersDb.ADMIN_ROLES.has(user.role),
+          canViewMembers,
+          isAdmin,
           joinApplication,
         })
       }
@@ -121,12 +148,14 @@ exports.main = async (event) => {
       }
 
       case 'listMembers': {
+        if (!openid) return fail('无法获取微信身份', 401)
         await requireViewer(openid)
         const list = await membersDb.listMembers(event.query || event)
         return ok(list)
       }
 
       case 'getMember': {
+        if (!openid) return fail('无法获取微信身份', 401)
         await requireViewer(openid)
         const row = await membersDb.getMember(event.id)
         if (!row || row.status === 'left') return fail('成员不存在', 404)

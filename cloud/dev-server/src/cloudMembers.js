@@ -190,26 +190,34 @@ export async function deleteMember(id) {
 
 async function clearUsersLinkedToMember(memberId, openid) {
   const col = getDb().collection('users')
-  const ids = new Set()
+  const rowsById = new Map()
+  const remember = (rows) => {
+    for (const row of rows || []) {
+      if (row?._id) rowsById.set(row._id, row)
+    }
+  }
   try {
     const byMember = await col.where({ memberId }).limit(20).get()
-    for (const row of byMember.data || []) ids.add(row._id)
+    remember(byMember.data)
   } catch {
     /* ignore */
   }
   if (openid) {
     try {
       let res = await col.where({ openid }).limit(5).get()
-      for (const row of res.data || []) ids.add(row._id)
+      remember(res.data)
       res = await col.where({ _openid: openid }).limit(5).get()
-      for (const row of res.data || []) ids.add(row._id)
+      remember(res.data)
     } catch {
       /* ignore */
     }
   }
-  for (const uid of ids) {
+  for (const [uid, row] of rowsById) {
     try {
-      await col.doc(uid).update({ memberId: null, lastLoginAt: new Date() })
+      const patch = { memberId: null, lastLoginAt: new Date() }
+      // 普通成员降为 guest；不降级 admin / super_admin
+      if (row.role === 'member') patch.role = 'guest'
+      await col.doc(uid).update(patch)
     } catch (e) {
       console.warn('[cloudMembers] clear user memberId', uid, e?.message || e)
     }

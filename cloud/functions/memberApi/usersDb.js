@@ -84,25 +84,36 @@ async function attachMember(openid, member) {
   }
 }
 
+/**
+ * 仅看 users 行：管理员恒可看；普通成员须仍挂着 memberId。
+ * 调用方还应再校验对应 members 仍为 active（见 memberApi.resolveAccess）。
+ */
 function canViewMembers(user) {
   if (!user) return false
   if (ADMIN_ROLES.has(user.role)) return true
-  return user.role === 'member' && Boolean(user.memberId)
+  return Boolean(user.memberId)
 }
 
 /**
- * 解除 users.memberId（保留 admin 角色）。仅供联调。
+ * 解除 users.memberId；非管理员降为 guest（移出/解绑后不再能看名单）。
  */
 async function detachMember(openid) {
   const user = await ensureUser(openid)
   const prevMemberId = user.memberId
-  await db().collection(USERS).doc(user.id).update({
-    data: {
-      memberId: null,
-      lastLoginAt: new Date(),
-    },
-  })
-  return { ...user, memberId: null, prevMemberId }
+  const patch = {
+    memberId: null,
+    lastLoginAt: new Date(),
+  }
+  if (!ADMIN_ROLES.has(user.role)) {
+    patch.role = 'guest'
+  }
+  await db().collection(USERS).doc(user.id).update({ data: patch })
+  return {
+    ...user,
+    memberId: null,
+    role: patch.role || user.role,
+    prevMemberId,
+  }
 }
 
 module.exports = {

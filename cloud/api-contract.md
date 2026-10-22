@@ -1,8 +1,8 @@
-# P0 API 契约（管理端）
+# 管理端 API 契约（P0 + P1-a）
 
 本地实现：`cloud/dev-server`（默认 `http://127.0.0.1:3789`）  
 云函数：`cloud/functions/adminApi`（`action=listMembers|createMember|...|importMembers`，见 `docs/云数据库接入.md`）  
-成员存储：`DATA_BACKEND=json|cloud`（cloud 时读写集合 `members`）
+成员 / 活动存储：`DATA_BACKEND=cloud` 时走云库（`members`、`activities` 等）
 
 除登录与 health 外，请求头需：`Authorization: Bearer <token>`
 
@@ -28,6 +28,13 @@
 | PATCH | `/api/invites/:id` | 更新启用/次数/过期 |
 | GET | `/api/join-applications` | query: `status`；入会申请 |
 | POST | `/api/join-applications/:id/review` | body: `{ decision: approved\|rejected }` |
+| GET | `/api/activities` | query: status/from/to/q |
+| GET | `/api/activities/:id` | 详情 |
+| POST | `/api/activities` | 创建；body 含 `startSchedule` / `endSchedule?` / `reminderCycle` / `reminderOffsetsMinutes`；status: draft\|published |
+| PUT | `/api/activities/:id` | 更新（cancelled/ended 不可改） |
+| POST | `/api/activities/:id/transition` | body: `{ action: publish\|cancel\|start\|end }` |
+
+日程分量 `*Schedule`：`{ year, month, day, weekday(1–7), time:"HH:mm" }`（均可 null）。开始至少一项非空。`reminderCycle`：无 time→`none`；年月日+time→仅`once`；日+time→`once|daily`；weekday+time→`once|weekly`；仅 time→`daily`。
 
 ### OCR 约定
 
