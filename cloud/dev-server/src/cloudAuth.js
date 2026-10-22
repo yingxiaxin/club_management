@@ -41,6 +41,9 @@ export function isQrLoginConfigured() {
   return cloudMembers.isCloudMembersConfigured()
 }
 
+/** 本机是否已配 WECHAT_APP_SECRET（可出小程序码） */
+export { canGenerateWxacodeLocally }
+
 export async function startQrLogin() {
   const data = await callAdminApi({ action: 'createAdminLoginTicket' })
   if (data?.qrBase64) return data

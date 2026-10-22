@@ -106,6 +106,8 @@ app.get('/api/health', (_req, res) => {
     stage: 'P0-c-qr-login',
     membersBackend: useCloudMembers() ? 'cloud' : 'json',
     qrLogin: cloudAuth.isQrLoginConfigured(),
+    /** 本机 AppSecret 是否已配（不返回密钥本身） */
+    wxacodeLocal: cloudAuth.canGenerateWxacodeLocally(),
   })
 })
 

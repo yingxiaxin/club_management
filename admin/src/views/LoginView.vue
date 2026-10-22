@@ -120,6 +120,10 @@ onUnmounted(() => {
       <div class="qr-box">
         <div v-if="qrLoading" class="qr-placeholder">正在创建登录票…</div>
         <img v-else-if="qr?.qrBase64" class="qr-img" :src="qr.qrBase64" alt="登录小程序码" />
+        <p v-if="qr?.qrBase64" class="qr-tip">
+          若提示「开发版已过期」：先在开发者工具点「预览」用手机扫一次，再扫本码；或上传体验版后把
+          <code>CLOUD_QR_ENV_VERSION=trial</code> 并重启 API。
+        </p>
         <div v-else class="qr-fallback">
           <p class="fallback-title">当前环境无法出小程序码</p>
           <p class="ticket" v-if="qr?.ticketId">
@@ -211,6 +215,20 @@ onUnmounted(() => {
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
   background: #fff;
+}
+
+.qr-tip {
+  margin: 0;
+  max-width: 280px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.qr-tip code {
+  font-size: 12px;
+  color: var(--color-text-secondary);
 }
 
 .qr-placeholder,
