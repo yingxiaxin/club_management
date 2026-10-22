@@ -1,144 +1,151 @@
 <view class="page">
+  <!-- 品牌门厅 -->
   <view class="hero">
-    <view class="brand-row">
-      <image
-        wx:if="{{clubIconUrl}}"
-        class="club-icon"
-        src="{{clubIconUrl}}"
-        mode="aspectFill"
-      />
-      <view class="brand-text">
-        <text class="brand">{{clubName}}</text>
-        <text class="subtitle" wx:if="{{clubIntro}}">{{clubIntro}}</text>
+    <view class="hero-glow" />
+    <view class="hero-frame">
+      <view class="hero-inner">
+        <image
+          wx:if="{{clubIconUrl}}"
+          class="club-icon"
+          src="{{clubIconUrl}}"
+          mode="aspectFill"
+        />
+        <view wx:else class="club-icon placeholder">
+          <text class="placeholder-mark">会</text>
+        </view>
+        <view class="brand-text">
+          <text class="brand">{{clubName}}</text>
+          <text class="intro" wx:if="{{clubIntro}}">{{clubIntro}}</text>
+        </view>
       </view>
     </view>
   </view>
 
-  <view class="panel" wx:if="{{loading}}">
+  <view class="panel state" wx:if="{{loading}}">
     <text class="muted">正在识别微信身份…</text>
   </view>
 
-  <view class="panel" wx:elif="{{error}}">
+  <view class="panel state" wx:elif="{{error}}">
     <text class="danger">{{error}}</text>
-    <button class="btn-primary" bindtap="refresh">重试</button>
+    <button class="btn-primary btn-inline" bindtap="refresh">重试</button>
   </view>
 
   <block wx:else>
-    <view class="panel status">
-      <text class="label">当前身份</text>
-      <text class="value">{{roleLabel}}</text>
-      <text class="meta" wx:if="{{displayName}}">{{displayName}}</text>
-      <text class="muted" wx:elif="{{joinPending}}">关联申请审核中</text>
-      <text class="muted" wx:else>尚未关联游戏角色</text>
+    <!-- 身份细条 -->
+    <view class="identity">
+      <view class="identity-dot {{canViewMembers ? 'ok' : 'wait'}}" />
+      <text class="identity-main">{{identityLine}}</text>
+      <text class="identity-role">{{roleLabel}}</text>
     </view>
 
-    <view class="panel announce" wx:if="{{canViewMembers}}">
-      <view class="schedule-head">
-        <text class="schedule-title">公告</text>
+    <!-- 快捷入口 -->
+    <view class="shortcuts" wx:if="{{canViewMembers}}">
+      <view class="shortcut" bindtap="goActivities">
+        <text class="shortcut-title">活动日程</text>
+        <text class="shortcut-desc">今日 {{todayCount}} · 本周 {{weekCount}}</text>
       </view>
-      <view wx:if="{{announceLoading}}">
+      <view class="shortcut" bindtap="goMembers">
+        <text class="shortcut-title">成员列表</text>
+        <text class="shortcut-desc">查看档案与备注</text>
+      </view>
+    </view>
+
+    <view class="guest-cta" wx:else>
+      <button class="btn-primary" bindtap="goJoin">邀请码关联角色</button>
+      <text class="hint">关联后可查看公告、活动与成员信息</text>
+    </view>
+
+    <!-- 公告 -->
+    <view class="section" wx:if="{{canViewMembers}}">
+      <view class="section-head">
+        <text class="section-title">公告</text>
+      </view>
+      <view class="panel soft" wx:if="{{announceLoading}}">
         <text class="muted">加载公告…</text>
       </view>
-      <view class="schedule-empty" wx:elif="{{!announcements.length}}">
+      <view class="panel soft empty" wx:elif="{{!announcements.length}}">
         <text class="muted">暂无公告</text>
       </view>
       <view class="announce-list" wx:else>
         <view
-          class="announce-row"
+          class="announce-card {{item.pinned ? 'pinned' : ''}} {{expandedAnnounceId === item.id ? 'open' : ''}}"
           wx:for="{{announcements}}"
           wx:key="id"
           data-id="{{item.id}}"
           bindtap="toggleAnnounce"
         >
-          <view class="announce-head">
-            <text class="announce-title">{{item.title}}</text>
-            <text wx:if="{{item.pinned}}" class="pin">置顶</text>
+          <view class="announce-accent" />
+          <view class="announce-body">
+            <view class="announce-head">
+              <text class="announce-title">{{item.title}}</text>
+              <text wx:if="{{item.pinned}}" class="pin">置顶</text>
+            </view>
+            <text class="announce-content">{{item.content}}</text>
+            <text class="announce-hint">{{expandedAnnounceId === item.id ? '收起' : '展开'}}</text>
           </view>
-          <text class="announce-body {{expandedAnnounceId === item.id ? 'open' : ''}}">
-            {{item.content}}
-          </text>
-          <text class="muted tiny">
-            {{expandedAnnounceId === item.id ? '点击收起' : '点击展开'}}
-          </text>
         </view>
       </view>
     </view>
 
-    <view class="panel schedule" wx:if="{{canViewMembers}}">
-      <view class="schedule-head">
-        <text class="schedule-title">今日活动</text>
-        <text class="schedule-link" bindtap="goActivities">全部日程</text>
+    <!-- 今日活动 -->
+    <view class="section" wx:if="{{canViewMembers}}">
+      <view class="section-head">
+        <text class="section-title">今日活动</text>
+        <text class="section-link" bindtap="goActivities">全部日程</text>
       </view>
-      <view wx:if="{{scheduleLoading}}">
+      <view class="panel soft" wx:if="{{scheduleLoading}}">
         <text class="muted">加载日程…</text>
       </view>
-      <view class="schedule-empty" wx:elif="{{!todayPreview.length}}">
+      <view class="panel soft empty" wx:elif="{{!todayPreview.length}}">
         <text class="muted">今日暂无活动</text>
-        <text class="muted tiny" wx:if="{{weekCount}}">本周还有 {{weekCount}} 场 · 点「全部日程」查看</text>
+        <text class="muted tiny" wx:if="{{weekCount}}">本周还有 {{weekCount}} 场</text>
       </view>
-      <view class="schedule-list" wx:else>
+      <view class="event-list" wx:else>
         <view
-          class="schedule-row"
+          class="event-row"
           wx:for="{{todayPreview}}"
           wx:key="id"
           data-id="{{item.id}}"
           bindtap="goActivityDetail"
         >
-          <view class="schedule-main">
-            <text class="schedule-name {{item.urgencyClass}}">{{item.title}}</text>
-            <text wx:if="{{item.typeLabel}}" class="tag {{item.urgencyClass}}">
-              <text wx:if="{{item.urgencyIcon}}" class="tag-icon">{{item.urgencyIcon}}</text>{{item.typeLabel}}
-            </text>
+          <view class="event-bar {{item.urgencyClass}}" />
+          <view class="event-main">
+            <view class="event-top">
+              <text class="event-name {{item.urgencyClass}}">{{item.title}}</text>
+              <text wx:if="{{item.typeLabel}}" class="tag {{item.urgencyClass}}">
+                <text wx:if="{{item.urgencyIcon}}" class="tag-icon">{{item.urgencyIcon}}</text>{{item.typeLabel}}
+              </text>
+            </view>
+            <text class="event-time">{{item.startText}}</text>
           </view>
-          <text class="schedule-time">{{item.startText}}</text>
         </view>
-        <text class="muted tiny" wx:if="{{todayCount > todayPreview.length}}">
-          今日共 {{todayCount}} 场
+        <text class="muted tiny more" wx:if="{{todayCount > todayPreview.length}}">
+          今日共 {{todayCount}} 场 · 点「全部日程」查看
         </text>
       </view>
     </view>
 
-    <view class="actions">
-      <button
-        wx:if="{{canViewMembers}}"
-        class="btn-primary"
-        bindtap="goActivities"
-      >
-        活动日程
-      </button>
-      <button
-        wx:if="{{canViewMembers}}"
-        class="btn-ghost"
-        bindtap="goMembers"
-      >
-        查看成员列表
-      </button>
-      <button
-        wx:else
-        class="btn-primary"
-        bindtap="goJoin"
-      >
-        邀请码关联角色
-      </button>
-      <button
-        wx:if="{{isAdmin && !memberId}}"
-        class="btn-ghost"
-        bindtap="goJoin"
-      >
-        邀请码关联（联调）
-      </button>
-      <button
-        wx:if="{{isAdmin && memberId}}"
-        class="btn-ghost"
-        bindtap="goJoin"
-      >
-        关联页 / 解除联调绑定
-      </button>
-      <button class="btn-ghost" bindtap="goAdminLogin">管理端扫码登录</button>
+    <!-- 更多（联调 / 管理） -->
+    <view class="more">
+      <text class="more-toggle" bindtap="toggleMore">{{showMore ? '收起更多' : '更多'}}</text>
+      <view class="more-panel" wx:if="{{showMore}}">
+        <button
+          wx:if="{{isAdmin && !memberId}}"
+          class="btn-ghost"
+          bindtap="goJoin"
+        >
+          邀请码关联（联调）
+        </button>
+        <button
+          wx:if="{{isAdmin && memberId}}"
+          class="btn-ghost"
+          bindtap="goJoin"
+        >
+          关联页 / 解除联调绑定
+        </button>
+        <button class="btn-ghost" bindtap="goAdminLogin">管理端扫码登录</button>
+        <text class="hint">成员名单由管理员维护；需邀请码且角色名一致才能关联。</text>
+      </view>
     </view>
-
-    <text class="hint">
-      成员名单由管理员维护。需邀请码且角色名与名单一致才能关联微信；未关联前不可查看俱乐部成员信息与活动细节。
-    </text>
   </block>
 </view>

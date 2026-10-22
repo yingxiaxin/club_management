@@ -4,18 +4,21 @@
  */
 .name.urgency-hot,
 .schedule-name.urgency-hot,
+.event-name.urgency-hot,
 .title.urgency-hot {
   color: var(--color-text-urgency-hot);
 }
 
 .name.urgency-soon,
 .schedule-name.urgency-soon,
+.event-name.urgency-soon,
 .title.urgency-soon {
   color: var(--color-text-urgency-soon);
 }
 
 .name.urgency-calm,
 .schedule-name.urgency-calm,
+.event-name.urgency-calm,
 .title.urgency-calm {
   color: var(--color-text-urgency-calm);
 }

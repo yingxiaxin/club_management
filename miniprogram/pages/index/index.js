@@ -28,6 +28,8 @@ Page({
     todayPreview: [],
     todayCount: 0,
     weekCount: 0,
+    identityLine: '',
+    showMore: false,
   },
 
   onShow() {
@@ -43,11 +45,15 @@ Page({
       ])
       const joinPending = data.joinApplication?.status === 'pending'
       const canViewMembers = Boolean(data.canViewMembers)
+      const displayName = data.displayName || data.member?.characterName || ''
+      let identityLine = '尚未关联游戏角色'
+      if (displayName) identityLine = displayName
+      else if (joinPending) identityLine = '关联申请审核中'
       this.setData({
         loading: false,
         role: data.role || 'guest',
         roleLabel: ROLE_LABELS[data.role] || data.role || '访客',
-        displayName: data.displayName || data.member?.characterName || '',
+        displayName,
         memberId: data.memberId || '',
         canViewMembers,
         joinPending,
@@ -55,6 +61,7 @@ Page({
         clubName: (club && club.name) || '诡秘之主',
         clubIconUrl: (club && club.iconUrl) || '',
         clubIntro: (club && club.intro) || '',
+        identityLine,
       })
       if (canViewMembers) {
         this.loadSchedulePreview()
@@ -116,6 +123,10 @@ Page({
     this.setData({
       expandedAnnounceId: this.data.expandedAnnounceId === id ? '' : id,
     })
+  },
+
+  toggleMore() {
+    this.setData({ showMore: !this.data.showMore })
   },
 
   goMembers() {
