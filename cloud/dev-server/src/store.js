@@ -178,7 +178,7 @@ export function getOcrJob(id) {
 }
 
 export function annotateCandidates(candidates) {
-  const list = readMembers().filter((m) => m.status !== 'left')
+  const list = readMembers()
   return (candidates || []).map((c, index) => {
     const name = String(c.characterName || '').trim()
     const matched = name ? list.find((m) => m.characterName === name) : null
@@ -195,6 +195,7 @@ export function annotateCandidates(candidates) {
       issues: c.issues || [],
       action: matched ? 'update' : 'create',
       matchedMemberId: matched?.id || null,
+      matchedWasLeft: matched?.status === 'left',
       // 角色名受头像干扰时常见缺字，默认勾选但仍标红提醒核对
       selected: Boolean(name),
     }
@@ -221,7 +222,8 @@ export function upsertMembersByName(rows, { ocrJobId } = {}) {
       skipped.push({ characterName: '', reason: '角色名为空' })
       continue
     }
-    const idx = list.findIndex((m) => m.characterName === name && m.status !== 'left')
+    // 含已退出：同角色名再次导入则恢复在职
+    const idx = list.findIndex((m) => m.characterName === name)
     const patch = {
       characterName: name,
       level: Number(item.level) || 0,
@@ -229,6 +231,7 @@ export function upsertMembersByName(rows, { ocrJobId } = {}) {
       fashionScore: Number(item.fashionScore) || 0,
       pathway: String(item.pathway || '').trim() || '未填写',
       title: String(item.title || '').trim() || '成员',
+      status: 'active',
       updatedAt: now,
     }
     if (ocrJobId) patch.lastOcrJobId = ocrJobId

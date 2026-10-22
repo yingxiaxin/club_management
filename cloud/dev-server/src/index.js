@@ -253,7 +253,7 @@ app.get('/api/ocr/jobs/:id', requireAdmin, (req, res) => {
 })
 
 /** 人工确认后按角色名新增/更新 */
-app.post('/api/ocr/commit', requireAdmin, (req, res) => {
+app.post('/api/ocr/commit', requireAdmin, async (req, res) => {
   try {
     const { jobId, rows } = req.body || {}
     if (!jobId) return res.status(400).json({ ok: false, message: '缺少 jobId' })

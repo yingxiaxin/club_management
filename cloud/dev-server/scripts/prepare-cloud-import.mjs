@@ -38,12 +38,14 @@ if (!fs.existsSync(src)) {
 }
 
 const rows = JSON.parse(fs.readFileSync(src, 'utf8'))
+// 控制台/脚本导入一律写成在职；勿把本地历史 left 带进云库
 const cloudRows = rows.map((m) => {
-  const { id, ...rest } = m
+  const { id, status: _status, ...rest } = m
   return {
     _id: id,
     ...rest,
     level: Number(m.level) || 0,
+    status: 'active',
   }
 })
 
@@ -52,10 +54,9 @@ const jsonl = cloudRows.map((r) => JSON.stringify(r)).join('\n') + '\n'
 fs.writeFileSync(out, jsonl, 'utf8')
 const outJsonl = path.resolve(root, 'data/members-cloud-import.jsonl')
 fs.writeFileSync(outJsonl, jsonl, 'utf8')
-const active = cloudRows.filter((r) => r.status !== 'left').length
 console.log(`已生成: ${out}`)
 console.log(`已生成: ${outJsonl}`)
-console.log(`共 ${cloudRows.length} 条（其中 active ${active}，left ${cloudRows.length - active}）`)
+console.log(`共 ${cloudRows.length} 条（全部 status=active）`)
 console.log('')
 console.log('【方式 A · 控制台导入】云开发 → 数据库 → members → 导入')
 console.log('  选 members-cloud-import.json 或 .jsonl（均为 JSON Lines，每行一条）')

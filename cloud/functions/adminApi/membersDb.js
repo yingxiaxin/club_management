@@ -83,6 +83,15 @@ async function findActiveByName(name) {
   return toClient((res.data || [])[0])
 }
 
+/** 按角色名查找（含已退出），用于导入/OCR 恢复在职 */
+async function findAnyByName(name) {
+  const res = await db().collection(COLLECTION).where({ characterName: name }).limit(20).get()
+  const rows = (res.data || []).map(toClient)
+  const active = rows.find((m) => m.status === 'active')
+  if (active) return active
+  return rows[0] || null
+}
+
 async function createMember(payload) {
   const name = String(payload.characterName || '').trim()
   if (!name) throw err('角色名必填', 400)
@@ -179,10 +188,11 @@ async function upsertMembersByName(rows, { ocrJobId } = {}) {
       fashionScore: Number(item.fashionScore) || 0,
       pathway: String(item.pathway || '').trim() || '未填写',
       title: String(item.title || '').trim() || '成员',
+      status: 'active',
     }
     if (ocrJobId) patch.lastOcrJobId = ocrJobId
 
-    const existing = await findActiveByName(name)
+    const existing = await findAnyByName(name)
     if (existing) {
       updated.push(await updateMember(existing.id, patch))
     } else {
@@ -225,7 +235,8 @@ async function importMembers(rows, { mode = 'upsert' } = {}) {
         pathway: String(raw.pathway || '').trim() || '未填写',
         title: String(raw.title || '').trim() || '成员',
         remark: String(raw.remark || '').trim(),
-        status: raw.status || 'active',
+        // 批量导入一律视为在职；仅管理端手动移出才标 left
+        status: 'active',
         joinedAt: raw.joinedAt || null,
         createdAt: raw.createdAt || new Date().toISOString(),
         updatedAt: raw.updatedAt || new Date().toISOString(),
@@ -269,10 +280,10 @@ module.exports = {
   upsertMembersByName,
   importMembers,
   annotateCandidates: async (candidates) => {
-    const list = await listMembers({})
+    const all = (await fetchAllMembers()).map(toClient)
     return (candidates || []).map((c, index) => {
       const name = String(c.characterName || '').trim()
-      const matched = name ? list.find((m) => m.characterName === name) : null
+      const matched = name ? all.find((m) => m.characterName === name) : null
       return {
         localId: `c-${index + 1}`,
         characterName: name,
@@ -286,6 +297,7 @@ module.exports = {
         issues: c.issues || [],
         action: matched ? 'update' : 'create',
         matchedMemberId: matched?.id || null,
+        matchedWasLeft: matched?.status === 'left',
         selected: Boolean(name),
       }
     })
