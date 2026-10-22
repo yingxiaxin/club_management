@@ -1,0 +1,50 @@
+.page {
+  min-height: 100vh;
+  padding: 48rpx 40rpx;
+  box-sizing: border-box;
+  background: var(--color-bg);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 28rpx;
+  padding: 40rpx 32rpx;
+  border: 1rpx solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: linear-gradient(165deg, var(--color-bg-glow) 0%, var(--color-surface) 100%);
+}
+
+.title {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--color-brand);
+}
+
+.meta,
+.label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.input {
+  padding: 20rpx 24rpx;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-elevated);
+  border: 1rpx solid var(--color-border);
+  color: var(--color-text);
+  font-size: var(--font-size-md);
+}
+
+.msg {
+  font-size: var(--font-size-sm);
+  color: var(--color-brand);
+  line-height: 1.5;
+}

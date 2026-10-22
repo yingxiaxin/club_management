@@ -1,4 +1,53 @@
 <view class="page">
-  <text class="title">诡秘之主 · 俱乐部</text>
-  <text class="hint">成员端骨架（P0-d）。云函数请在开发者工具左侧 cloud/functions 部署。</text>
+  <view class="hero">
+    <text class="brand">诡秘之主</text>
+    <text class="subtitle">俱乐部成员端</text>
+  </view>
+
+  <view class="panel" wx:if="{{loading}}">
+    <text class="muted">正在识别微信身份…</text>
+  </view>
+
+  <view class="panel" wx:elif="{{error}}">
+    <text class="danger">{{error}}</text>
+    <button class="btn-primary" bindtap="refresh">重试</button>
+  </view>
+
+  <block wx:else>
+    <view class="panel status">
+      <text class="label">当前身份</text>
+      <text class="value">{{roleLabel}}</text>
+      <text class="meta" wx:if="{{displayName}}">{{displayName}}</text>
+      <text class="muted" wx:else>尚未绑定游戏角色</text>
+    </view>
+
+    <view class="actions">
+      <button
+        wx:if="{{canViewMembers}}"
+        class="btn-primary"
+        bindtap="goMembers"
+      >
+        查看成员列表
+      </button>
+      <button
+        wx:else
+        class="btn-primary"
+        bindtap="goBind"
+      >
+        绑定我的角色
+      </button>
+      <button
+        wx:if="{{canViewMembers && !memberId}}"
+        class="btn-ghost"
+        bindtap="goBind"
+      >
+        绑定游戏角色（可选）
+      </button>
+      <button class="btn-ghost" bindtap="goAdminLogin">管理端扫码登录</button>
+    </view>
+
+    <text class="hint">
+      名单由管理员维护。未绑定前不可查看成员列表；邀请码入会将在后续版本开放。
+    </text>
+  </block>
 </view>

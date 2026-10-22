@@ -1,0 +1,44 @@
+<view class="page">
+  <view class="state" wx:if="{{loading}}">
+    <text class="muted">加载中…</text>
+  </view>
+  <view class="state" wx:elif="{{error}}">
+    <text class="danger">{{error}}</text>
+  </view>
+  <block wx:elif="{{member}}">
+    <view class="hero">
+      <text class="name">{{member.characterName}}</text>
+      <view class="tags">
+        <text class="tag">{{member.title}}</text>
+        <text class="tag muted-tag">{{member.pathway}}</text>
+        <text class="tag muted-tag" wx:if="{{member.level}}">Lv.{{member.level}}</text>
+      </view>
+    </view>
+
+    <view class="scores">
+      <view class="score-card">
+        <text class="score-label">非凡评分</text>
+        <text class="score-num">{{member.powerScore}}</text>
+      </view>
+      <view class="score-card">
+        <text class="score-label">风尚度</text>
+        <text class="score-num alt">{{member.fashionScore}}</text>
+      </view>
+    </view>
+
+    <view class="panel">
+      <view class="field">
+        <text class="label">备注</text>
+        <text class="value">{{member.remark || '无'}}</text>
+      </view>
+      <view class="field">
+        <text class="label">入会时间</text>
+        <text class="value">{{joinedAtText}}</text>
+      </view>
+      <view class="field">
+        <text class="label">状态</text>
+        <text class="value">{{statusText}}</text>
+      </view>
+    </view>
+  </block>
+</view>

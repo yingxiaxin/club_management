@@ -1,6 +1,24 @@
+@import './styles/tokens.wxss';
+
 page {
-  background: #1a1612;
-  color: #e8e0d4;
+  background: var(--color-bg);
+  color: var(--color-text);
   min-height: 100%;
   box-sizing: border-box;
+  font-size: var(--font-size-md);
+}
+
+.btn-primary {
+  background: var(--color-brand) !important;
+  color: var(--color-text-inverse) !important;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  border: none !important;
+}
+
+.btn-ghost {
+  background: transparent !important;
+  color: var(--color-brand) !important;
+  border: 1rpx solid var(--color-border-strong) !important;
+  border-radius: var(--radius-md);
 }

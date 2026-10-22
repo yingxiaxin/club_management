@@ -1,0 +1,122 @@
+.page {
+  min-height: 100vh;
+  padding: 40rpx 32rpx 64rpx;
+  box-sizing: border-box;
+  background:
+    radial-gradient(ellipse 70% 40% at 50% 0%, var(--color-bg-glow), transparent),
+    var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 28rpx;
+}
+
+.state {
+  padding: 80rpx 24rpx;
+  text-align: center;
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.danger {
+  color: var(--color-danger);
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.name {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.tags {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.tag {
+  font-size: 22rpx;
+  padding: 6rpx 14rpx;
+  border-radius: var(--radius-sm);
+  border: 1rpx solid var(--color-border-strong);
+  color: var(--color-brand);
+  background: var(--color-brand-muted);
+}
+
+.muted-tag {
+  color: var(--color-text-secondary);
+  border-color: var(--color-border);
+  background: var(--color-surface);
+}
+
+.scores {
+  display: flex;
+  flex-direction: row;
+  gap: 16rpx;
+}
+
+.score-card {
+  flex: 1;
+  padding: 28rpx 24rpx;
+  border-radius: var(--radius-md);
+  border: 1rpx solid var(--color-border);
+  background: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.score-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.score-num {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: var(--color-brand);
+}
+
+.score-num.alt {
+  color: var(--color-text-secondary);
+}
+
+.panel {
+  padding: 8rpx 0;
+  border-radius: var(--radius-md);
+  border: 1rpx solid var(--color-border);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.field {
+  padding: 24rpx 28rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  border-bottom: 1rpx solid var(--color-border);
+}
+
+.field:last-child {
+  border-bottom: none;
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.value {
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+  line-height: 1.5;
+  word-break: break-all;
+}

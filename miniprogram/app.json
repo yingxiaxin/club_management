@@ -1,10 +1,17 @@
 {
-  "pages": ["pages/index/index", "pages/admin-login/index"],
+  "pages": [
+    "pages/index/index",
+    "pages/members/index",
+    "pages/member-detail/index",
+    "pages/bind/index",
+    "pages/admin-login/index"
+  ],
   "window": {
-    "navigationBarTitleText": "俱乐部管理",
-    "navigationBarBackgroundColor": "#1a1612",
+    "navigationBarTitleText": "诡秘之主 · 俱乐部",
+    "navigationBarBackgroundColor": "#1a1c22",
     "navigationBarTextStyle": "white",
-    "backgroundColor": "#1a1612"
+    "backgroundColor": "#0e0f14",
+    "backgroundTextStyle": "light"
   },
   "style": "v2",
   "sitemapLocation": "sitemap.json"

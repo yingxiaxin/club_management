@@ -1,0 +1,47 @@
+/**
+ * 诡秘风 Design Tokens —— 与 admin / 视觉风格指南对齐
+ * 换肤只改本文件；业务页只用 var(--*)。
+ * 小程序把变量挂在 page 上（无 :root）。
+ */
+page {
+  /* Brand — antique gold */
+  --color-brand: #c9a227;
+  --color-brand-hover: #e0bc4a;
+  --color-brand-muted: rgba(201, 162, 39, 0.16);
+  --color-brand-glow: rgba(201, 162, 39, 0.35);
+
+  /* Surface — deep charcoal */
+  --color-bg: #0e0f14;
+  --color-bg-glow: #2a2218;
+  --color-surface: #1a1c22;
+  --color-surface-elevated: #22252e;
+  --color-surface-glass: rgba(26, 28, 34, 0.92);
+  --color-border: #3a3428;
+  --color-border-strong: #6b5a32;
+
+  /* Text — warm cream */
+  --color-text: #f5ecdc;
+  --color-text-secondary: #d4c4a8;
+  --color-text-muted: #a09078;
+  --color-text-inverse: #1a140a;
+
+  /* Status */
+  --color-success: #7aab76;
+  --color-warning: #d4a04a;
+  --color-danger: #b86558;
+  --color-info: #7d9ab0;
+
+  /* Layout */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --font-size-sm: 26rpx;
+  --font-size-md: 28rpx;
+  --font-size-lg: 34rpx;
+  --font-size-xl: 40rpx;
+}
