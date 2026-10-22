@@ -316,3 +316,25 @@ export function authFromToken(token) {
   if (!token) return null
   return sessions.get(token) || null
 }
+
+/** 扫码登录成功后签发与应急登录相同形态的本地 session */
+export function createSessionFromWechat({ username, role, displayName, openid }) {
+  if (!['super_admin', 'admin'].includes(role)) {
+    throw Object.assign(new Error('非管理员角色'), { status: 403 })
+  }
+  const token = uuid()
+  sessions.set(token, {
+    username: username || `wx_${String(openid || '').slice(-6) || 'admin'}`,
+    role,
+    displayName: displayName || '管理员',
+    openid: openid || null,
+    createdAt: Date.now(),
+  })
+  const user = sessions.get(token)
+  return {
+    token,
+    role: user.role,
+    displayName: user.displayName,
+    username: user.username,
+  }
+}

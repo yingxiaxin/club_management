@@ -1,4 +1,5 @@
 {
+  "description": "请用微信开发者工具打开仓库根目录（含 project.config.json），勿单独打开本目录。云函数根目录在仓库根配置为 cloud/functions/。",
   "setting": {
     "es6": true,
     "postcss": true,
@@ -14,12 +15,10 @@
     "useCompilerPlugins": false
   },
   "compileType": "miniprogram",
-  "simulatorPluginLibVersion": {},
+  "appid": "wx0a3fc7a2aee9f66f",
   "packOptions": {
     "ignore": [],
     "include": []
   },
-  "appid": "wx0a3fc7a2aee9f66f",
-  "cloudfunctionRoot": "../cloud/functions/",
   "editorSetting": {}
 }

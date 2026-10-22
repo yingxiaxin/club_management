@@ -1,0 +1,6 @@
+page {
+  background: #1a1612;
+  color: #e8e0d4;
+  min-height: 100%;
+  box-sizing: border-box;
+}

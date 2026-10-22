@@ -1,11 +1,10 @@
 /**
- * 管理端云函数：成员读写走云数据库 members。
+ * 管理端云函数：成员读写 + 扫码登录票。
  * 调用：cloud.callFunction({ name: 'adminApi', data: { action, ... } })
- *
- * 本地 admin 默认仍走 cloud/dev-server；配置 DATA_BACKEND=cloud 后由 Node SDK 写同一库。
  */
 const cloud = require('wx-server-sdk')
 const membersDb = require('./membersDb')
+const authDb = require('./authDb')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
@@ -22,7 +21,7 @@ exports.main = async (event) => {
   try {
     switch (action) {
       case 'health':
-        return ok({ service: 'adminApi', store: 'cloud-db', stage: 'cloud-members' })
+        return ok({ service: 'adminApi', store: 'cloud-db', stage: 'P0-c-qr-login' })
 
       case 'listMembers':
         return ok(await membersDb.listMembers(event.query || event))
@@ -62,9 +61,36 @@ exports.main = async (event) => {
           }),
         )
 
+      case 'createAdminLoginTicket':
+        return ok(await authDb.createAdminLoginTicket())
+
+      case 'getAdminLoginTicket':
+        return ok(await authDb.getAdminLoginTicket(event.ticketId || event.id))
+
+      case 'confirmAdminLogin': {
+        const wxContext = cloud.getWXContext()
+        const openid = wxContext.OPENID
+        return ok(await authDb.confirmAdminLogin(event.ticketId || event.id, openid))
+      }
+
+      case 'consumeAdminLoginTicket':
+        return ok(await authDb.consumeAdminLoginTicket(event.ticketId || event.id))
+
+      case 'whoami': {
+        const wxContext = cloud.getWXContext()
+        const openid = wxContext.OPENID
+        const admin = await authDb.findAdminByOpenid(openid)
+        return ok({
+          openid,
+          isAdmin: Boolean(admin),
+          role: admin?.role || null,
+          displayName: admin?.displayName || null,
+        })
+      }
+
       default:
         return fail(
-          `未知 action: ${action || '(空)'}。支持 health/listMembers/getMember/createMember/updateMember/deleteMember/batchUpdateScores/upsertMembersByName/importMembers`,
+          `未知 action: ${action || '(空)'}。支持 health/listMembers/.../createAdminLoginTicket/confirmAdminLogin/whoami`,
           400,
         )
     }

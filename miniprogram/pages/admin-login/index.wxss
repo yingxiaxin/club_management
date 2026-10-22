@@ -1,0 +1,82 @@
+.page {
+  min-height: 100vh;
+  padding: 48rpx 40rpx;
+  box-sizing: border-box;
+  background: #1a1612;
+  color: #e8e0d4;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 28rpx;
+  padding: 40rpx 32rpx;
+  border: 1rpx solid rgba(196, 152, 90, 0.35);
+  border-radius: 16rpx;
+  background: linear-gradient(165deg, #2a2218 0%, #1a1612 100%);
+}
+
+.title {
+  font-size: 40rpx;
+  font-weight: 600;
+  color: #d4a574;
+}
+
+.meta,
+.hint,
+.msg,
+.label {
+  font-size: 26rpx;
+  color: rgba(232, 224, 212, 0.7);
+  line-height: 1.5;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.input {
+  padding: 20rpx 24rpx;
+  border-radius: 12rpx;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1rpx solid rgba(196, 152, 90, 0.35);
+  color: #e8e0d4;
+  font-size: 28rpx;
+}
+
+.openid {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  padding: 20rpx;
+  border-radius: 12rpx;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.value {
+  font-size: 24rpx;
+  word-break: break-all;
+  color: #e8e0d4;
+}
+
+.btn {
+  margin-top: 12rpx;
+  background: #b8894a !important;
+  color: #1a1612 !important;
+  font-weight: 600;
+}
+
+.btn-copy {
+  align-self: flex-start;
+  margin: 0 !important;
+  background: transparent !important;
+  color: #d4a574 !important;
+  border: 1rpx solid rgba(196, 152, 90, 0.45) !important;
+  font-size: 24rpx !important;
+}
+
+.msg {
+  color: #d4a574;
+}

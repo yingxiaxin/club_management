@@ -1,0 +1,35 @@
+<view class="page">
+  <view class="card">
+    <text class="title">管理端登录确认</text>
+    <text class="meta">在 PC 登录页复制票号，粘贴到下方后点确认</text>
+
+    <view class="field">
+      <text class="label">票号</text>
+      <input
+        class="input"
+        value="{{ticketId}}"
+        placeholder="例如 tmviy7rgjhxml7r"
+        bindinput="onTicketInput"
+      />
+    </view>
+
+    <view class="openid" wx:if="{{openid}}">
+      <text class="label">当前 openid（以系统为准，j/J 肉眼易混）</text>
+      <text class="value" selectable>{{openid}}</text>
+      <button class="btn-copy" size="mini" bindtap="onCopyOpenid">复制 openid</button>
+      <text class="hint">若提示非管理员：把复制结果写入云库 users（role=super_admin）</text>
+    </view>
+
+    <button
+      class="btn"
+      type="primary"
+      loading="{{loading}}"
+      disabled="{{!ticketId || done}}"
+      bindtap="onConfirm"
+    >
+      {{done ? '已确认' : '确认登录管理端'}}
+    </button>
+
+    <text class="msg" wx:if="{{message}}">{{message}}</text>
+  </view>
+</view>

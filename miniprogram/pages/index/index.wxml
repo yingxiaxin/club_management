@@ -1,0 +1,4 @@
+<view class="page">
+  <text class="title">诡秘之主 · 俱乐部</text>
+  <text class="hint">成员端骨架（P0-d）。云函数请在开发者工具左侧 cloud/functions 部署。</text>
+</view>

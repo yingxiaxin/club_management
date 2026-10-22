@@ -9,7 +9,9 @@
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/api/health` | 健康检查 |
-| POST | `/api/auth/login` | body: `{ username, password }` |
+| POST | `/api/auth/login` | body: `{ username, password }` 应急账号 |
+| POST | `/api/auth/qr/start` | 创建扫码票 + 小程序码（需云密钥与已部署 adminApi） |
+| GET | `/api/auth/qr/:ticketId` | 轮询；`confirmed` 时签发 Bearer token 并消费票 |
 | GET | `/api/auth/me` | 当前管理员 |
 | GET | `/api/members` | query: sort/order/pathway/title/q |
 | GET | `/api/members/export.csv` | CSV 导出 |

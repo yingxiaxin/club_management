@@ -10,6 +10,7 @@ async function unwrap<T>(p: Promise<{ data: ApiOk<T> | ApiErr }>): Promise<T> {
   return data.data
 }
 
+/** @deprecated 请用 `@/api/auth` 的 loginWithPassword；保留兼容旧引用 */
 export function login(username: string, password: string) {
   return unwrap(
     http.post('/api/auth/login', { username, password }) as Promise<{

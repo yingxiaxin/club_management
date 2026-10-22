@@ -10,6 +10,7 @@ import {
   batchUpdateScores,
   createMember,
   createOcrJob,
+  createSessionFromWechat,
   deleteMember,
   getMember,
   getOcrJob,
@@ -19,6 +20,7 @@ import {
   upsertMembersByName,
 } from './store.js'
 import * as cloudMembers from './cloudMembers.js'
+import * as cloudAuth from './cloudAuth.js'
 import { recognizeMemberScreenshots } from './ocr/recognize.js'
 
 // 加载 cloud/dev-server/.env（可选腾讯云 OCR / 云开发密钥），不覆盖已有环境变量
@@ -101,8 +103,9 @@ app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
     service: 'club-dev-server',
-    stage: 'P0-cloud-db',
+    stage: 'P0-c-qr-login',
     membersBackend: useCloudMembers() ? 'cloud' : 'json',
+    qrLogin: cloudAuth.isQrLoginConfigured(),
   })
 })
 
@@ -111,6 +114,48 @@ app.post('/api/auth/login', (req, res) => {
     const { username, password } = req.body || {}
     const data = login(String(username || ''), String(password || ''))
     res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+/** 创建扫码登录票 + 小程序码（需云开发密钥且已部署 adminApi） */
+app.post('/api/auth/qr/start', async (_req, res) => {
+  try {
+    if (!cloudAuth.isQrLoginConfigured()) {
+      return res.status(503).json({
+        ok: false,
+        message: '未配置云开发密钥，无法扫码登录；请用应急账号或配置 CLOUDBASE_*',
+      })
+    }
+    const data = await cloudAuth.startQrLogin()
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+/** 轮询扫码状态；首次 confirmed 时签发本地 token 并消费票 */
+app.get('/api/auth/qr/:ticketId', async (req, res) => {
+  try {
+    if (!cloudAuth.isQrLoginConfigured()) {
+      return res.status(503).json({ ok: false, message: '未配置云开发密钥' })
+    }
+    const ticketId = req.params.ticketId
+    const ticket = await cloudAuth.pollQrLogin(ticketId)
+    if (ticket.status === 'confirmed') {
+      const consumed = await cloudAuth.consumeQrLogin(ticketId)
+      const data = createSessionFromWechat(consumed)
+      return res.json({ ok: true, data: { status: 'confirmed', ...data } })
+    }
+    res.json({
+      ok: true,
+      data: {
+        status: ticket.status,
+        expiresAt: ticket.expiresAt,
+        ticketId: ticket.ticketId,
+      },
+    })
   } catch (err) {
     res.status(err.status || 500).json({ ok: false, message: err.message })
   }

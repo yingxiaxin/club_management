@@ -1,0 +1,11 @@
+{
+  "pages": ["pages/index/index", "pages/admin-login/index"],
+  "window": {
+    "navigationBarTitleText": "俱乐部管理",
+    "navigationBarBackgroundColor": "#1a1612",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#1a1612"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}
