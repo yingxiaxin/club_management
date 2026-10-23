@@ -15,6 +15,7 @@ import {
   getMember,
   getOcrJob,
   listMembers,
+  getEmergencyAccounts,
   login,
   updateMember,
   upsertMembersByName,
@@ -25,6 +26,7 @@ import * as cloudInvites from './cloudInvites.js'
 import * as cloudActivities from './cloudActivities.js'
 import * as cloudClub from './cloudClub.js'
 import * as cloudAnnouncements from './cloudAnnouncements.js'
+import * as cloudUsers from './cloudUsers.js'
 import { recognizeMemberScreenshots } from './ocr/recognize.js'
 
 // 加载 cloud/dev-server/.env（可选腾讯云 OCR / 云开发密钥），不覆盖已有环境变量
@@ -101,6 +103,49 @@ function requireAdmin(req, res, next) {
   }
   req.user = user
   next()
+}
+
+/** 仅超管：任命/撤销管理员 */
+function requireSuperAdmin(req, res, next) {
+  const header = req.headers.authorization || ''
+  const token = header.startsWith('Bearer ') ? header.slice(7) : ''
+  const user = authFromToken(token)
+  if (!user || !['super_admin', 'admin'].includes(user.role)) {
+    return res.status(401).json({ ok: false, message: '未登录或无权限' })
+  }
+  if (user.role !== 'super_admin') {
+    return res.status(403).json({ ok: false, message: '仅超管可任命或撤销管理员' })
+  }
+  req.user = user
+  next()
+}
+
+function requireCloudUsers(res) {
+  if (!useCloudMembers()) {
+    res.status(503).json({
+      ok: false,
+      message: '任命管理员需 DATA_BACKEND=cloud 并配置 CLOUDBASE_*',
+    })
+    return false
+  }
+  return true
+}
+
+function filterByAccountRole(list, accountRole) {
+  const key = String(accountRole || '').trim()
+  if (!key || key === 'all') return list
+  if (key === 'unbound') return list.filter((m) => !m.boundOpenid)
+  if (key === 'admin') return list.filter((m) => m.accountRole === 'admin')
+  if (key === 'super_admin') return list.filter((m) => m.accountRole === 'super_admin')
+  if (key === 'member') {
+    return list.filter(
+      (m) =>
+        Boolean(m.boundOpenid) &&
+        m.accountRole !== 'admin' &&
+        m.accountRole !== 'super_admin',
+    )
+  }
+  return list
 }
 
 app.get('/api/health', (_req, res) => {
@@ -197,7 +242,15 @@ app.get('/api/auth/me', requireAdmin, (req, res) => {
 
 app.get('/api/members', requireAdmin, async (req, res) => {
   try {
-    const data = await membersApi.list(req.query)
+    let data = await membersApi.list(req.query)
+    if (useCloudMembers()) {
+      await cloudUsers.attachAccountRoles(data)
+    } else {
+      for (const m of data) {
+        m.accountRole = null
+      }
+    }
+    data = filterByAccountRole(data, req.query.accountRole)
     res.json({ ok: true, data })
   } catch (err) {
     res.status(err.status || 500).json({ ok: false, message: err.message })
@@ -263,6 +316,26 @@ app.put('/api/members/:id', requireAdmin, async (req, res) => {
 app.delete('/api/members/:id', requireAdmin, async (req, res) => {
   try {
     const data = await membersApi.remove(req.params.id)
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.post('/api/members/:id/grant-admin', requireSuperAdmin, async (req, res) => {
+  try {
+    if (!requireCloudUsers(res)) return
+    const data = await cloudUsers.grantAdmin(req.params.id)
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.post('/api/members/:id/revoke-admin', requireSuperAdmin, async (req, res) => {
+  try {
+    if (!requireCloudUsers(res)) return
+    const data = await cloudUsers.revokeAdmin(req.params.id)
     res.json({ ok: true, data })
   } catch (err) {
     res.status(err.status || 500).json({ ok: false, message: err.message })
@@ -567,5 +640,12 @@ app.listen(PORT, () => {
   console.log(
     `成员数据源: ${useCloudMembers() ? '云数据库 members' : '本地 JSON'}（DATA_BACKEND=${process.env.DATA_BACKEND || 'json'}）`,
   )
-  console.log('应急账号: superadmin / club-change-me  或  admin / club-change-me')
+  const emergency = getEmergencyAccounts()
+  if (emergency.length) {
+    console.log(
+      `应急账号已加载（仅用户名）: ${emergency.map((a) => `${a.username}/${a.role}`).join('、')}（口令见 .env，勿打印）`,
+    )
+  } else {
+    console.log('未配置应急账号（.env 中 EMERGENCY_*_USERNAME/PASSWORD）')
+  }
 })

@@ -59,7 +59,7 @@ cd cloud/dev-server && npm install && npm run dev
 cd admin && npm install && npm run dev
 ```
 
-浏览器：http://127.0.0.1:5173 ，账号 `superadmin` / `club-change-me`
+浏览器：http://127.0.0.1:5173 。日常扫码登录；应急账号见本机 `cloud/dev-server/.env` 的 `EMERGENCY_*`（勿提交）。
 
 ## Git / GitHub
 

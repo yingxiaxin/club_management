@@ -17,8 +17,8 @@ let pollTimer: ReturnType<typeof setInterval> | null = null
 const emergencyOpen = ref<string[]>([])
 const emergencyLoading = ref(false)
 const form = reactive({
-  username: 'superadmin',
-  password: 'club-change-me',
+  username: '',
+  password: '',
 })
 
 function goIn(token: string, user: { username: string; role: string; displayName: string }) {
@@ -159,7 +159,6 @@ onUnmounted(() => {
               应急登录
             </el-button>
           </el-form>
-          <p class="tip">默认：superadmin / club-change-me（仅防微信号换绑）</p>
         </el-collapse-item>
       </el-collapse>
     </div>
@@ -191,11 +190,9 @@ onUnmounted(() => {
 }
 
 .hint,
-.tip,
 .status,
 .err,
-.ticket,
-.tip-inline {
+.ticket {
   margin: 0;
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
@@ -288,9 +285,5 @@ onUnmounted(() => {
 
 .submit {
   width: 100%;
-}
-
-.tip {
-  margin-top: var(--space-3);
 }
 </style>

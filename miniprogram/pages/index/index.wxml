@@ -31,11 +31,33 @@
   </view>
 
   <block wx:else>
-    <!-- 身份细条 -->
-    <view class="identity">
-      <view class="identity-dot {{canViewMembers ? 'ok' : 'wait'}}" />
-      <text class="identity-main">{{identityLine}}</text>
-      <text class="identity-role">{{roleLabel}}</text>
+    <!-- 个人信息（俱乐部信息栏下方）：管理员在此展开管理工具 -->
+    <view class="me-card">
+      <view class="me-head {{isAdmin ? 'tappable' : ''}}" bindtap="onMeHeadTap">
+        <view class="identity-dot {{canViewMembers ? 'ok' : 'wait'}}" />
+        <view class="me-text">
+          <text class="me-label">我的身份</text>
+          <text class="identity-main">{{identityLine}}</text>
+        </view>
+        <text class="identity-role">{{roleLabel}}</text>
+        <text wx:if="{{isAdmin}}" class="me-chevron {{showAdminTools ? 'open' : ''}}">›</text>
+      </view>
+      <view class="me-tools" wx:if="{{isAdmin && showAdminTools}}">
+        <view class="me-tool" bindtap="goAdminLogin">
+          <view class="me-tool-text">
+            <text class="me-tool-title">管理端扫码登录</text>
+            <text class="me-tool-desc">确认 PC 后台登录票</text>
+          </view>
+          <text class="me-tool-arrow">›</text>
+        </view>
+        <view class="me-tool" bindtap="goJoin">
+          <view class="me-tool-text">
+            <text class="me-tool-title">{{memberId ? '关联联调' : '邀请码关联（联调）'}}</text>
+            <text class="me-tool-desc">{{memberId ? '进入关联页 / 解除测试绑定' : '用邀请码测试关联流程'}}</text>
+          </view>
+          <text class="me-tool-arrow">›</text>
+        </view>
+      </view>
     </view>
 
     <!-- 快捷入口 -->
@@ -140,27 +162,5 @@
       </view>
     </view>
 
-    <!-- 仅管理员：联调 / 扫码登录（普通成员不展示） -->
-    <view class="more" wx:if="{{isAdmin}}">
-      <text class="more-toggle" bindtap="toggleMore">{{showMore ? '收起管理入口' : '管理入口'}}</text>
-      <view class="more-panel" wx:if="{{showMore}}">
-        <button
-          wx:if="{{!memberId}}"
-          class="btn-ghost"
-          bindtap="goJoin"
-        >
-          邀请码关联（联调）
-        </button>
-        <button
-          wx:else
-          class="btn-ghost"
-          bindtap="goJoin"
-        >
-          关联页 / 解除联调绑定
-        </button>
-        <button class="btn-ghost" bindtap="goAdminLogin">管理端扫码登录</button>
-        <text class="hint">以上仅管理员可见，用于 PC 扫码登录与关联联调。</text>
-      </view>
-    </view>
   </block>
 </view>

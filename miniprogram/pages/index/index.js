@@ -29,7 +29,7 @@ Page({
     todayCount: 0,
     weekCount: 0,
     identityLine: '',
-    showMore: false,
+    showAdminTools: false,
   },
 
   onShow() {
@@ -130,8 +130,9 @@ Page({
     })
   },
 
-  toggleMore() {
-    this.setData({ showMore: !this.data.showMore })
+  onMeHeadTap() {
+    if (!this.data.isAdmin) return
+    this.setData({ showAdminTools: !this.data.showAdminTools })
   },
 
   goMembers() {

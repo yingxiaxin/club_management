@@ -275,26 +275,41 @@ export function upsertMembersByName(rows, { ocrJobId } = {}) {
   return { created, updated, skipped }
 }
 
-/** 应急账号：本地开发默认，上线务必修改 */
-export const EMERGENCY_ACCOUNTS = [
-  {
-    username: 'superadmin',
-    password: 'club-change-me',
-    role: 'super_admin',
-    displayName: '超管（应急）',
-  },
-  {
-    username: 'admin',
-    password: 'club-change-me',
-    role: 'admin',
-    displayName: '管理员（应急）',
-  },
-]
+/**
+ * 应急账号来自环境变量（cloud/dev-server/.env），勿写进仓库与页面。
+ * 须在 index.js 加载 .env 之后再调用（登录时读取即可）。
+ */
+export function getEmergencyAccounts() {
+  const accounts = []
+  const superUser = String(process.env.EMERGENCY_SUPER_USERNAME || '').trim()
+  const superPass = String(process.env.EMERGENCY_SUPER_PASSWORD || '')
+  if (superUser && superPass) {
+    accounts.push({
+      username: superUser,
+      password: superPass,
+      role: 'super_admin',
+      displayName:
+        String(process.env.EMERGENCY_SUPER_DISPLAY_NAME || '').trim() || '超管（应急）',
+    })
+  }
+  const adminUser = String(process.env.EMERGENCY_ADMIN_USERNAME || '').trim()
+  const adminPass = String(process.env.EMERGENCY_ADMIN_PASSWORD || '')
+  if (adminUser && adminPass) {
+    accounts.push({
+      username: adminUser,
+      password: adminPass,
+      role: 'admin',
+      displayName:
+        String(process.env.EMERGENCY_ADMIN_DISPLAY_NAME || '').trim() || '管理员（应急）',
+    })
+  }
+  return accounts
+}
 
 const sessions = new Map()
 
 export function login(username, password) {
-  const account = EMERGENCY_ACCOUNTS.find(
+  const account = getEmergencyAccounts().find(
     (a) => a.username === username && a.password === password,
   )
   if (!account) throw Object.assign(new Error('账号或密码错误'), { status: 401 })

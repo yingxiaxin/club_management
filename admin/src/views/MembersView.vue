@@ -6,9 +6,12 @@ import {
   createMember,
   exportMembersCsv,
   fetchMembers,
+  grantAdmin,
   removeMember,
+  revokeAdmin,
   updateMember,
 } from '@/api/members'
+import { getUser } from '@/auth/session'
 import { commitOcrImport, parseOcrImages } from '@/api/ocr'
 import type { Member, MemberInput } from '@/types/member'
 import type { OcrCandidate } from '@/types/ocr'
@@ -23,9 +26,28 @@ const query = reactive({
   q: '',
   pathway: '',
   title: '',
+  accountRole: '',
   sort: 'powerScore',
   order: 'desc',
 })
+
+const isSuperAdmin = computed(() => getUser()?.role === 'super_admin')
+
+function accountRoleLabel(row: Member) {
+  if (!row.boundOpenid) return '未关联'
+  if (row.accountRole === 'super_admin') return '超管'
+  if (row.accountRole === 'admin') return '管理员'
+  return '成员'
+}
+
+function canGrantAdmin(row: Member) {
+  if (!isSuperAdmin.value || !row.boundOpenid) return false
+  return row.accountRole !== 'admin' && row.accountRole !== 'super_admin'
+}
+
+function canRevokeAdmin(row: Member) {
+  return isSuperAdmin.value && row.accountRole === 'admin'
+}
 
 const dialogVisible = ref(false)
 const editingId = ref<string | null>(null)
@@ -101,6 +123,7 @@ async function load() {
     if (query.q.trim()) params.q = query.q.trim()
     if (query.pathway.trim()) params.pathway = query.pathway.trim()
     if (query.title.trim()) params.title = query.title.trim()
+    if (query.accountRole.trim()) params.accountRole = query.accountRole.trim()
     rows.value = await fetchMembers(params)
   } catch (e) {
     ElMessage.error(e instanceof Error ? e.message : '加载失败')
@@ -195,6 +218,38 @@ async function onDelete(row: Member) {
   } catch (e) {
     if (e === 'cancel' || e === 'close') return
     ElMessage.error(e instanceof Error ? e.message : '删除失败')
+  }
+}
+
+async function onGrantAdmin(row: Member) {
+  try {
+    await ElMessageBox.confirm(
+      `将「${row.characterName}」任命为管理员后，其绑定微信可扫码登录管理后台。是否继续？`,
+      '任命管理员',
+      { type: 'warning', confirmButtonText: '任命', cancelButtonText: '取消' },
+    )
+    await grantAdmin(row.id)
+    ElMessage.success('已任命为管理员')
+    await load()
+  } catch (e) {
+    if (e === 'cancel' || e === 'close') return
+    ElMessage.error(e instanceof Error ? e.message : '任命失败')
+  }
+}
+
+async function onRevokeAdmin(row: Member) {
+  try {
+    await ElMessageBox.confirm(
+      `取消「${row.characterName}」的管理员后将无法登录管理后台，小程序成员能力保留。是否继续？`,
+      '取消管理员',
+      { type: 'warning', confirmButtonText: '取消管理员', cancelButtonText: '返回' },
+    )
+    await revokeAdmin(row.id)
+    ElMessage.success('已取消管理员')
+    await load()
+  } catch (e) {
+    if (e === 'cancel' || e === 'close') return
+    ElMessage.error(e instanceof Error ? e.message : '撤销失败')
   }
 }
 
@@ -363,6 +418,11 @@ onUnmounted(() => window.removeEventListener('paste', onOcrPaste))
       <el-select v-model="query.title" clearable placeholder="职位" class="filter-item">
         <el-option v-for="t in TITLE_OPTIONS" :key="t" :label="t" :value="t" />
       </el-select>
+      <el-select v-model="query.accountRole" clearable placeholder="后台身份" class="filter-item">
+        <el-option label="管理员" value="admin" />
+        <el-option label="成员（已关联）" value="member" />
+        <el-option label="未关联" value="unbound" />
+      </el-select>
       <el-select v-model="query.sort" class="filter-item">
         <el-option label="按非凡评分" value="powerScore" />
         <el-option label="按风尚度" value="fashionScore" />
@@ -403,11 +463,41 @@ onUnmounted(() => window.removeEventListener('paste', onOcrPaste))
         <el-table-column prop="fashionScore" label="风尚度" min-width="1" sortable="custom" />
         <el-table-column prop="pathway" label="序列/途径" min-width="1" sortable="custom" show-overflow-tooltip />
         <el-table-column prop="title" label="职位" min-width="1" />
+        <el-table-column label="身份" width="104" align="center">
+          <template #default="{ row }">
+            <span
+              class="role-tag"
+              :class="{
+                'role-super': row.accountRole === 'super_admin',
+                'role-admin': row.accountRole === 'admin',
+                'role-unbound': !row.boundOpenid,
+              }"
+            >
+              {{ accountRoleLabel(row) }}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column prop="remark" label="备注" min-width="1" show-overflow-tooltip />
-        <el-table-column label="操作" width="100" align="center">
+        <el-table-column label="操作" :width="isSuperAdmin ? 200 : 120" align="center">
           <template #default="{ row }">
             <div class="row-actions">
               <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
+              <el-button
+                v-if="canGrantAdmin(row)"
+                link
+                type="warning"
+                @click="onGrantAdmin(row)"
+              >
+                任命
+              </el-button>
+              <el-button
+                v-if="canRevokeAdmin(row)"
+                link
+                type="warning"
+                @click="onRevokeAdmin(row)"
+              >
+                取消管理
+              </el-button>
               <el-button link type="danger" @click="onDelete(row)">移出</el-button>
             </div>
           </template>
@@ -648,8 +738,27 @@ onUnmounted(() => window.removeEventListener('paste', onOcrPaste))
   align-items: center;
   justify-content: center;
   gap: 2px;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   line-height: 1.4;
+}
+
+.role-tag {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.role-tag.role-super {
+  color: var(--color-brand-hover);
+  font-weight: 600;
+}
+
+.role-tag.role-admin {
+  color: var(--color-brand);
+  font-weight: 600;
+}
+
+.role-tag.role-unbound {
+  color: var(--color-text-muted);
 }
 
 .ocr-dialog-body {

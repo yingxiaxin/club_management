@@ -102,16 +102,39 @@
   line-height: 1.55;
 }
 
-/* —— 身份细条 —— */
-.identity {
+/* —— 个人信息（俱乐部栏下方） —— */
+.me-card {
+  border-radius: var(--radius-md);
+  border: 1rpx solid var(--color-border);
+  background: var(--color-surface-glass);
+  overflow: hidden;
+  box-shadow: inset 0 1rpx 0 rgba(201, 162, 39, 0.06);
+}
+
+.me-head {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 14rpx;
-  padding: 16rpx 22rpx;
-  border-radius: var(--radius-sm);
-  border: 1rpx solid var(--color-border);
-  background: var(--color-surface-glass);
+  padding: 22rpx 24rpx;
+}
+
+.me-head.tappable:active {
+  background: var(--color-brand-muted);
+}
+
+.me-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.me-label {
+  font-size: 20rpx;
+  color: var(--color-text-muted);
+  letter-spacing: 0.06em;
 }
 
 .identity-dot {
@@ -132,8 +155,6 @@
 }
 
 .identity-main {
-  flex: 1;
-  min-width: 0;
   font-size: var(--font-size-sm);
   color: var(--color-text);
   overflow: hidden;
@@ -148,6 +169,74 @@
   border-radius: var(--radius-sm);
   padding: 2rpx 12rpx;
   background: var(--color-brand-muted);
+  flex-shrink: 0;
+}
+
+.me-chevron {
+  font-size: 36rpx;
+  line-height: 1;
+  color: var(--color-brand);
+  opacity: 0.7;
+  transform: rotate(90deg);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 16rpx;
+}
+
+.me-chevron.open {
+  transform: rotate(-90deg);
+  opacity: 1;
+}
+
+.me-tools {
+  border-top: 1rpx solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  background:
+    linear-gradient(180deg, rgba(201, 162, 39, 0.05), transparent 48%),
+    var(--color-surface);
+}
+
+.me-tool {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16rpx;
+  padding: 22rpx 24rpx;
+  border-bottom: 1rpx solid var(--color-border);
+}
+
+.me-tool:last-child {
+  border-bottom: none;
+}
+
+.me-tool:active {
+  background: var(--color-brand-muted);
+}
+
+.me-tool-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.me-tool-title {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.me-tool-desc {
+  font-size: 20rpx;
+  color: var(--color-text-muted);
+}
+
+.me-tool-arrow {
+  font-size: 32rpx;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
 }
 
 /* —— 快捷入口 —— */
@@ -456,23 +545,3 @@
   background: var(--color-brand-muted);
 }
 
-.more {
-  margin-top: 8rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-  align-items: center;
-}
-
-.more-toggle {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
-  padding: 8rpx 24rpx;
-}
-
-.more-panel {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-}

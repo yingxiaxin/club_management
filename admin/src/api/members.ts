@@ -39,6 +39,16 @@ export function removeMember(id: string) {
   return unwrap(http.delete(`/api/members/${id}`) as Promise<{ data: ApiOk<Member> }>)
 }
 
+/** 超管：任命为管理员（须已关联微信） */
+export function grantAdmin(id: string) {
+  return unwrap(http.post(`/api/members/${id}/grant-admin`) as Promise<{ data: ApiOk<Member> }>)
+}
+
+/** 超管：撤销管理员（不解绑微信） */
+export function revokeAdmin(id: string) {
+  return unwrap(http.post(`/api/members/${id}/revoke-admin`) as Promise<{ data: ApiOk<Member> }>)
+}
+
 export async function exportMembersCsv() {
   const res = await http.get('/api/members/export.csv', { responseType: 'blob' })
   return res.data as Blob

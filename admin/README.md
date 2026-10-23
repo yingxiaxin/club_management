@@ -20,7 +20,7 @@ npm run dev
 
 浏览器打开：http://127.0.0.1:5173  
 
-应急账号：`superadmin` / `club-change-me`（或 `admin` / `club-change-me`）
+应急账号配置在本机 `cloud/dev-server/.env` 的 `EMERGENCY_*`（见 `.env.example`）；**不要**写进页面或公开文档，建议同步记在密码管理器。日常请用微信扫码。
 
 > 建议 Node **18+**。若为 Node 16，本仓库已锁定 Vite 4 以便运行。
 
