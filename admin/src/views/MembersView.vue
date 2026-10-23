@@ -384,6 +384,7 @@ onUnmounted(() => window.removeEventListener('paste', onOcrPaste))
         :data="rows"
         stripe
         table-layout="fixed"
+        height="100%"
         style="width: 100%"
         empty-text="暂无成员"
         :default-sort="{
@@ -578,12 +579,21 @@ onUnmounted(() => window.removeEventListener('paste', onOcrPaste))
 </template>
 
 <style scoped>
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  height: calc(100vh - var(--header-height) - 2 * var(--space-5));
+  min-height: 360px;
+  overflow: hidden;
+}
+
 .page-head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--space-4);
-  margin-bottom: var(--space-4);
+  flex-shrink: 0;
 }
 
 .page-title {
@@ -616,7 +626,7 @@ onUnmounted(() => window.removeEventListener('paste', onOcrPaste))
   flex-wrap: wrap;
   gap: var(--space-3);
   padding: var(--space-4);
-  margin-bottom: var(--space-4);
+  flex-shrink: 0;
 }
 
 .filter-item {
@@ -628,8 +638,9 @@ onUnmounted(() => window.removeEventListener('paste', onOcrPaste))
 }
 
 .table-wrap {
-  padding: var(--space-2);
-  overflow: visible;
+  flex: 1;
+  min-height: 160px;
+  overflow: hidden;
 }
 
 .row-actions {

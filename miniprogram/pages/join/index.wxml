@@ -5,19 +5,22 @@
 
   <block wx:elif="{{alreadyBound}}">
     <view class="panel">
-      <text class="title">你已关联成员</text>
-      <text class="meta" wx:if="{{boundName}}">当前：{{boundName}}</text>
-      <text class="meta">可直接查看俱乐部成员列表。</text>
-      <button class="btn-primary" bindtap="goMembers">查看成员列表</button>
-      <button
-        wx:if="{{isAdmin}}"
-        class="btn-ghost"
-        loading="{{unbinding}}"
-        bindtap="onUnbindForTest"
-      >
-        解除关联（联调）
-      </button>
-      <text class="muted" wx:if="{{isAdmin}}">仅管理员可见：解除后可再测邀请码关联。</text>
+      <text class="title">你已关联角色</text>
+      <text class="meta" wx:if="{{boundName}}">当前角色：{{boundName}}</text>
+      <text class="meta">可以查看公告、活动日程与成员列表了。</text>
+      <button class="btn-primary" bindtap="goHome">回首页</button>
+      <button class="btn-ghost" bindtap="goMembers">查看成员列表</button>
+      <view class="admin-box" wx:if="{{isAdmin}}">
+        <text class="admin-label">管理员联调</text>
+        <button
+          class="btn-ghost"
+          loading="{{unbinding}}"
+          bindtap="onUnbindForTest"
+        >
+          解除关联（联调）
+        </button>
+        <text class="muted">解除后可再用邀请码重测关联流程。</text>
+      </view>
       <text class="msg" wx:if="{{message}}">{{message}}</text>
     </view>
   </block>
@@ -26,8 +29,9 @@
     <view class="panel">
       <text class="title">关联申请审核中</text>
       <text class="meta">角色名：{{application.characterName}}</text>
-      <text class="muted">请等待管理员确认后，即可查看成员列表。</text>
-      <button class="btn-ghost" bindtap="refresh">刷新状态</button>
+      <text class="meta">已提交给管理员。通过后即可查看俱乐部信息，无需重复提交。</text>
+      <button class="btn-primary" bindtap="refresh">刷新状态</button>
+      <button class="btn-ghost" bindtap="goHome">回首页</button>
     </view>
   </block>
 
@@ -35,25 +39,28 @@
     <view class="panel" wx:if="{{application && application.status === 'rejected'}}">
       <text class="title">上次关联未通过</text>
       <text class="meta">角色名：{{application.characterName}}</text>
-      <text class="muted">可核对角色名后重新提交。</text>
+      <text class="muted">请核对角色名是否与俱乐部名单完全一致后重新提交；也可联系管理员确认名单。</text>
     </view>
     <view class="panel form">
-      <text class="title">邀请码关联</text>
-      <text class="meta">
-        用邀请码把你的微信与俱乐部名单中的角色关联。角色名须与名单完全一致；不在名单中无法关联。
-      </text>
-      <text class="meta" wx:if="{{isAdmin}}">（当前为管理员微信，仅联调测试用）</text>
+      <text class="title">邀请码关联角色</text>
+      <text class="meta">把微信与俱乐部名单中的角色关联。名单由管理员维护，邀请码不会新建角色。</text>
+      <view class="steps">
+        <text class="step">1. 向管理员索取有效邀请码</text>
+        <text class="step">2. 角色名须与名单完全一致（含标点与空格）</text>
+        <text class="step">3. 提交后等待管理员确认</text>
+      </view>
+      <text class="meta admin-tip" wx:if="{{isAdmin}}">当前为管理员微信，可用于联调测试关联流程。</text>
       <view class="field">
         <text class="label">邀请码</text>
-        <input class="input" value="{{inviteCode}}" bindinput="onInviteInput" placeholder="管理员提供的邀请码" />
+        <input class="input" value="{{inviteCode}}" bindinput="onInviteInput" placeholder="管理员发给你的邀请码" />
       </view>
       <view class="field">
         <text class="label">角色名</text>
-        <input class="input" value="{{characterName}}" bindinput="onNameInput" placeholder="须与俱乐部名单一致" maxlength="32" />
+        <input class="input" value="{{characterName}}" bindinput="onNameInput" placeholder="与俱乐部名单完全一致" maxlength="32" />
       </view>
       <view class="field">
         <text class="label">留言（可选）</text>
-        <input class="input" value="{{remark}}" bindinput="onRemarkInput" placeholder="给管理员的说明" />
+        <input class="input" value="{{remark}}" bindinput="onRemarkInput" placeholder="方便管理员核对，如游戏区服" />
       </view>
       <button
         class="btn-primary"

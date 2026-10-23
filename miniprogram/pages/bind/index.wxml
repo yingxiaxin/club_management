@@ -1,32 +1,10 @@
 <view class="page">
   <view class="panel">
-    <text class="title">绑定游戏角色</text>
+    <text class="title">请用邀请码关联</text>
     <text class="meta">
-      输入与俱乐部名单完全一致的角色名。绑定后可查看成员列表与评分。
+      俱乐部成员需使用管理员提供的邀请码，把微信与名单中的角色关联。不再支持仅填角色名直接绑定。
     </text>
-
-    <view class="field">
-      <text class="label">角色名</text>
-      <input
-        class="input"
-        value="{{characterName}}"
-        placeholder="例如：月光馆"
-        maxlength="32"
-        bindinput="onInput"
-        confirm-type="done"
-        bindconfirm="onSubmit"
-      />
-    </view>
-
-    <button
-      class="btn-primary"
-      loading="{{loading}}"
-      disabled="{{loading || !characterName}}"
-      bindtap="onSubmit"
-    >
-      确认绑定
-    </button>
-
-    <text class="msg" wx:if="{{message}}">{{message}}</text>
+    <button class="btn-primary" bindtap="goJoin">去邀请码关联</button>
+    <button class="btn-ghost" bindtap="goHome">回首页</button>
   </view>
 </view>

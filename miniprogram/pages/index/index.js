@@ -75,9 +75,14 @@ Page({
         })
       }
     } catch (e) {
+      const raw = e.message || ''
+      const soft =
+        /memberApi|云函数|deploy|网络|timeout|fail/i.test(raw) || !raw
+          ? '暂时无法连接俱乐部服务，请稍后重试'
+          : raw
       this.setData({
         loading: false,
-        error: e.message || '加载失败，请确认已部署云函数 memberApi',
+        error: soft,
       })
     }
   },

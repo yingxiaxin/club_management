@@ -51,3 +51,35 @@
   color: var(--color-brand);
   line-height: 1.5;
 }
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  padding: 8rpx 0 4rpx;
+}
+
+.step {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.admin-tip {
+  color: var(--color-brand);
+}
+
+.admin-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-top: 8rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx dashed var(--color-border);
+}
+
+.admin-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-brand);
+  font-weight: 600;
+}

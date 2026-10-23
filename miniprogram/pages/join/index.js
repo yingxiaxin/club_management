@@ -51,7 +51,7 @@ Page({
     } catch (e) {
       this.setData({
         loading: false,
-        message: e.message || '加载失败，请确认已重新部署 memberApi',
+        message: e.message || '加载失败，请稍后重试',
       })
     }
   },
@@ -100,5 +100,9 @@ Page({
 
   goMembers() {
     wx.switchTab({ url: '/pages/members/index' })
+  },
+
+  goHome() {
+    wx.switchTab({ url: '/pages/index/index' })
   },
 })

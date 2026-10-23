@@ -15,6 +15,7 @@
       </view>
       <view class="empty-panel" wx:if="{{!today.length}}">
         <text class="muted">今日暂无已发布活动</text>
+        <text class="muted tiny">管理员发布后会出现在这里</text>
       </view>
       <view class="list-stack" wx:else>
         <view
@@ -48,6 +49,7 @@
       </view>
       <view class="empty-panel" wx:if="{{!week.length}}">
         <text class="muted">本周暂无已发布活动</text>
+        <text class="muted tiny">可先看看今日，或稍后再来</text>
       </view>
       <view class="list-stack" wx:else>
         <view

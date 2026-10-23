@@ -51,12 +51,12 @@ Page({
       })
       if (e.status === 403) {
         wx.showModal({
-          title: '需要绑定',
-          content: '请先绑定俱乐部角色后再查看活动',
-          confirmText: '去绑定',
+          title: '需要先关联角色',
+          content: '用管理员给你的邀请码关联游戏角色后，即可查看活动。',
+          confirmText: '去关联',
           success: (res) => {
             if (res.confirm) {
-              wx.navigateTo({ url: '/pages/bind/index' })
+              wx.navigateTo({ url: '/pages/join/index' })
             }
           },
         })
@@ -127,12 +127,12 @@ Page({
       wx.showToast({ title: err.message || '订阅失败', icon: 'none' })
       if (err.status === 403) {
         wx.showModal({
-          title: '需要绑定',
-          content: '请先绑定俱乐部角色后再订阅提醒',
-          confirmText: '去绑定',
+          title: '需要先关联角色',
+          content: '用管理员给你的邀请码关联游戏角色后，即可订阅提醒。',
+          confirmText: '去关联',
           success: (res) => {
             if (res.confirm) {
-              wx.navigateTo({ url: '/pages/bind/index' })
+              wx.navigateTo({ url: '/pages/join/index' })
             }
           },
         })
@@ -167,12 +167,12 @@ Page({
       wx.showToast({ title: err.message || '提交失败', icon: 'none' })
       if (err.status === 403) {
         wx.showModal({
-          title: '需要绑定',
-          content: '请先绑定俱乐部角色后再表态',
-          confirmText: '去绑定',
+          title: '需要先关联角色',
+          content: '用管理员给你的邀请码关联游戏角色后，即可表态出席。',
+          confirmText: '去关联',
           success: (res) => {
             if (res.confirm) {
-              wx.navigateTo({ url: '/pages/bind/index' })
+              wx.navigateTo({ url: '/pages/join/index' })
             }
           },
         })

@@ -64,7 +64,8 @@
     <button class="btn-primary retry" size="mini" bindtap="load">重试</button>
   </view>
   <view class="empty-panel" wx:elif="{{!list.length}}">
-    <text class="muted">暂无成员</text>
+    <text class="muted">没有符合条件的成员</text>
+    <text class="muted tiny">可清空搜索或筛选后再试</text>
   </view>
 
   <view class="list-stack" wx:else>
