@@ -48,7 +48,7 @@ const WEEKDAY_OPTIONS = [
 
 const loading = ref(false)
 const activities = ref<Activity[]>([])
-const statusFilter = ref<'all' | ActivityStatus>('all')
+const statusFilter = ref<'all' | ActivityStatus>('published')
 
 const dialogOpen = ref(false)
 const editingId = ref<string | null>(null)
@@ -432,12 +432,12 @@ onMounted(load)
           style="width: 100%"
         >
           <el-table-column prop="title" label="标题" min-width="120" show-overflow-tooltip />
-          <el-table-column label="类型" width="72">
+          <el-table-column label="类型" width="110" min-width="110">
             <template #default="{ row }">
               {{ TYPE_LABEL[row.type as ActivityType] || row.type }}
             </template>
           </el-table-column>
-          <el-table-column label="开始" min-width="140" show-overflow-tooltip>
+          <el-table-column label="开始" min-width="120" show-overflow-tooltip>
             <template #default="{ row }">{{ formatSchedule(row, 'start') }}</template>
           </el-table-column>
           <el-table-column label="结束" min-width="120" show-overflow-tooltip>
@@ -446,17 +446,17 @@ onMounted(load)
           <el-table-column label="提醒" min-width="120" show-overflow-tooltip>
             <template #default="{ row }">{{ formatCycle(row) }}</template>
           </el-table-column>
-          <el-table-column label="组队" width="64">
+          <el-table-column label="组队" width="100" min-width="100">
             <template #default="{ row }">{{ row.enableTeam ? '开' : '关' }}</template>
           </el-table-column>
-          <el-table-column label="状态" width="80">
+          <el-table-column label="状态" width="110" min-width="110">
             <template #default="{ row }">
               <span :class="statusClass(row.status)">
                 {{ STATUS_LABEL[row.status as ActivityStatus] }}
               </span>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="260" fixed="right">
+          <el-table-column label="操作" width="240" min-width="240" fixed="right">
             <template #default="{ row }">
               <el-button
                 v-if="row.status !== 'cancelled' && row.status !== 'ended'"
@@ -606,7 +606,7 @@ onMounted(load)
 
         <el-form-item label="开启组队">
           <el-switch v-model="form.enableTeam" />
-          <span class="hint">P2 组队入口用；本阶段仅占位</span>
+          <span class="hint">开启后，小程序活动详情可建队 / 申请入队</span>
         </el-form-item>
         <el-form-item label="说明">
           <el-input v-model="form.description" type="textarea" :rows="3" maxlength="500" />

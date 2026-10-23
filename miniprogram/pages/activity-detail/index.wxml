@@ -7,38 +7,61 @@
     <button class="btn-primary retry" size="mini" bindtap="load">重试</button>
   </view>
 
-  <block wx:elif="{{activity}}">
-    <view class="hero panel-card framed">
-      <text class="title {{activity.urgencyClass}}">{{activity.title}}</text>
+  <view class="sheet" wx:elif="{{activity}}">
+    <!-- 标题 + 提醒 -->
+    <view class="block head">
+      <view class="title-row">
+        <text class="title {{activity.urgencyClass}}">{{activity.title}}</text>
+        <view
+          wx:if="{{activity.reminderCycle && activity.reminderCycle !== 'none'}}"
+          class="remind-chip {{activity.myReminderSubscribed ? 'is-on' : ''}} {{!activity.canSubscribeReminder && !activity.myReminderSubscribed ? 'is-off' : ''}}"
+          bindtap="onRemindMe"
+        >
+          <text wx:if="{{reminding}}">…</text>
+          <text wx:elif="{{activity.myReminderSubscribed}}">已提醒</text>
+          <text wx:elif="{{!activity.canSubscribeReminder}}">不可提醒</text>
+          <text wx:else>提醒我</text>
+        </view>
+      </view>
       <view class="tags">
         <text class="tag {{activity.urgencyClass}}">
           <text wx:if="{{activity.urgencyIcon}}" class="tag-icon">{{activity.urgencyIcon}}</text>{{activity.typeLabel}}
         </text>
         <text class="tag muted-tag">{{activity.statusLabel}}</text>
       </view>
+      <text class="remind-hint" wx:if="{{activity.reminderCycle && activity.reminderCycle !== 'none' && activity.reminderOffsetsText && !activity.myReminderSubscribed}}">
+        开始前 {{activity.reminderOffsetsText}} 分钟推送
+      </text>
+      <text class="remind-hint" wx:elif="{{!activity.reminderCycle || activity.reminderCycle === 'none'}}">
+        本活动未配置提醒
+      </text>
     </view>
 
-    <view class="panel panel-card">
-      <view class="field">
-        <text class="label">开始</text>
-        <text class="value">{{activity.startText}}</text>
+    <view class="divider"></view>
+
+    <!-- 时间与说明 -->
+    <view class="block">
+      <view class="meta-line">
+        <text class="meta-k">开始</text>
+        <text class="meta-v">{{activity.startText}}</text>
       </view>
-      <view class="field" wx:if="{{activity.endText}}">
-        <text class="label">结束</text>
-        <text class="value">{{activity.endText}}</text>
+      <view class="meta-line" wx:if="{{activity.endText}}">
+        <text class="meta-k">结束</text>
+        <text class="meta-v">{{activity.endText}}</text>
       </view>
-      <view class="field">
-        <text class="label">说明</text>
-        <text class="value">{{activity.description || '无'}}</text>
+      <view class="meta-line col">
+        <text class="meta-k">说明</text>
+        <text class="meta-v wrap">{{activity.description || '无'}}</text>
       </view>
     </view>
 
-    <view class="rsvp-panel">
-      <view class="rsvp-head">
-        <text class="hint-title">出席意向</text>
-        <text class="rsvp-total" wx:if="{{activity.rsvpCounts}}">
-          已表态 {{activity.rsvpCounts.total || 0}} 人
-        </text>
+    <view class="divider"></view>
+
+    <!-- 出席意向 -->
+    <view class="block">
+      <view class="sec-head">
+        <text class="sec-title">出席意向</text>
+        <text class="sec-meta" wx:if="{{activity.rsvpCounts}}">已表态 {{activity.rsvpCounts.total || 0}} 人</text>
       </view>
 
       <view class="rsvp-actions">
@@ -52,15 +75,11 @@
         >{{item.label}}</button>
       </view>
 
-      <text class="rsvp-hint" wx:if="{{!activity.canChangeRsvp}}">
+      <text class="sec-hint" wx:if="{{!activity.canChangeRsvp}}">
         {{activity.rsvpLockedReason || '当前不可修改意向'}}
       </text>
-      <text class="rsvp-hint" wx:elif="{{activity.myRsvp}}">
-        可在活动开始前再次修改意向
-      </text>
-      <text class="rsvp-hint" wx:else>
-        请选择：参加 / 待定 / 请假
-      </text>
+      <text class="sec-hint" wx:elif="{{activity.myRsvp}}">可在活动开始前再次修改</text>
+      <text class="sec-hint" wx:else>请选择：参加 / 待定 / 请假</text>
 
       <view class="rsvp-groups">
         <view class="rsvp-group">
@@ -70,14 +89,9 @@
           </view>
           <view class="rsvp-names" wx:if="{{expanded.going}}">
             <text class="muted" wx:if="{{!(activity.rsvpGroups.going && activity.rsvpGroups.going.length)}}">暂无</text>
-            <text
-              wx:for="{{activity.rsvpGroups.going}}"
-              wx:key="memberId"
-              class="rsvp-name"
-            >{{item.characterName}}</text>
+            <text wx:for="{{activity.rsvpGroups.going}}" wx:key="memberId" class="rsvp-name">{{item.characterName}}</text>
           </view>
         </view>
-
         <view class="rsvp-group">
           <view class="rsvp-group-head" data-key="maybe" bindtap="toggleGroup">
             <text class="rsvp-group-title maybe">待定 {{activity.rsvpCounts.maybe || 0}}</text>
@@ -85,14 +99,9 @@
           </view>
           <view class="rsvp-names" wx:if="{{expanded.maybe}}">
             <text class="muted" wx:if="{{!(activity.rsvpGroups.maybe && activity.rsvpGroups.maybe.length)}}">暂无</text>
-            <text
-              wx:for="{{activity.rsvpGroups.maybe}}"
-              wx:key="memberId"
-              class="rsvp-name"
-            >{{item.characterName}}</text>
+            <text wx:for="{{activity.rsvpGroups.maybe}}" wx:key="memberId" class="rsvp-name">{{item.characterName}}</text>
           </view>
         </view>
-
         <view class="rsvp-group">
           <view class="rsvp-group-head" data-key="decline" bindtap="toggleGroup">
             <text class="rsvp-group-title decline">请假 {{activity.rsvpCounts.decline || 0}}</text>
@@ -100,51 +109,28 @@
           </view>
           <view class="rsvp-names" wx:if="{{expanded.decline}}">
             <text class="muted" wx:if="{{!(activity.rsvpGroups.decline && activity.rsvpGroups.decline.length)}}">暂无</text>
-            <text
-              wx:for="{{activity.rsvpGroups.decline}}"
-              wx:key="memberId"
-              class="rsvp-name"
-            >{{item.characterName}}</text>
+            <text wx:for="{{activity.rsvpGroups.decline}}" wx:key="memberId" class="rsvp-name">{{item.characterName}}</text>
           </view>
         </view>
       </view>
     </view>
 
-    <view class="hint-panel reminder">
-      <view class="rsvp-head">
-        <text class="hint-title">活动提醒</text>
-        <text class="rsvp-total" wx:if="{{activity.myReminderSubscribed}}">已订阅</text>
+    <!-- 组队 -->
+    <block wx:if="{{activity.enableTeam}}">
+      <view class="divider"></view>
+      <view class="block">
+        <view class="sec-head">
+          <text class="sec-title">组队</text>
+          <text class="sec-meta">{{activity.teamCount || 0}} 支队伍</text>
+        </view>
+        <view class="team-row">
+          <text class="sec-hint flex">查看本活动队伍，或直接创建</text>
+          <view class="team-links">
+            <text class="link" bindtap="goTeams">查看</text>
+            <text class="link accent" bindtap="goCreateTeam">创建</text>
+          </view>
+        </view>
       </view>
-
-      <block wx:if="{{activity.reminderCycle === 'none' || !activity.reminderCycle}}">
-        <text class="hint-body">该活动未开启提醒。</text>
-        <text class="rsvp-hint">请管理员在电脑端「活动日程」编辑该活动，将提醒周期改为「一次 / 每天 / 每周」并设置提前量后再试。</text>
-      </block>
-
-      <block wx:else>
-        <text class="hint-body" wx:if="{{activity.reminderOffsetsText}}">
-          将在开始前 {{activity.reminderOffsetsText}} 分钟提醒
-        </text>
-        <button
-          class="btn-primary remind-btn"
-          bindtap="onRemindMe"
-          loading="{{reminding}}"
-          disabled="{{reminding || activity.myReminderSubscribed || !activity.canSubscribeReminder}}"
-        >
-          {{activity.myReminderSubscribed ? '已开启提醒' : '提醒我'}}
-        </button>
-        <text class="rsvp-hint" wx:if="{{!activity.canSubscribeReminder && !activity.myReminderSubscribed}}">
-          活动已开始或未配置提醒时间，无法订阅
-        </text>
-        <text class="rsvp-hint" wx:elif="{{!activity.hasSubscribeTemplate}}">
-          管理员尚未配置订阅消息模板时，仍可预约；配置后由定时任务下发。
-        </text>
-      </block>
-    </view>
-
-    <view class="hint-panel" wx:if="{{activity.enableTeam}}">
-      <text class="hint-title">组队</text>
-      <text class="hint-body">本活动已开启组队入口，组队功能将在后续版本开放。</text>
-    </view>
-  </block>
+    </block>
+  </view>
 </view>

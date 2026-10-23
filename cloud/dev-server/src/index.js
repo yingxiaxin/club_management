@@ -24,6 +24,7 @@ import * as cloudMembers from './cloudMembers.js'
 import * as cloudAuth from './cloudAuth.js'
 import * as cloudInvites from './cloudInvites.js'
 import * as cloudActivities from './cloudActivities.js'
+import * as cloudTeams from './cloudTeams.js'
 import * as cloudClub from './cloudClub.js'
 import * as cloudAnnouncements from './cloudAnnouncements.js'
 import * as cloudUsers from './cloudUsers.js'
@@ -152,14 +153,26 @@ app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
     service: 'club-dev-server',
-    stage: 'P1-d-reminders',
+    stage: 'P2-a-teams',
     membersBackend: useCloudMembers() ? 'cloud' : 'json',
     qrLogin: cloudAuth.isQrLoginConfigured(),
     /** 本机 AppSecret 是否已配（不返回密钥本身） */
     wxacodeLocal: cloudAuth.canGenerateWxacodeLocally(),
     invites: useCloudMembers(),
     activities: useCloudMembers(),
+    teams: useCloudMembers(),
   })
+}
+
+function requireCloudTeams(res) {
+  if (!useCloudMembers()) {
+    res.status(503).json({
+      ok: false,
+      message: '组队需 DATA_BACKEND=cloud 并配置 CLOUDBASE_*',
+    })
+    return false
+  }
+  return true
 })
 
 function requireCloudInvites(res) {
@@ -554,6 +567,61 @@ app.post('/api/activities/:id/transition', requireAdmin, async (req, res) => {
     if (!requireCloudActivities(res)) return
     const action = req.body?.action || req.body?.status
     const data = await cloudActivities.transitionActivity(req.params.id, action)
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+/** —— P2-a 组队总览 / 强制关闭 —— */
+app.get('/api/teams', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudTeams(res)) return
+    const data = await cloudTeams.listTeams({
+      activityId: req.query.activityId,
+      status: req.query.status,
+    })
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.post('/api/teams/expire-due', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudTeams(res)) return
+    const data = await cloudTeams.expireTeamsDue()
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.get('/api/teams/:id', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudTeams(res)) return
+    const data = await cloudTeams.getTeamDetail(req.params.id)
+    if (!data) return res.status(404).json({ ok: false, message: '队伍不存在' })
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.post('/api/teams/:id/force-close', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudTeams(res)) return
+    const data = await cloudTeams.forceCloseTeam(req.params.id)
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.post('/api/teams/:id/mark-started', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudTeams(res)) return
+    const data = await cloudTeams.markTeamStarted(req.params.id)
     res.json({ ok: true, data })
   } catch (err) {
     res.status(err.status || 500).json({ ok: false, message: err.message })

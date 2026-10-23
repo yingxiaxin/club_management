@@ -99,7 +99,7 @@ onMounted(load)
 <template>
   <div class="page" v-loading="loading">
     <div class="head">
-      <h1>俱乐部资料</h1>
+      <h1>俱乐部资料设置</h1>
       <p class="sub">名称、图标与简介会显示在小程序首页。提醒模板仍在「提醒设置」。</p>
     </div>
 

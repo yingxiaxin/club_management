@@ -84,6 +84,10 @@ Page({
   async onRemindMe() {
     const activity = this.data.activity
     if (!activity || this.data.reminding || activity.myReminderSubscribed) return
+    if (!activity.reminderCycle || activity.reminderCycle === 'none') {
+      wx.showToast({ title: '本活动未配置提醒', icon: 'none' })
+      return
+    }
     if (!activity.canSubscribeReminder) {
       wx.showToast({ title: '当前无法订阅提醒', icon: 'none' })
       return
@@ -138,6 +142,20 @@ Page({
         })
       }
     }
+  },
+
+  goTeams() {
+    if (!this.activityId) return
+    wx.navigateTo({
+      url: `/pages/teams/index?activityId=${encodeURIComponent(this.activityId)}`,
+    })
+  },
+
+  goCreateTeam() {
+    if (!this.activityId) return
+    wx.navigateTo({
+      url: `/pages/team-create/index?activityId=${encodeURIComponent(this.activityId)}`,
+    })
   },
 
   async onRsvp(e) {

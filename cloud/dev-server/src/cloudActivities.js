@@ -437,5 +437,16 @@ export async function transitionActivity(id, action) {
     updatedAt: new Date().toISOString(),
   }
   await getDb().collection(ACTIVITIES).doc(String(id)).update(patch)
+
+  // P2：活动结束/取消 → 下属招募中队伍强制关闭
+  if (rule.to === 'ended' || rule.to === 'cancelled') {
+    try {
+      const { closeTeamsForActivity } = await import('./cloudTeams.js')
+      await closeTeamsForActivity(id)
+    } catch (e) {
+      console.warn('[cloudActivities] closeTeamsForActivity', e?.message || e)
+    }
+  }
+
   return { ...row, ...patch }
 }

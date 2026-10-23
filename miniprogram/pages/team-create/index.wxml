@@ -1,0 +1,69 @@
+<view class="page">
+  <view class="page-state" wx:if="{{loading}}">
+    <text class="muted">加载中…</text>
+  </view>
+
+  <block wx:else>
+    <view class="form">
+      <view class="field">
+        <text class="label">队长</text>
+        <text class="readonly">{{leaderName || '—'}}</text>
+      </view>
+      <view class="field">
+        <text class="label">人数上限</text>
+        <input
+          class="input"
+          type="number"
+          placeholder="至少 2"
+          value="{{maxMembers}}"
+          bindinput="onMaxInput"
+        />
+      </view>
+      <view class="field">
+        <text class="label">要求评分（可选）</text>
+        <input
+          class="input"
+          type="number"
+          placeholder="留空表示不限制"
+          value="{{minPowerScore}}"
+          bindinput="onScoreInput"
+        />
+      </view>
+      <view class="field">
+        <text class="label">备注（可选）</text>
+        <textarea
+          class="textarea"
+          placeholder="集合点、语音频道等"
+          value="{{remark}}"
+          maxlength="200"
+          bindinput="onRemarkInput"
+        />
+      </view>
+
+      <view class="time-block">
+        <view class="time-row">
+          <text class="label">自定义开打时间</text>
+          <switch checked="{{useCustomStart}}" bindchange="onToggleStart" />
+        </view>
+        <text class="time-hint" wx:if="{{!useCustomStart}}">
+          默认跟随活动时间：{{activityStartText}}
+        </text>
+        <view class="pickers" wx:else>
+          <picker mode="date" value="{{startDate}}" bindchange="onDateChange">
+            <view class="picker">{{startDate || '选择日期'}}</view>
+          </picker>
+          <picker mode="time" value="{{startTime}}" bindchange="onTimeChange">
+            <view class="picker">{{startTime || '时间'}}</view>
+          </picker>
+        </view>
+      </view>
+    </view>
+
+    <button
+      class="btn-primary"
+      bindtap="onSubmit"
+      loading="{{submitting}}"
+      disabled="{{submitting || !leaderName}}"
+    >创建队伍</button>
+  </block>
+</view>

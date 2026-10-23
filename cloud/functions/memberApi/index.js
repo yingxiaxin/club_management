@@ -1,5 +1,5 @@
 /**
- * 成员端云函数：登录身份、入会、成员/活动只读、RSVP、提醒订阅。
+ * 成员端云函数：登录身份、入会、成员/活动只读、RSVP、提醒订阅、组队。
  * 调用：cloud.callFunction({ name: 'memberApi', data: { action, ... } })
  */
 const cloud = require('wx-server-sdk')
@@ -8,6 +8,7 @@ const usersDb = require('./usersDb')
 const invitesDb = require('./invitesDb')
 const activitiesDb = require('./activitiesDb')
 const rsvpsDb = require('./rsvpsDb')
+const teamsDb = require('./teamsDb')
 const clubDb = require('./clubDb')
 const subscriptionsDb = require('./subscriptionsDb')
 const announcementsDb = require('./announcementsDb')
@@ -63,11 +64,11 @@ async function requireViewer(openid) {
   return access
 }
 
-/** RSVP 须绑定有效成员档案（管理员未绑定不可代表态） */
-async function requireBoundMember(openid) {
+/** RSVP / 组队写操作须绑定有效成员档案（管理员未绑定不可代操作） */
+async function requireBoundMember(openid, verb = '操作') {
   const access = await requireViewer(openid)
   if (!access.member || access.member.status === 'left') {
-    const e = new Error('请先绑定俱乐部角色后再表态')
+    const e = new Error(`请先绑定俱乐部角色后再${verb}`)
     e.status = 403
     throw e
   }
@@ -82,7 +83,7 @@ exports.main = async (event) => {
   try {
     switch (action) {
       case 'health':
-        return ok({ service: 'memberApi', store: 'cloud-db', stage: 'P1-announce' })
+        return ok({ service: 'memberApi', store: 'cloud-db', stage: 'P2-a-teams' })
 
       case 'whoami': {
         if (!openid) return fail('无法获取微信身份', 401)
@@ -229,7 +230,7 @@ exports.main = async (event) => {
 
       case 'subscribeActivityReminder': {
         if (!openid) return fail('无法获取微信身份', 401)
-        const access = await requireBoundMember(openid)
+        const access = await requireBoundMember(openid, '订阅提醒')
         const id = event.id || event.activityId
         if (!id) return fail('缺少活动 id', 400)
         const raw = await activitiesDb.getRawPublished(id)
@@ -255,7 +256,7 @@ exports.main = async (event) => {
 
       case 'setRsvp': {
         if (!openid) return fail('无法获取微信身份', 401)
-        const access = await requireBoundMember(openid)
+        const access = await requireBoundMember(openid, '表态')
         const id = event.id || event.activityId
         if (!id) return fail('缺少活动 id', 400)
         const raw = await activitiesDb.getRawPublished(id)
@@ -277,9 +278,145 @@ exports.main = async (event) => {
         return ok(row)
       }
 
+      case 'listTeamsByActivity': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        const access = await requireBoundMember(openid, '查看组队')
+        const activityId = event.activityId || event.id
+        const list = await teamsDb.listTeamsByActivity(activityId, access.member.id)
+        return ok(list)
+      }
+
+      case 'getTeam': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        const access = await requireBoundMember(openid, '查看组队')
+        const teamId = event.teamId || event.id
+        if (!teamId) return fail('缺少队伍 id', 400)
+        return ok(await teamsDb.getTeamDetail(teamId, access.member.id))
+      }
+
+      case 'createTeam': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        const access = await requireBoundMember(openid, '建队')
+        return ok(await teamsDb.createTeam(event, access.member))
+      }
+
+      case 'updateTeam': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        const access = await requireBoundMember(openid, '改队')
+        const teamId = event.teamId || event.id
+        if (!teamId) return fail('缺少队伍 id', 400)
+        return ok(await teamsDb.updateTeam(teamId, event, access.member.id))
+      }
+
+      case 'applyTeam': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        const access = await requireBoundMember(openid, '申请入队')
+        const teamId = event.teamId || event.id
+        if (!teamId) return fail('缺少队伍 id', 400)
+        return ok(await teamsDb.applyTeam(teamId, event.message, access.member))
+      }
+
+      case 'cancelTeamApplication': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        const access = await requireBoundMember(openid, '撤回申请')
+        const teamId = event.teamId || event.id
+        if (!teamId) return fail('缺少队伍 id', 400)
+        return ok(await teamsDb.cancelTeamApplication(teamId, access.member.id))
+      }
+
+      case 'reviewTeamApplication': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        const access = await requireBoundMember(openid, '审批')
+        const teamId = event.teamId || event.id
+        if (!teamId) return fail('缺少队伍 id', 400)
+        return ok(
+          await teamsDb.reviewTeamApplication(
+            teamId,
+            event.memberId || event.targetMemberId,
+            event.decision,
+            access.member.id,
+          ),
+        )
+      }
+
+      case 'kickTeamMember': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        const access = await requireBoundMember(openid, '踢人')
+        const teamId = event.teamId || event.id
+        if (!teamId) return fail('缺少队伍 id', 400)
+        return ok(
+          await teamsDb.kickTeamMember(
+            teamId,
+            event.memberId || event.targetMemberId,
+            access.member.id,
+          ),
+        )
+      }
+
+      case 'leaveTeam': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        const access = await requireBoundMember(openid, '离队')
+        const teamId = event.teamId || event.id
+        if (!teamId) return fail('缺少队伍 id', 400)
+        return ok(await teamsDb.leaveTeam(teamId, access.member.id))
+      }
+
+      case 'transferTeamLeader': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        const access = await requireBoundMember(openid, '转让队长')
+        const teamId = event.teamId || event.id
+        if (!teamId) return fail('缺少队伍 id', 400)
+        return ok(
+          await teamsDb.transferTeamLeader(
+            teamId,
+            event.memberId || event.targetMemberId,
+            access.member.id,
+          ),
+        )
+      }
+
+      case 'pauseTeamRecruiting': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        const access = await requireBoundMember(openid, '关闭招募')
+        const teamId = event.teamId || event.id
+        if (!teamId) return fail('缺少队伍 id', 400)
+        return ok(await teamsDb.pauseTeamRecruiting(teamId, access.member.id))
+      }
+
+      case 'resumeTeamRecruiting': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        const access = await requireBoundMember(openid, '开启招募')
+        const teamId = event.teamId || event.id
+        if (!teamId) return fail('缺少队伍 id', 400)
+        return ok(await teamsDb.resumeTeamRecruiting(teamId, access.member.id))
+      }
+
+      case 'dissolveTeam': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        const access = await requireBoundMember(openid, '撤销队伍')
+        const teamId = event.teamId || event.id
+        if (!teamId) return fail('缺少队伍 id', 400)
+        return ok(await teamsDb.dissolveTeam(teamId, access.member.id))
+      }
+
+      case 'closeTeam': {
+        // 兼容旧客户端：等同撤销队伍
+        if (!openid) return fail('无法获取微信身份', 401)
+        const access = await requireBoundMember(openid, '撤销队伍')
+        const teamId = event.teamId || event.id
+        if (!teamId) return fail('缺少队伍 id', 400)
+        return ok(await teamsDb.dissolveTeam(teamId, access.member.id))
+      }
+
+      case 'listMyTeams': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        const access = await requireBoundMember(openid, '查看组队')
+        return ok(await teamsDb.listMyTeams(access.member.id, event.filter))
+      }
+
       default:
         return fail(
-          `未知 action: ${action || '(空)'}。支持 health/whoami/bindByCharacterName/submitJoinApplication/getMyJoinApplication/unbindSelfForTest/listMembers/getMember/listSchedule/getActivity/getReminderConfig/getClubProfile/listAnnouncements/subscribeActivityReminder/setRsvp`,
+          `未知 action: ${action || '(空)'}。支持 health/whoami/.../setRsvp/listTeamsByActivity/getTeam/createTeam/updateTeam/applyTeam/cancelTeamApplication/reviewTeamApplication/kickTeamMember/leaveTeam/transferTeamLeader/pauseTeamRecruiting/resumeTeamRecruiting/dissolveTeam/listMyTeams`,
           400,
         )
     }

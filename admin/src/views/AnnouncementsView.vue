@@ -124,7 +124,7 @@ onMounted(load)
   <div class="page" v-loading="loading">
     <header class="head">
       <div>
-        <h1>公告</h1>
+        <h1>公告发布</h1>
         <p class="sub">置顶优先展示在小程序首页；成员绑定后可见。</p>
       </div>
       <el-button type="primary" @click="openCreate">发布公告</el-button>

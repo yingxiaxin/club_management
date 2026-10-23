@@ -1,0 +1,144 @@
+<view class="page">
+  <view class="page-state" wx:if="{{loading}}">
+    <text class="muted">加载中…</text>
+  </view>
+  <view class="page-state" wx:elif="{{error}}">
+    <text class="danger">{{error}}</text>
+    <button class="btn-primary retry" size="mini" bindtap="load">重试</button>
+  </view>
+
+  <block wx:elif="{{team}}">
+    <view class="sheet">
+      <view class="block">
+        <view class="info-row">
+          <text class="info-main">{{team.leaderCharacterName || '队长'}} · {{team.memberCount || 0}}/{{team.maxMembers}}</text>
+          <text class="status-chip">{{team.statusLabel}}</text>
+        </view>
+        <text class="info-sub">开打 {{team.startText}}</text>
+        <text class="info-sub" wx:if="{{team.minPowerScore != null}}">要求评分 ≥ {{team.minPowerScore}}</text>
+        <text class="info-desc" wx:if="{{team.remark}}">{{team.remark}}</text>
+        <view
+          class="captain-actions"
+          wx:if="{{team.canPauseRecruit || team.canResumeRecruit || team.canDissolve}}"
+        >
+          <button
+            wx:if="{{team.canPauseRecruit}}"
+            class="cap-btn"
+            size="mini"
+            bindtap="onPauseRecruit"
+            disabled="{{busy}}"
+          >关闭招募</button>
+          <button
+            wx:if="{{team.canResumeRecruit}}"
+            class="cap-btn primary"
+            size="mini"
+            bindtap="onResumeRecruit"
+            disabled="{{busy}}"
+          >开启招募</button>
+          <button
+            wx:if="{{team.canDissolve}}"
+            class="cap-btn danger"
+            size="mini"
+            bindtap="onDissolve"
+            disabled="{{busy}}"
+          >撤销队伍</button>
+        </view>
+        <view class="leave-row" wx:if="{{team.canLeave}}">
+          <button
+            class="cap-btn"
+            size="mini"
+            bindtap="onLeave"
+            disabled="{{busy}}"
+          >离开队伍</button>
+        </view>
+      </view>
+
+      <view class="divider"></view>
+
+      <view class="block">
+        <text class="sec-title">队员</text>
+        <view class="member-list">
+          <view class="member-line" wx:for="{{team.members}}" wx:key="memberId">
+            <view class="member-left">
+              <text class="member-name">{{item.characterName}}</text>
+              <text class="dot" wx:if="{{item.powerScore != null}}">·</text>
+              <text class="member-meta" wx:if="{{item.powerScore != null}}">{{item.powerScore}}</text>
+            </view>
+            <view class="member-ops">
+              <text class="role-chip" wx:if="{{item.memberId === team.leaderMemberId}}">队长</text>
+              <text class="role-chip muted" wx:else>成员</text>
+              <block wx:if="{{team.canManage && item.memberId !== team.leaderMemberId}}">
+                <text
+                  class="op"
+                  data-id="{{item.memberId}}"
+                  data-name="{{item.characterName}}"
+                  bindtap="onTransfer"
+                >转让</text>
+                <text
+                  class="op danger-op"
+                  data-id="{{item.memberId}}"
+                  data-name="{{item.characterName}}"
+                  bindtap="onKick"
+                >踢出</text>
+              </block>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <block wx:if="{{team.canManage && team.pendingApplications && team.pendingApplications.length}}">
+        <view class="divider"></view>
+        <view class="block">
+          <text class="sec-title">待审批</text>
+          <view class="member-list">
+            <view class="member-line" wx:for="{{team.pendingApplications}}" wx:key="memberId">
+              <view class="member-left wrap">
+                <text class="member-name">{{item.characterName}}</text>
+                <text class="dot" wx:if="{{item.powerScore != null}}">·</text>
+                <text class="member-meta" wx:if="{{item.powerScore != null}}">{{item.powerScore}}</text>
+                <text class="apply-msg" wx:if="{{item.message}}">{{item.message}}</text>
+              </view>
+              <view class="member-ops">
+                <text class="op" data-id="{{item.memberId}}" bindtap="onApprove">通过</text>
+                <text class="op danger-op" data-id="{{item.memberId}}" bindtap="onReject">拒绝</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </block>
+
+      <block wx:if="{{team.canApply}}">
+        <view class="divider"></view>
+        <view class="block">
+          <text class="sec-title">申请加入</text>
+          <textarea
+            class="textarea"
+            placeholder="附言（可选）"
+            value="{{applyMessage}}"
+            maxlength="100"
+            bindinput="onApplyMessage"
+          />
+          <button
+            class="btn-primary"
+            bindtap="onApply"
+            loading="{{busy}}"
+            disabled="{{busy}}"
+          >提交申请</button>
+        </view>
+      </block>
+
+      <block wx:elif="{{team.canCancelApply}}">
+        <view class="divider"></view>
+        <view class="block">
+          <text class="sec-hint">已申请，等待队长审批（{{team.myAppLabel}}）</text>
+          <button
+            class="btn-ghost"
+            bindtap="onCancelApply"
+            loading="{{busy}}"
+            disabled="{{busy}}"
+          >撤回申请</button>
+        </view>
+      </block>
+    </view>
+  </block>
+</view>

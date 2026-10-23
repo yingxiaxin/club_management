@@ -4,6 +4,7 @@
 const cloud = require('wx-server-sdk')
 const { decorate, splitSchedule } = require('./scheduleMatch')
 const rsvpsDb = require('./rsvpsDb')
+const teamsDb = require('./teamsDb')
 const clubDb = require('./clubDb')
 const subscriptionsDb = require('./subscriptionsDb')
 
@@ -98,10 +99,13 @@ async function getPublishedActivity(
   const row = await getRawPublished(id)
   if (!row) return null
   const activity = decorate(row)
-  const [rsvp, club, sub] = await Promise.all([
+  const [rsvp, club, sub, teamList] = await Promise.all([
     rsvpsDb.summarize(id, memberId),
     clubDb.getClubProfile(),
     openid ? subscriptionsDb.getMine(id, openid) : Promise.resolve(null),
+    activity.enableTeam
+      ? teamsDb.listTeamsByActivity(id, memberId).catch(() => [])
+      : Promise.resolve([]),
   ])
   const offsets = effectiveOffsets(activity, club.reminderOffsetsMinutes)
   const canSubscribeReminder =
@@ -119,6 +123,7 @@ async function getPublishedActivity(
     hasSubscribeTemplate: Boolean(club.subscribeTemplateId),
     myReminderSubscribed: Boolean(sub && sub.status === 'active'),
     canSubscribeReminder,
+    teamCount: Array.isArray(teamList) ? teamList.length : 0,
   }
 }
 

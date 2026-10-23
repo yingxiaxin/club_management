@@ -1,0 +1,83 @@
+@import "../../styles/shell.wxss";
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-radius: var(--radius-md);
+  border: 1rpx solid var(--color-border-strong);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.field {
+  padding: 24rpx 28rpx;
+  border-bottom: 1rpx solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.readonly {
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.input,
+.textarea,
+.picker {
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+}
+
+.textarea {
+  min-height: 120rpx;
+  width: 100%;
+}
+
+.time-block {
+  padding: 24rpx 28rpx 28rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+  background: var(--color-bg);
+}
+
+.time-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.time-hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  padding: 12rpx 16rpx;
+  border-radius: var(--radius-sm);
+  border: 1rpx dashed var(--color-border);
+  background: var(--color-surface);
+}
+
+.pickers {
+  display: flex;
+  flex-direction: row;
+  gap: 16rpx;
+}
+
+.picker {
+  flex: 1;
+  padding: 14rpx 16rpx;
+  border-radius: var(--radius-sm);
+  border: 1rpx solid var(--color-border);
+  background: var(--color-surface);
+  text-align: center;
+}

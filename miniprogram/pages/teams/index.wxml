@@ -1,0 +1,44 @@
+<view class="page">
+  <view class="page-state" wx:if="{{loading}}">
+    <text class="muted">加载中…</text>
+  </view>
+  <view class="page-state" wx:elif="{{error}}">
+    <text class="danger">{{error}}</text>
+    <button class="btn-primary retry" size="mini" bindtap="load">重试</button>
+  </view>
+
+  <block wx:else>
+    <view class="section-head">
+      <view class="head-left">
+        <text class="section-title">本活动队伍</text>
+        <text class="section-meta">{{teams.length}} 支</text>
+      </view>
+      <text class="create-link" bindtap="goCreate">创建队伍</text>
+    </view>
+
+    <view class="empty-panel" wx:if="{{!teams.length}}">
+      <text class="muted">还没有队伍</text>
+      <text class="create-link" bindtap="goCreate">去创建</text>
+    </view>
+
+    <view class="list-stack" wx:else>
+      <view
+        class="bar-row {{item.myInTeam ? 'is-mine' : ''}}"
+        wx:for="{{teams}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="goDetail"
+      >
+        <view class="bar accent"></view>
+        <view class="bar-main">
+          <view class="row-top">
+            <text class="row-title">{{item.line1}}</text>
+            <text class="chip-tag">{{item.statusLabel}}</text>
+          </view>
+          <text class="row-sub">{{item.startIsActivity ? '活动开始 ' : '开打 '}}{{item.startText}}</text>
+          <text class="badge" wx:if="{{item.badge}}">{{item.badge}}</text>
+        </view>
+      </view>
+    </view>
+  </block>
+</view>
