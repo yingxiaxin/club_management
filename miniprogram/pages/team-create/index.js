@@ -6,7 +6,7 @@ Page({
     activityId: '',
     leaderName: '',
     activityStartText: '',
-    maxMembers: '4',
+    maxMembers: '6',
     minPowerScore: '',
     remark: '',
     useCustomStart: false,
@@ -25,6 +25,14 @@ Page({
       return
     }
     this.bootstrap()
+  },
+
+  onPullDownRefresh() {
+    if (!this.activityId) {
+      wx.stopPullDownRefresh()
+      return
+    }
+    this.bootstrap().finally(() => wx.stopPullDownRefresh())
   },
 
   async bootstrap() {

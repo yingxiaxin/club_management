@@ -19,6 +19,10 @@ Page({
     this.refresh()
   },
 
+  onPullDownRefresh() {
+    this.refresh().finally(() => wx.stopPullDownRefresh())
+  },
+
   onInviteInput(e) {
     this.setData({ inviteCode: String(e.detail.value || '').trim() })
   },

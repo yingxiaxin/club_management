@@ -14,8 +14,10 @@ cloud/
 ├── env.json               # AppID + 云环境 ID
 ├── api-contract.md        # 管理端 API 契约
 ├── dev-server/            # 本地 API（admin 联调；可切云库）
-├── functions/adminApi/    # 管理端云函数（members 写 + 扫码登录）
-├── functions/memberApi/   # 成员端云函数（绑定 + 成员/活动只读）
+├── functions/adminApi/         # 管理端云函数（members 写 + 扫码登录）
+├── functions/memberApi/        # 成员端云函数（绑定 / 日程 / RSVP / 组队）
+├── functions/reminderDispatch/ # 定时：活动订阅消息
+├── functions/teamLifecycle/    # 定时：组队到点 → started（P2-d）
 └── README.md
 ```
 

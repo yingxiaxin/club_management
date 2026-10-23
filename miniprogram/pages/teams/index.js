@@ -18,6 +18,10 @@ Page({
     this.load()
   },
 
+  onPullDownRefresh() {
+    this.load().finally(() => wx.stopPullDownRefresh())
+  },
+
   async load() {
     if (!this.activityId) {
       this.setData({ loading: false, error: '缺少活动 id' })

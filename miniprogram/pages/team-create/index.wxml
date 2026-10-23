@@ -45,9 +45,9 @@
           <text class="label">自定义开打时间</text>
           <switch checked="{{useCustomStart}}" bindchange="onToggleStart" />
         </view>
-        <text class="time-hint" wx:if="{{!useCustomStart}}">
+        <view class="time-hint" wx:if="{{!useCustomStart}}">
           默认跟随活动时间：{{activityStartText}}
-        </text>
+        </view>
         <view class="pickers" wx:else>
           <picker mode="date" value="{{startDate}}" bindchange="onDateChange">
             <view class="picker">{{startDate || '选择日期'}}</view>

@@ -63,6 +63,8 @@
 
 定时云函数 `reminderDispatch`：每分钟扫描到期提醒并 `subscribeMessage.send`（见 `docs/P1-d提醒与订阅消息.md`）。
 
+定时云函数 `teamLifecycle`：每分钟调用 `memberApi.expireTeamsDue`，将 `startAt` 已到的 `recruiting`/`full`/`paused` 队伍标为 `started`（见 `docs/P2组队.md` P2-d）。本机联调可 `POST /api/teams/expire-due`（需 admin）。
+
 日程匹配冒烟（不连库）：`node cloud/dev-server/scripts/smoke-p1b-schedule.mjs`
 
 ### OCR 约定

@@ -1,5 +1,6 @@
 {
   "navigationBarTitleText": "活动组队",
+  "enablePullDownRefresh": true,
   "usingComponents": {
     "home-fab": "/components/home-fab/index"
   }

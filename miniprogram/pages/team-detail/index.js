@@ -23,6 +23,10 @@ Page({
     this.load()
   },
 
+  onPullDownRefresh() {
+    this.load({ soft: true }).finally(() => wx.stopPullDownRefresh())
+  },
+
   decorate(team) {
     if (!team) return null
     const manageable =

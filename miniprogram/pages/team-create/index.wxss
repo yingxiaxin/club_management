@@ -58,10 +58,14 @@
 }
 
 .time-hint {
+  display: flex;
+  align-items: center;
+  min-height: 64rpx;
+  box-sizing: border-box;
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
-  line-height: 1.5;
-  padding: 12rpx 16rpx;
+  line-height: 1.45;
+  padding: 16rpx 18rpx;
   border-radius: var(--radius-sm);
   border: 1rpx dashed var(--color-border);
   background: var(--color-surface);

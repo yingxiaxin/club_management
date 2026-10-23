@@ -315,7 +315,12 @@ async function createTeam(payload, actorMember) {
     String(payload.modeName || '').trim() ||
     String(actorMember.characterName || '').trim() ||
     '队伍'
-  const maxMembers = Math.round(Number(payload.maxMembers))
+  // 创建默认 6（与小程序建队表单一致）；显式传入则校验 ≥ 2
+  const maxRaw = payload.maxMembers
+  const maxMembers =
+    maxRaw === undefined || maxRaw === null || maxRaw === ''
+      ? 6
+      : Math.round(Number(maxRaw))
   if (!Number.isFinite(maxMembers) || maxMembers < 2) {
     throw err('人数上限至少为 2', 400)
   }

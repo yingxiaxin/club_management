@@ -30,6 +30,10 @@ Page({
     this.load()
   },
 
+  onPullDownRefresh() {
+    this.load().finally(() => wx.stopPullDownRefresh())
+  },
+
   async load() {
     if (!this.memberId) {
       this.setData({ loading: false, error: '缺少成员 id' })

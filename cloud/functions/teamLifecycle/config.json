@@ -1,0 +1,10 @@
+{
+  "permissions": {},
+  "triggers": [
+    {
+      "name": "teamLifecycleTick",
+      "type": "timer",
+      "config": "0 */1 * * * * *"
+    }
+  ]
+}

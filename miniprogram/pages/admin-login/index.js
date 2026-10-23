@@ -19,6 +19,10 @@ Page({
     this.refreshWhoami()
   },
 
+  onPullDownRefresh() {
+    this.refreshWhoami().finally(() => wx.stopPullDownRefresh())
+  },
+
   onTicketInput(e) {
     this.setData({ ticketId: String(e.detail.value || '').trim() })
   },

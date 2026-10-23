@@ -83,7 +83,7 @@ exports.main = async (event) => {
   try {
     switch (action) {
       case 'health':
-        return ok({ service: 'memberApi', store: 'cloud-db', stage: 'P2-a-teams' })
+        return ok({ service: 'memberApi', store: 'cloud-db', stage: 'P2-d-team-lifecycle' })
 
       case 'whoami': {
         if (!openid) return fail('无法获取微信身份', 401)
@@ -416,9 +416,15 @@ exports.main = async (event) => {
         return ok(await teamsDb.listMyTeams(access.member.id, event.filter))
       }
 
+      /** P2-d：到点结算；仅系统（定时器 / 其它云函数互调）。带 OPENID 的小程序调用拒绝。 */
+      case 'expireTeamsDue': {
+        if (openid) return fail('仅系统可触发到点结算', 403)
+        return ok(await teamsDb.expireTeamsDue())
+      }
+
       default:
         return fail(
-          `未知 action: ${action || '(空)'}。支持 health/whoami/.../setRsvp/listTeamsByActivity/getTeam/createTeam/updateTeam/applyTeam/cancelTeamApplication/reviewTeamApplication/kickTeamMember/leaveTeam/transferTeamLeader/pauseTeamRecruiting/resumeTeamRecruiting/dissolveTeam/listMyTeams`,
+          `未知 action: ${action || '(空)'}。支持 health/whoami/.../setRsvp/listTeamsByActivity/getTeam/createTeam/updateTeam/applyTeam/cancelTeamApplication/reviewTeamApplication/kickTeamMember/leaveTeam/transferTeamLeader/pauseTeamRecruiting/resumeTeamRecruiting/dissolveTeam/listMyTeams/expireTeamsDue`,
           400,
         )
     }

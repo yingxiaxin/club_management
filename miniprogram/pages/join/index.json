@@ -1,5 +1,6 @@
 {
   "navigationBarTitleText": "邀请码入会",
+  "enablePullDownRefresh": true,
   "usingComponents": {
     "home-fab": "/components/home-fab/index"
   }

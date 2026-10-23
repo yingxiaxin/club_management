@@ -37,7 +37,11 @@ Page({
     this.refresh()
   },
 
-  async refresh() {
+  onPullDownRefresh() {
+    this.refresh({ awaitExtras: true }).finally(() => wx.stopPullDownRefresh())
+  },
+
+  async refresh({ awaitExtras = false } = {}) {
     this.setData({ loading: true, error: '' })
     try {
       const [data, club] = await Promise.all([
@@ -65,8 +69,12 @@ Page({
         identityLine,
       })
       if (canViewMembers) {
-        this.loadSchedulePreview()
-        this.loadAnnouncements()
+        if (awaitExtras) {
+          await Promise.all([this.loadSchedulePreview(), this.loadAnnouncements()])
+        } else {
+          this.loadSchedulePreview()
+          this.loadAnnouncements()
+        }
       } else {
         this.setData({
           todayPreview: [],
