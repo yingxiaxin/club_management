@@ -55,7 +55,7 @@ export const PATHWAY_ALIASES = [
   { canonical: '读者', patterns: ['读者'] },
   { canonical: '窃贼', patterns: ['窃贼'] },
   { canonical: '水手', patterns: ['水手'] },
-  { canonical: '歌手', patterns: ['歌手'] },
+  { canonical: '歌颂', patterns: ['歌颂', '歌颂者', '歌手'] },
   { canonical: '农夫', patterns: ['农夫'] },
   { canonical: '工匠', patterns: ['工匠'] },
 ]

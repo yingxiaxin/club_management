@@ -1,4 +1,5 @@
 const { callMemberApi } = require('../../utils/api')
+const { mapWithPathwayClass } = require('../../utils/pathway')
 
 Page({
   data: {
@@ -81,7 +82,7 @@ Page({
       }
       this.setData({
         loading: false,
-        list: rows,
+        list: mapWithPathwayClass(rows),
         pathwayOptions,
         titleOptions,
       })

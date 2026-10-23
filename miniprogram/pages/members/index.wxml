@@ -70,7 +70,7 @@
 
   <view class="list-stack" wx:else>
     <view
-      class="bar-row"
+      class="bar-row {{item.pathwayTint}}"
       wx:for="{{list}}"
       wx:key="id"
       data-id="{{item.id}}"

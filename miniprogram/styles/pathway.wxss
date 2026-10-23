@@ -1,0 +1,76 @@
+/**
+ * 途径色样式 —— 色值只来自 tokens；业务页挂 class，勿写死 hex。
+ * class 由 utils/pathway.js 的 pathwayClass() 生成。
+ * 列表行渐变与管理端一致：3px/6rpx 原色 → muted → 透明。
+ */
+
+.pathway-audience {
+  --pathway: var(--color-pathway-audience);
+  --pathway-muted: var(--color-pathway-audience-muted);
+}
+
+.pathway-warrior {
+  --pathway: var(--color-pathway-warrior);
+  --pathway-muted: var(--color-pathway-warrior-muted);
+}
+
+.pathway-bard {
+  --pathway: var(--color-pathway-bard);
+  --pathway-muted: var(--color-pathway-bard-muted);
+}
+
+.pathway-apprentice {
+  --pathway: var(--color-pathway-apprentice);
+  --pathway-muted: var(--color-pathway-apprentice-muted);
+}
+
+.pathway-diviner {
+  --pathway: var(--color-pathway-diviner);
+  --pathway-muted: var(--color-pathway-diviner-muted);
+}
+
+.pathway-pryer {
+  --pathway: var(--color-pathway-pryer);
+  --pathway-muted: var(--color-pathway-pryer-muted);
+}
+
+/* 成员列表：原色细条 + muted 铺开到透明（盖在 surface 上） */
+.bar-row.pathway-tint {
+  border-color: var(--color-border);
+  background:
+    linear-gradient(
+      90deg,
+      var(--pathway) 0,
+      var(--pathway) 6rpx,
+      var(--pathway-muted) 6rpx,
+      transparent 100%
+    ),
+    var(--color-surface);
+}
+
+.bar-row.pathway-tint .bar {
+  width: 0;
+}
+
+/* RSVP 人名 label：色签（描边 + 字色 + 弱底） */
+.rsvp-name.pathway-tint {
+  color: var(--pathway);
+  border-color: var(--pathway);
+  background: var(--pathway-muted);
+}
+
+/* 队伍详情队员行：同管理端行渐变 */
+.member-line.pathway-tint {
+  border-left: none;
+  padding-left: 16rpx;
+  margin: 4rpx 0;
+  border-radius: var(--radius-sm);
+  border-bottom-color: transparent;
+  background: linear-gradient(
+    90deg,
+    var(--pathway) 0,
+    var(--pathway) 6rpx,
+    var(--pathway-muted) 6rpx,
+    transparent 100%
+  );
+}

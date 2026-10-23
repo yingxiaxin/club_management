@@ -80,16 +80,19 @@ async function getMine(activityId, memberId) {
   }
 }
 
-async function fetchMemberNames(memberIds) {
+async function fetchMemberBriefs(memberIds) {
   const ids = [...new Set(memberIds.filter(Boolean).map(String))]
   const map = new Map()
   for (const id of ids) {
     try {
       const res = await db().collection(MEMBERS).doc(id).get()
       const row = res.data
-      map.set(id, (row && row.characterName) || id)
+      map.set(id, {
+        characterName: (row && row.characterName) || id,
+        pathway: (row && row.pathway) || '',
+      })
     } catch {
-      map.set(id, id)
+      map.set(id, { characterName: id, pathway: '' })
     }
   }
   return map
@@ -104,19 +107,19 @@ async function fetchMemberNames(memberIds) {
  */
 async function summarize(activityId, memberId = null) {
   const rows = await listByActivity(activityId)
-  const nameMap = await fetchMemberNames(rows.map((r) => r.memberId))
+  const briefMap = await fetchMemberBriefs(rows.map((r) => r.memberId))
   const groups = { going: [], maybe: [], decline: [] }
   const counts = { going: 0, maybe: 0, decline: 0, total: 0 }
 
   for (const row of rows) {
     const status = STATUSES.has(row.status) ? row.status : null
     if (!status) continue
+    const brief = briefMap.get(String(row.memberId)) || {}
     const item = {
       memberId: row.memberId,
       characterName:
-        row.characterName ||
-        nameMap.get(String(row.memberId)) ||
-        row.memberId,
+        row.characterName || brief.characterName || row.memberId,
+      pathway: brief.pathway || '',
       status,
       statusLabel: STATUS_LABELS[status],
       updatedAt: row.updatedAt || null,

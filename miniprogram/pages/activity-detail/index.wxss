@@ -1,5 +1,6 @@
 @import "../../styles/shell.wxss";
 @import "../../styles/urgency.wxss";
+@import "../../styles/pathway.wxss";
 
 .page {
   padding-bottom: 64rpx;
@@ -9,7 +10,7 @@
   border-radius: var(--radius-md);
   border: 1rpx solid var(--color-border-strong);
   background:
-    linear-gradient(165deg, rgba(201, 162, 39, 0.07), transparent 38%),
+    linear-gradient(165deg, rgba(135, 116, 80, 0.07), transparent 38%),
     var(--color-surface);
   overflow: hidden;
 }
@@ -268,6 +269,10 @@
   border: 1rpx solid var(--color-border);
 }
 
+.team-block:active {
+  background: var(--color-brand-muted);
+}
+
 .team-row {
   display: flex;
   flex-direction: row;
@@ -275,20 +280,10 @@
   gap: 16rpx;
 }
 
-.team-links {
-  display: flex;
-  flex-direction: row;
-  gap: 24rpx;
-  flex-shrink: 0;
-}
-
-.link {
-  font-size: var(--font-size-md);
-  color: var(--color-text-secondary);
-  padding: 4rpx 0;
-}
-
 .link.accent {
+  flex-shrink: 0;
+  font-size: var(--font-size-md);
   color: var(--color-brand);
   font-weight: 600;
+  padding: 4rpx 0;
 }

@@ -15,6 +15,7 @@ import { getUser } from '@/auth/session'
 import { commitOcrImport, parseOcrImages } from '@/api/ocr'
 import type { Member, MemberInput } from '@/types/member'
 import type { OcrCandidate } from '@/types/ocr'
+import { pathwayRowClassName, pathwayTagClass } from '@/utils/pathway'
 
 const OCR_MAX_FILES = 12
 /** 结果表可视高度：只滚表格，上传区保持固定 */
@@ -447,6 +448,7 @@ onUnmounted(() => window.removeEventListener('paste', onOcrPaste))
         height="100%"
         style="width: 100%"
         empty-text="暂无成员"
+        :row-class-name="pathwayRowClassName"
         :default-sort="{
           prop: query.sort,
           order: query.order === 'asc' ? 'ascending' : 'descending',
@@ -461,7 +463,15 @@ onUnmounted(() => window.removeEventListener('paste', onOcrPaste))
         </el-table-column>
         <el-table-column prop="powerScore" label="非凡评分" min-width="1" sortable="custom" />
         <el-table-column prop="fashionScore" label="风尚度" min-width="1" sortable="custom" />
-        <el-table-column prop="pathway" label="序列/途径" min-width="1" sortable="custom" show-overflow-tooltip />
+        <el-table-column prop="pathway" label="序列/途径" min-width="1" sortable="custom">
+          <template #default="{ row }">
+            <span
+              class="pathway-tag"
+              :class="pathwayTagClass(row.pathway)"
+              :title="row.pathway || ''"
+            >{{ row.pathway || '—' }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="title" label="职位" min-width="1" />
         <el-table-column label="身份" width="104" align="center">
           <template #default="{ row }">
@@ -843,5 +853,132 @@ onUnmounted(() => window.removeEventListener('paste', onOcrPaste))
 .tag-update {
   color: var(--color-brand);
   font-size: var(--font-size-sm);
+}
+
+/* 途径色签：描边 + 字色 + 弱底 */
+.pathway-tag {
+  display: inline-block;
+  max-width: 100%;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+.pathway-tag-audience {
+  color: var(--color-pathway-audience);
+  border-color: var(--color-pathway-audience);
+  background: var(--color-pathway-audience-muted);
+}
+.pathway-tag-warrior {
+  color: var(--color-pathway-warrior);
+  border-color: var(--color-pathway-warrior);
+  background: var(--color-pathway-warrior-muted);
+}
+.pathway-tag-bard {
+  color: var(--color-pathway-bard);
+  border-color: var(--color-pathway-bard);
+  background: var(--color-pathway-bard-muted);
+}
+.pathway-tag-apprentice {
+  color: var(--color-pathway-apprentice);
+  border-color: var(--color-pathway-apprentice);
+  background: var(--color-pathway-apprentice-muted);
+}
+.pathway-tag-diviner {
+  color: var(--color-pathway-diviner);
+  border-color: var(--color-pathway-diviner);
+  background: var(--color-pathway-diviner-muted);
+}
+.pathway-tag-pryer {
+  color: var(--color-pathway-pryer);
+  border-color: var(--color-pathway-pryer);
+  background: var(--color-pathway-pryer-muted);
+}
+
+/*
+ * 行背景：原色 → 透明（整行连续渐变）。
+ * 单元格透明，渐变画在 tr 上，避免每格各自重画。
+ */
+.table-wrap :deep(.el-table .pathway-row-audience > td.el-table__cell),
+.table-wrap :deep(.el-table .pathway-row-warrior > td.el-table__cell),
+.table-wrap :deep(.el-table .pathway-row-bard > td.el-table__cell),
+.table-wrap :deep(.el-table .pathway-row-apprentice > td.el-table__cell),
+.table-wrap :deep(.el-table .pathway-row-diviner > td.el-table__cell),
+.table-wrap :deep(.el-table .pathway-row-pryer > td.el-table__cell) {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* 左侧 3px 原色条 → muted 起铺满行宽渐变到透明 */
+.table-wrap :deep(.el-table tr.pathway-row-audience) {
+  background: linear-gradient(
+    90deg,
+    var(--color-pathway-audience) 0,
+    var(--color-pathway-audience) 3px,
+    var(--color-pathway-audience-muted) 3px,
+    transparent 100%
+  );
+}
+.table-wrap :deep(.el-table tr.pathway-row-warrior) {
+  background: linear-gradient(
+    90deg,
+    var(--color-pathway-warrior) 0,
+    var(--color-pathway-warrior) 3px,
+    var(--color-pathway-warrior-muted) 3px,
+    transparent 100%
+  );
+}
+.table-wrap :deep(.el-table tr.pathway-row-bard) {
+  background: linear-gradient(
+    90deg,
+    var(--color-pathway-bard) 0,
+    var(--color-pathway-bard) 3px,
+    var(--color-pathway-bard-muted) 3px,
+    transparent 100%
+  );
+}
+.table-wrap :deep(.el-table tr.pathway-row-apprentice) {
+  background: linear-gradient(
+    90deg,
+    var(--color-pathway-apprentice) 0,
+    var(--color-pathway-apprentice) 3px,
+    var(--color-pathway-apprentice-muted) 3px,
+    transparent 100%
+  );
+}
+.table-wrap :deep(.el-table tr.pathway-row-diviner) {
+  background: linear-gradient(
+    90deg,
+    var(--color-pathway-diviner) 0,
+    var(--color-pathway-diviner) 3px,
+    var(--color-pathway-diviner-muted) 3px,
+    transparent 100%
+  );
+}
+.table-wrap :deep(.el-table tr.pathway-row-pryer) {
+  background: linear-gradient(
+    90deg,
+    var(--color-pathway-pryer) 0,
+    var(--color-pathway-pryer) 3px,
+    var(--color-pathway-pryer-muted) 3px,
+    transparent 100%
+  );
+}
+
+.table-wrap :deep(.el-table tr.pathway-row-audience:hover > td.el-table__cell),
+.table-wrap :deep(.el-table tr.pathway-row-warrior:hover > td.el-table__cell),
+.table-wrap :deep(.el-table tr.pathway-row-bard:hover > td.el-table__cell),
+.table-wrap :deep(.el-table tr.pathway-row-apprentice:hover > td.el-table__cell),
+.table-wrap :deep(.el-table tr.pathway-row-diviner:hover > td.el-table__cell),
+.table-wrap :deep(.el-table tr.pathway-row-pryer:hover > td.el-table__cell) {
+  background-color: transparent !important;
 }
 </style>

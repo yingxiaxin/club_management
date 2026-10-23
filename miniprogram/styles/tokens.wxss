@@ -4,40 +4,55 @@
  * 小程序把变量挂在 page 上（无 :root）。
  */
 page {
-  /* Brand — antique gold */
-  --color-brand: #c9a227;
-  --color-brand-hover: #e0bc4a;
-  --color-brand-muted: rgba(201, 162, 39, 0.16);
-  --color-brand-glow: rgba(201, 162, 39, 0.35);
+  /* Brand — olive bronze（再提一档） */
+  --color-brand: #877450;
+  --color-brand-hover: #a39268;
+  --color-brand-muted: rgba(135, 116, 80, 0.22);
+  --color-brand-glow: rgba(135, 116, 80, 0.4);
 
-  /* Surface — deep charcoal */
+  /* Surface — deep charcoal（微暖） */
   --color-bg: #0e0f14;
-  --color-bg-glow: #2a2218;
+  --color-bg-glow: #221c14;
   --color-surface: #1a1c22;
   --color-surface-elevated: #22252e;
   --color-surface-glass: rgba(26, 28, 34, 0.92);
   --color-border: #3a3428;
-  --color-border-strong: #6b5a32;
+  --color-border-strong: #95845c;
 
-  /* Text — warm cream */
-  --color-text: #f5ecdc;
-  --color-text-secondary: #d4c4a8;
-  --color-text-muted: #a09078;
+  /* Text — 奶油白微偏暖橄榄 */
+  --color-text: #f3ecdf;
+  --color-text-secondary: #d0c4a8;
+  --color-text-muted: #9a8c78;
   --color-text-inverse: #1a140a;
 
   /* Status */
   --color-success: #7aab76;
-  --color-warning: #d4a04a;
+  --color-warning: #d4894a;
   --color-danger: #b86558;
   --color-info: #7d9ab0;
 
-  /* 活动紧迫度：类型 label（在品牌金/状态色基础上偏红/黄/绿） */
+  /* 途径色 — 用户自职业色彩2提取（窥秘为提亮后实色） */
+  --color-pathway-audience: #94c7b1;
+  --color-pathway-warrior: #d3742e;
+  --color-pathway-bard: #debd39;
+  --color-pathway-apprentice: #2c81b0;
+  --color-pathway-diviner: #54599f;
+  --color-pathway-pryer: #975dc1;
+  /* 与管理端色签/行渐变弱底对齐 */
+  --color-pathway-audience-muted: rgba(148, 199, 177, 0.16);
+  --color-pathway-warrior-muted: rgba(211, 116, 46, 0.16);
+  --color-pathway-bard-muted: rgba(222, 189, 57, 0.16);
+  --color-pathway-apprentice-muted: rgba(44, 129, 176, 0.16);
+  --color-pathway-diviner-muted: rgba(84, 89, 159, 0.18);
+  --color-pathway-pryer-muted: rgba(151, 93, 193, 0.16);
+
+  /* 活动紧迫度：偏红 / 橙褐（避开歌颂黄） / 苔绿 */
   --color-urgency-hot: #d4785a;
   --color-urgency-hot-muted: rgba(212, 120, 90, 0.18);
   --color-urgency-hot-border: #8a4a3a;
-  --color-urgency-soon: #d4a04a;
-  --color-urgency-soon-muted: rgba(212, 160, 74, 0.18);
-  --color-urgency-soon-border: #8a6a32;
+  --color-urgency-soon: #d4894a;
+  --color-urgency-soon-muted: rgba(212, 137, 74, 0.18);
+  --color-urgency-soon-border: #8a5a32;
   --color-urgency-calm: #7aab76;
   --color-urgency-calm-muted: rgba(122, 171, 118, 0.16);
   --color-urgency-calm-border: #4a6a48;

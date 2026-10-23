@@ -236,6 +236,7 @@ async function fetchMemberBriefs(memberIds) {
     list.push({
       memberId: id,
       characterName: (m && m.characterName) || id,
+      pathway: (m && m.pathway) || '',
       powerScore: m && typeof m.powerScore === 'number' ? m.powerScore : null,
     })
   }
@@ -286,6 +287,7 @@ async function getTeamDetail(teamId, viewerMemberId) {
         return {
           ...row,
           characterName: row.characterName || (m && m.characterName) || row.memberId,
+          pathway: (m && m.pathway) || '',
           powerScore: m && typeof m.powerScore === 'number' ? m.powerScore : null,
         }
       }),

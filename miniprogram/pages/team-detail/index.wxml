@@ -58,7 +58,7 @@
       <view class="block">
         <text class="sec-title">队员</text>
         <view class="member-list">
-          <view class="member-line" wx:for="{{team.members}}" wx:key="memberId">
+          <view class="member-line {{item.pathwayTint}}" wx:for="{{team.members}}" wx:key="memberId">
             <view class="member-left">
               <text class="member-name">{{item.characterName}}</text>
               <text class="dot" wx:if="{{item.powerScore != null}}">·</text>
@@ -91,7 +91,7 @@
         <view class="block">
           <text class="sec-title">待审批</text>
           <view class="member-list">
-            <view class="member-line" wx:for="{{team.pendingApplications}}" wx:key="memberId">
+            <view class="member-line {{item.pathwayTint}}" wx:for="{{team.pendingApplications}}" wx:key="memberId">
               <view class="member-left wrap">
                 <text class="member-name">{{item.characterName}}</text>
                 <text class="dot" wx:if="{{item.powerScore != null}}">·</text>

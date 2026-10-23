@@ -1,4 +1,5 @@
 const { callMemberApi } = require('../../utils/api')
+const { mapWithPathwayClass } = require('../../utils/pathway')
 
 const RSVP_OPTIONS = [
   { status: 'going', label: '参加' },
@@ -67,8 +68,15 @@ Page({
   withReminderText(activity) {
     if (!activity) return activity
     const offsets = activity.reminderEffectiveOffsets || []
+    const rawGroups = activity.rsvpGroups || {}
+    const rsvpGroups = {
+      going: mapWithPathwayClass(rawGroups.going),
+      maybe: mapWithPathwayClass(rawGroups.maybe),
+      decline: mapWithPathwayClass(rawGroups.decline),
+    }
     return {
       ...activity,
+      rsvpGroups,
       reminderOffsetsText: offsets.length ? offsets.join(' / ') : '',
     }
   },

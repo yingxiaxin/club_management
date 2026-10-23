@@ -112,7 +112,6 @@ onMounted(load)
           <el-radio label="trial">体验版</el-radio>
           <el-radio label="formal">正式版</el-radio>
         </el-radio-group>
-        <p class="tip">联调阶段用开发版；正式发版后改为正式版。</p>
       </el-form-item>
 
       <el-form-item>

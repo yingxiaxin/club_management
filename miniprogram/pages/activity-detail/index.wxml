@@ -89,7 +89,11 @@
           </view>
           <view class="rsvp-names" wx:if="{{expanded.going}}">
             <text class="muted" wx:if="{{!(activity.rsvpGroups.going && activity.rsvpGroups.going.length)}}">暂无</text>
-            <text wx:for="{{activity.rsvpGroups.going}}" wx:key="memberId" class="rsvp-name">{{item.characterName}}</text>
+            <text
+              wx:for="{{activity.rsvpGroups.going}}"
+              wx:key="memberId"
+              class="rsvp-name {{item.pathwayTint}}"
+            >{{item.characterName}}</text>
           </view>
         </view>
         <view class="rsvp-group">
@@ -99,7 +103,11 @@
           </view>
           <view class="rsvp-names" wx:if="{{expanded.maybe}}">
             <text class="muted" wx:if="{{!(activity.rsvpGroups.maybe && activity.rsvpGroups.maybe.length)}}">暂无</text>
-            <text wx:for="{{activity.rsvpGroups.maybe}}" wx:key="memberId" class="rsvp-name">{{item.characterName}}</text>
+            <text
+              wx:for="{{activity.rsvpGroups.maybe}}"
+              wx:key="memberId"
+              class="rsvp-name {{item.pathwayTint}}"
+            >{{item.characterName}}</text>
           </view>
         </view>
         <view class="rsvp-group">
@@ -109,26 +117,27 @@
           </view>
           <view class="rsvp-names" wx:if="{{expanded.decline}}">
             <text class="muted" wx:if="{{!(activity.rsvpGroups.decline && activity.rsvpGroups.decline.length)}}">暂无</text>
-            <text wx:for="{{activity.rsvpGroups.decline}}" wx:key="memberId" class="rsvp-name">{{item.characterName}}</text>
+            <text
+              wx:for="{{activity.rsvpGroups.decline}}"
+              wx:key="memberId"
+              class="rsvp-name {{item.pathwayTint}}"
+            >{{item.characterName}}</text>
           </view>
         </view>
       </view>
     </view>
 
-    <!-- 组队 -->
+    <!-- 组队：整区进列表；创建单独点，不冒泡 -->
     <block wx:if="{{activity.enableTeam}}">
       <view class="divider"></view>
-      <view class="block">
+      <view class="block team-block" bindtap="goTeams">
         <view class="sec-head">
           <text class="sec-title">组队</text>
           <text class="sec-meta">{{activity.teamCount || 0}} 支队伍</text>
         </view>
         <view class="team-row">
-          <text class="sec-hint flex">查看本活动队伍，或直接创建</text>
-          <view class="team-links">
-            <text class="link" bindtap="goTeams">查看</text>
-            <text class="link accent" bindtap="goCreateTeam">创建</text>
-          </view>
+          <text class="sec-hint flex">点击查看本活动队伍</text>
+          <text class="link accent" catchtap="goCreateTeam">创建</text>
         </view>
       </view>
     </block>

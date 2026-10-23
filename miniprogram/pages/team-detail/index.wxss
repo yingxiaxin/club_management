@@ -1,10 +1,11 @@
 @import "../../styles/shell.wxss";
+@import "../../styles/pathway.wxss";
 
 .sheet {
   border-radius: var(--radius-md);
   border: 1rpx solid var(--color-border-strong);
   background:
-    linear-gradient(165deg, rgba(201, 162, 39, 0.07), transparent 38%),
+    linear-gradient(165deg, rgba(135, 116, 80, 0.07), transparent 38%),
     var(--color-surface);
   overflow: hidden;
 }

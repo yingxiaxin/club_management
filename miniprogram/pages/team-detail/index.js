@@ -4,6 +4,7 @@ const {
   appStatusLabel,
   formatStartAt,
 } = require('../../utils/teams')
+const { mapWithPathwayClass } = require('../../utils/pathway')
 
 Page({
   data: {
@@ -30,6 +31,8 @@ Page({
       team.status === 'paused'
     return {
       ...team,
+      members: mapWithPathwayClass(team.members),
+      pendingApplications: mapWithPathwayClass(team.pendingApplications),
       statusLabel: teamStatusLabel(team.status),
       startText: formatStartAt(team.startAt),
       myAppLabel: team.myApplicationStatus
