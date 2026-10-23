@@ -7,7 +7,8 @@
 - 云库集合：`activities`（首次访问本机 API 时尝试 `createCollection`）
 - 本机 API：`cloud/dev-server/src/cloudActivities.js` + `/api/activities*`
 - 管理端：`/activities` 活动 CRUD / 发布 / 取消
-- 开始/结束：分量填写（年、月、日、星期、时间）；活动表区域内部滚动
+- 开始/结束：分量填写（年、月、日、星期、时间）；时间控件步长 5 分钟；活动表区域内部滚动
+- **开始→结束联动**：改开始时，结束的年月日星期与开始相同，时间默认开始 +30 分钟（跨日顺延）；编辑回填不覆盖已有结束；结束后仍可手改
 - 提醒周期：无时间 → `none`；年月日+时间 → 仅 `once`；日+时间 → `once`/`daily`；周几+时间 → `once`/`weekly`；仅时间 → `daily`
 
 ## 不做

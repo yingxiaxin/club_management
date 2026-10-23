@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   createActivity,
@@ -52,9 +52,71 @@ const statusFilter = ref<'all' | ActivityStatus>('all')
 
 const dialogOpen = ref(false)
 const editingId = ref<string | null>(null)
+/** 打开新建/编辑时跳过「开始→结束」联动，避免覆盖已有结束时间 */
+const skipEndSync = ref(false)
+const END_OFFSET_MINUTES = 30
 
 function emptySchedule(): ScheduleParts {
   return { year: null, month: null, day: null, weekday: null, time: null }
+}
+
+/** 结束默认 = 开始的年月日星期 + 时间后推 N 分钟（跨日则顺延日/星期） */
+function endFromStart(start: ScheduleParts, offsetMinutes: number): ScheduleParts {
+  const end: ScheduleParts = {
+    year: start.year,
+    month: start.month,
+    day: start.day,
+    weekday: start.weekday,
+    time: null,
+  }
+  if (!start.time) return end
+
+  const [hRaw, mRaw] = start.time.split(':')
+  const h = Number(hRaw)
+  const m = Number(mRaw)
+  if (!Number.isFinite(h) || !Number.isFinite(m)) {
+    end.time = start.time
+    return end
+  }
+
+  let total = h * 60 + m + offsetMinutes
+  const dayBump = Math.floor(total / (24 * 60))
+  total = ((total % (24 * 60)) + 24 * 60) % (24 * 60)
+  end.time = `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+
+  if (dayBump === 0) return end
+
+  if (end.year != null && end.month != null && end.day != null) {
+    const d = new Date(end.year, end.month - 1, end.day)
+    d.setDate(d.getDate() + dayBump)
+    end.year = d.getFullYear()
+    end.month = d.getMonth() + 1
+    end.day = d.getDate()
+    const wd = d.getDay()
+    end.weekday = wd === 0 ? 7 : wd
+  } else {
+    if (end.day != null) end.day = end.day + dayBump
+    if (end.weekday != null) {
+      end.weekday = ((end.weekday - 1 + dayBump) % 7) + 1
+    }
+  }
+  return end
+}
+
+function syncEndFromStart() {
+  if (skipEndSync.value || !dialogOpen.value) return
+  Object.assign(form.end, endFromStart(form.start, END_OFFSET_MINUTES))
+}
+
+function withSkipEndSync(fn: () => void) {
+  skipEndSync.value = true
+  try {
+    fn()
+  } finally {
+    nextTick(() => {
+      skipEndSync.value = false
+    })
+  }
 }
 
 const form = reactive({
@@ -118,6 +180,17 @@ watch(
   { immediate: true },
 )
 
+watch(
+  () => [
+    form.start.year,
+    form.start.month,
+    form.start.day,
+    form.start.weekday,
+    form.start.time,
+  ],
+  syncEndFromStart,
+)
+
 async function load() {
   loading.value = true
   try {
@@ -155,17 +228,19 @@ function scheduleFromActivity(row: Activity, which: 'start' | 'end'): SchedulePa
 }
 
 function openCreate() {
-  editingId.value = null
-  form.title = ''
-  form.type = 'daily'
-  Object.assign(form.start, emptySchedule())
-  Object.assign(form.end, emptySchedule())
-  form.description = ''
-  form.enableTeam = false
-  form.reminderCycle = 'none'
-  form.reminderMinutes = 10
-  form.publishNow = false
-  dialogOpen.value = true
+  withSkipEndSync(() => {
+    editingId.value = null
+    form.title = ''
+    form.type = 'daily'
+    Object.assign(form.start, emptySchedule())
+    Object.assign(form.end, emptySchedule())
+    form.description = ''
+    form.enableTeam = false
+    form.reminderCycle = 'none'
+    form.reminderMinutes = 10
+    form.publishNow = false
+    dialogOpen.value = true
+  })
 }
 
 function openEdit(row: Activity) {
@@ -173,17 +248,19 @@ function openEdit(row: Activity) {
     ElMessage.warning('已结束或已取消的活动不可编辑')
     return
   }
-  editingId.value = row.id
-  form.title = row.title
-  form.type = row.type
-  Object.assign(form.start, scheduleFromActivity(row, 'start'))
-  Object.assign(form.end, scheduleFromActivity(row, 'end'))
-  form.description = row.description || ''
-  form.enableTeam = Boolean(row.enableTeam)
-  form.reminderCycle = resolveReminderCycle(row)
-  form.reminderMinutes = row.reminderOffsetsMinutes?.[0] || 10
-  form.publishNow = false
-  dialogOpen.value = true
+  withSkipEndSync(() => {
+    editingId.value = row.id
+    form.title = row.title
+    form.type = row.type
+    Object.assign(form.start, scheduleFromActivity(row, 'start'))
+    Object.assign(form.end, scheduleFromActivity(row, 'end'))
+    form.description = row.description || ''
+    form.enableTeam = Boolean(row.enableTeam)
+    form.reminderCycle = resolveReminderCycle(row)
+    form.reminderMinutes = row.reminderOffsetsMinutes?.[0] || 10
+    form.publishNow = false
+    dialogOpen.value = true
+  })
 }
 
 function hasAnySchedule(s: ScheduleParts) {
@@ -455,8 +532,8 @@ onMounted(load)
             <el-time-select
               v-model="form.start.time"
               start="00:00"
-              step="00:15"
-              end="23:45"
+              step="00:05"
+              end="23:55"
               placeholder="时间"
               clearable
               class="sched-time"
@@ -486,13 +563,14 @@ onMounted(load)
             <el-time-select
               v-model="form.end.time"
               start="00:00"
-              step="00:15"
-              end="23:45"
+              step="00:05"
+              end="23:55"
               placeholder="时间"
               clearable
               class="sched-time"
             />
           </div>
+          <p class="field-tip">随开始联动：年月日星期与开始相同，时间默认 +30 分钟（可再改）。</p>
         </el-form-item>
 
         <el-form-item label="提醒周期">
