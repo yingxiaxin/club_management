@@ -23,7 +23,7 @@
 .bar-row.is-mine {
   border-color: var(--color-border-strong);
   background:
-    linear-gradient(90deg, rgba(135, 116, 80, 0.08), transparent 48%),
+    linear-gradient(90deg, rgba(189, 163, 119, 0.08), transparent 48%),
     var(--color-surface);
 }
 

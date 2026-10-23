@@ -67,3 +67,5 @@
     >创建队伍</button>
   </block>
 </view>
+
+<home-fab />

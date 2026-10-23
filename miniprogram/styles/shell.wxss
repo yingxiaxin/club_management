@@ -88,9 +88,9 @@
 .panel-card.framed {
   border-color: var(--color-border-strong);
   background:
-    linear-gradient(165deg, rgba(135, 116, 80, 0.08), transparent 42%),
+    linear-gradient(165deg, rgba(189, 163, 119, 0.08), transparent 42%),
     var(--color-surface);
-  box-shadow: 0 0 32rpx rgba(135, 116, 80, 0.06);
+  box-shadow: 0 0 32rpx rgba(189, 163, 119, 0.06);
 }
 
 .list-stack {

@@ -8,6 +8,7 @@
     "pages/team-create/index",
     "pages/team-detail/index",
     "pages/member-detail/index",
+    "pages/announcements/index",
     "pages/bind/index",
     "pages/join/index",
     "pages/admin-login/index"
@@ -21,7 +22,7 @@
   },
   "tabBar": {
     "color": "#9a8c78",
-    "selectedColor": "#877450",
+    "selectedColor": "#bda377",
     "backgroundColor": "#1a1c22",
     "borderStyle": "black",
     "list": [

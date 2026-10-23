@@ -139,55 +139,236 @@ function shanghaiDateTimeMs(year, month, day, time) {
   return Number.isNaN(d.getTime()) ? null : d.getTime()
 }
 
-/**
- * 本周内最相关的一次开始时刻：优先下一场未开始；否则最近一场已开始
- * 无开始时间则无法算紧迫度，返回 null
- */
-function resolveRelevantStartMs(activity, now = new Date()) {
+/** 是否锚定到具体一场（绝对时刻或完整年月日+时间）；周期模板（仅周几/每日）为 false */
+function isAnchoredStart(activity) {
+  if (activity?.startAt) return true
   const schedule = resolveStartSchedule(activity)
+  return Boolean(
+    schedule &&
+      schedule.year != null &&
+      schedule.month != null &&
+      schedule.day != null &&
+      schedule.time,
+  )
+}
+
+function isPeriodicTemplate(activity) {
+  return !isAnchoredStart(activity)
+}
+
+function dateKeyFromParts(parts) {
+  if (!parts || parts.year == null || parts.month == null || parts.day == null) return null
+  return `${parts.year}-${pad2(parts.month)}-${pad2(parts.day)}`
+}
+
+function endOfShanghaiDayMs(year, month, day) {
+  const iso = `${year}-${pad2(month)}-${pad2(day)}T23:59:59+08:00`
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? null : d.getTime()
+}
+
+function normalizeEndSchedule(activity) {
+  if (activity?.endSchedule && typeof activity.endSchedule === 'object') {
+    const s = activity.endSchedule
+    const hasAny =
+      s.year != null ||
+      s.month != null ||
+      s.day != null ||
+      s.weekday != null ||
+      Boolean(s.time)
+    if (hasAny) {
+      return {
+        year: s.year ?? null,
+        month: s.month ?? null,
+        day: s.day ?? null,
+        weekday: s.weekday ?? null,
+        time: s.time || null,
+      }
+    }
+  }
+  return scheduleFromIso(activity?.endAt)
+}
+
+/** 本场结束时刻：endAt / 完整结束日+时 / 仅时刻落在开始日；否则开始日 23:59:59 */
+function resolveOccurrenceEndMs(activity, startMs, startParts) {
+  if (activity?.endAt) {
+    const t = new Date(activity.endAt).getTime()
+    if (!Number.isNaN(t)) return t
+  }
+  const endSch = normalizeEndSchedule(activity)
+  if (
+    endSch &&
+    endSch.year != null &&
+    endSch.month != null &&
+    endSch.day != null &&
+    endSch.time
+  ) {
+    const ms = shanghaiDateTimeMs(endSch.year, endSch.month, endSch.day, endSch.time)
+    if (ms != null) return ms
+  }
+  if (endSch?.time && startParts) {
+    const ms = shanghaiDateTimeMs(
+      startParts.year,
+      startParts.month,
+      startParts.day,
+      endSch.time,
+    )
+    if (ms != null) return ms
+  }
+  if (startParts) {
+    return endOfShanghaiDayMs(startParts.year, startParts.month, startParts.day)
+  }
+  if (startMs != null) return startMs
+  return null
+}
+
+function startMsOnDay(schedule, dayParts) {
   if (!schedule) return null
+  if (schedule.time) {
+    return shanghaiDateTimeMs(dayParts.year, dayParts.month, dayParts.day, schedule.time)
+  }
+  return shanghaiDateTimeMs(dayParts.year, dayParts.month, dayParts.day, '00:00')
+}
+
+/**
+ * 枚举候选场次开始（锚定一场；周期扫过去 7 天～未来 21 天）
+ */
+function enumerateOccurrenceStarts(activity, now = new Date()) {
+  const schedule = resolveStartSchedule(activity)
+  if (!schedule) return []
 
   if (activity.startAt) {
-    const t = new Date(activity.startAt).getTime()
-    return Number.isNaN(t) ? null : t
+    const ms = new Date(activity.startAt).getTime()
+    if (Number.isNaN(ms)) return []
+    const parts = shanghaiParts(new Date(ms))
+    return [{ ms, parts }]
   }
   if (
     schedule.year != null &&
     schedule.month != null &&
-    schedule.day != null &&
-    schedule.time
+    schedule.day != null
   ) {
-    return shanghaiDateTimeMs(schedule.year, schedule.month, schedule.day, schedule.time)
+    const ms = startMsOnDay(schedule, {
+      year: schedule.year,
+      month: schedule.month,
+      day: schedule.day,
+      weekday: schedule.weekday,
+    })
+    if (ms == null) return []
+    const parts = shanghaiParts(new Date(ms))
+    return [{ ms, parts }]
   }
-  if (!schedule.time) return null
 
   const today = shanghaiParts(now)
   const noonUtc = Date.UTC(today.year, today.month - 1, today.day, 4, 0, 0)
-  const candidates = []
-  for (let i = 0; i < 7; i++) {
+  const out = []
+  for (let i = -7; i <= 21; i++) {
     const day = shanghaiParts(new Date(noonUtc + i * 86400000))
     if (!matchesCalendarDay(activity, day)) continue
-    const ms = shanghaiDateTimeMs(day.year, day.month, day.day, schedule.time)
-    if (ms != null) candidates.push(ms)
+    const ms = startMsOnDay(schedule, day)
+    if (ms != null) out.push({ ms, parts: day })
   }
-  if (!candidates.length) return null
+  return out
+}
+
+function formatOccurrenceLabel(parts, time) {
+  if (!parts) return '时间待定'
+  const wd = WEEKDAY_LABELS[parts.weekday] || ''
+  const dateBit = `${parts.month}月${parts.day}日`
+  const bits = [dateBit]
+  if (wd) bits.push(wd)
+  if (time) bits.push(time)
+  return bits.join(' ')
+}
+
+/**
+ * 当前展示场次：进行中 → 今日已结束场 → 下一场未开始 → 最近已结束
+ */
+function resolveOccurrence(activity, now = new Date()) {
+  const schedule = resolveStartSchedule(activity)
   const nowMs = now.getTime()
-  const future = candidates.filter((t) => t >= nowMs).sort((a, b) => a - b)
-  if (future.length) return future[0]
-  return Math.max(...candidates)
+  const isPeriodic = isPeriodicTemplate(activity)
+  const starts = enumerateOccurrenceStarts(activity, now)
+  if (!starts.length) {
+    return {
+      isPeriodic,
+      dateKey: null,
+      dateParts: null,
+      startMs: null,
+      endMs: null,
+      started: false,
+      ended: false,
+      label: formatScheduleText(schedule),
+      nextDateKey: null,
+      nextLabel: '',
+    }
+  }
+
+  const windows = starts.map((s) => {
+    const endMs = resolveOccurrenceEndMs(activity, s.ms, s.parts)
+    return {
+      ms: s.ms,
+      parts: s.parts,
+      endMs,
+      dateKey: dateKeyFromParts(s.parts),
+    }
+  })
+
+  let current = windows.find((w) => w.ms <= nowMs && w.endMs != null && nowMs < w.endMs)
+  if (!current) {
+    const todayKey = dateKeyFromParts(shanghaiParts(now))
+    current = windows.find((w) => w.dateKey === todayKey && w.endMs != null && nowMs >= w.endMs)
+  }
+  if (!current) {
+    const upcoming = windows.filter((w) => w.ms > nowMs).sort((a, b) => a.ms - b.ms)
+    current = upcoming[0] || null
+  }
+  if (!current) {
+    const past = windows
+      .filter((w) => w.endMs != null && w.endMs <= nowMs)
+      .sort((a, b) => b.endMs - a.endMs)
+    current = past[0] || windows[0]
+  }
+
+  const next =
+    windows.filter((w) => w.ms > current.ms).sort((a, b) => a.ms - b.ms)[0] || null
+  const time = schedule?.time || null
+  const ended = current.endMs != null && nowMs >= current.endMs
+  const started = current.ms != null && nowMs >= current.ms
+
+  return {
+    isPeriodic,
+    dateKey: current.dateKey,
+    dateParts: current.parts,
+    startMs: current.ms,
+    endMs: current.endMs,
+    started,
+    ended,
+    label: formatOccurrenceLabel(current.parts, time),
+    nextDateKey: next?.dateKey || null,
+    nextLabel: next ? formatOccurrenceLabel(next.parts, time) : '',
+  }
+}
+
+/**
+ * 本周内最相关的一次开始时刻：优先用 resolveOccurrence
+ */
+function resolveRelevantStartMs(activity, now = new Date()) {
+  const occ = resolveOccurrence(activity, now)
+  return occ.startMs
 }
 
 const URGENCY_ICONS = { hot: '🔥', soon: '⏰', calm: '🍃' }
 
 /**
- * 紧迫档：≤10 分钟（含已开始）hot；≤1 小时 soon；更远 calm；无时间 null
+ * 紧迫档：未结束场次按距开始；已结束不再标紧迫
  */
 function resolveUrgency(activity, now = new Date()) {
-  const startMs = resolveRelevantStartMs(activity, now)
-  if (startMs == null) {
+  const occ = resolveOccurrence(activity, now)
+  if (occ.startMs == null || occ.ended) {
     return { urgency: null, urgencyIcon: '', minutesUntil: null }
   }
-  const minutesUntil = Math.round((startMs - now.getTime()) / 60000)
+  const minutesUntil = Math.round((occ.startMs - now.getTime()) / 60000)
   let urgency = 'calm'
   if (minutesUntil <= 10) urgency = 'hot'
   else if (minutesUntil <= 60) urgency = 'soon'
@@ -231,38 +412,61 @@ function formatScheduleText(schedule) {
   return parts.join(' ') || '时间待定'
 }
 
+function sameCalendarDay(a, b) {
+  return (
+    a &&
+    b &&
+    a.year === b.year &&
+    a.month === b.month &&
+    a.day === b.day
+  )
+}
+
 function decorate(activity, now = new Date()) {
   const startSchedule = resolveStartSchedule(activity)
-  const endSchedule =
-    activity.endSchedule && typeof activity.endSchedule === 'object'
-      ? {
-          year: activity.endSchedule.year ?? null,
-          month: activity.endSchedule.month ?? null,
-          day: activity.endSchedule.day ?? null,
-          weekday: activity.endSchedule.weekday ?? null,
-          time: activity.endSchedule.time || null,
-        }
-      : scheduleFromIso(activity.endAt)
+  const endSchedule = normalizeEndSchedule(activity)
+  const occ = resolveOccurrence(activity, now)
   const urgencyInfo = resolveUrgency(activity, now)
-  const startMs = resolveRelevantStartMs(activity, now)
+
   let canChangeRsvp = true
   let rsvpLockedReason = ''
-  if (activity.status === 'ongoing') {
+  const st = activity.status
+  if (st === 'ended' || st === 'cancelled' || st === 'draft') {
     canChangeRsvp = false
-    rsvpLockedReason = '活动进行中，无法修改意向'
-  } else if (activity.status && activity.status !== 'published') {
+    rsvpLockedReason =
+      st === 'ended' ? '活动已结束，无法报名' : '当前活动状态不可表态'
+  } else if (st && st !== 'published' && st !== 'ongoing') {
     canChangeRsvp = false
     rsvpLockedReason = '当前活动状态不可表态'
-  } else if (startMs != null && startMs <= now.getTime()) {
+  } else if (occ.ended) {
     canChangeRsvp = false
-    rsvpLockedReason = '活动已开始，无法修改意向'
+    rsvpLockedReason = '活动已结束，无法报名'
   }
 
   const reminderOffsetsMinutes = Array.isArray(activity.reminderOffsetsMinutes)
     ? activity.reminderOffsetsMinutes
     : []
-  // 旧数据可能只有提前量、无 reminderCycle（管理端编辑框会因「完整日期」自动显示「一次」）
   const reminderCycle = resolveReminderCycle(activity, startSchedule, reminderOffsetsMinutes)
+
+  const startText = occ.label || formatScheduleText(startSchedule)
+  let endText = ''
+  if (endSchedule) {
+    if (endSchedule.time && occ.dateParts && endSchedule.year == null) {
+      endText = formatOccurrenceLabel(occ.dateParts, endSchedule.time)
+    } else {
+      endText = formatScheduleText(endSchedule)
+    }
+  }
+
+  let occurrencePhase = 'upcoming'
+  let occurrencePhaseLabel = '未开始'
+  if (occ.ended) {
+    occurrencePhase = 'ended'
+    occurrencePhaseLabel = '已结束'
+  } else if (occ.started) {
+    occurrencePhase = 'live'
+    occurrencePhaseLabel = '进行中'
+  }
 
   return {
     id: activity.id,
@@ -277,8 +481,17 @@ function decorate(activity, now = new Date()) {
     endSchedule,
     startAt: activity.startAt || null,
     endAt: activity.endAt || null,
-    startText: formatScheduleText(startSchedule),
-    endText: endSchedule ? formatScheduleText(endSchedule) : '',
+    startText,
+    endText,
+    occurrenceDateKey: occ.dateKey,
+    occurrenceDateParts: occ.dateParts,
+    occurrenceEnded: Boolean(occ.ended),
+    occurrenceStarted: Boolean(occ.started),
+    occurrencePhase,
+    occurrencePhaseLabel,
+    isPeriodic: Boolean(occ.isPeriodic),
+    nextOccurrenceText: occ.ended && occ.nextLabel ? occ.nextLabel : '',
+    nextOccurrenceDateKey: occ.ended ? occ.nextDateKey : null,
     reminderCycle,
     reminderOffsetsMinutes,
     urgency: urgencyInfo.urgency,
@@ -292,18 +505,25 @@ function decorate(activity, now = new Date()) {
 
 function sortActivities(list) {
   return list.slice().sort((a, b) => {
-    const ta = timeSortKey(a.startSchedule)
-    const tb = timeSortKey(b.startSchedule)
+    const ae = a.occurrenceEnded ? 1 : 0
+    const be = b.occurrenceEnded ? 1 : 0
+    if (ae !== be) return ae - be
+    const ta = a.occurrenceDateParts
+      ? timeSortKey({ time: a.startSchedule?.time })
+      : timeSortKey(a.startSchedule)
+    const tb = b.occurrenceDateParts
+      ? timeSortKey({ time: b.startSchedule?.time })
+      : timeSortKey(b.startSchedule)
     if (ta !== tb) return ta - tb
-    const wa = a.startSchedule?.weekday ?? 99
-    const wb = b.startSchedule?.weekday ?? 99
+    const wa = a.occurrenceDateParts?.weekday ?? a.startSchedule?.weekday ?? 99
+    const wb = b.occurrenceDateParts?.weekday ?? b.startSchedule?.weekday ?? 99
     if (wa !== wb) return wa - wb
     return String(a.title || '').localeCompare(String(b.title || ''), 'zh')
   })
 }
 
 /**
- * 从可见活动列表拆出今日 / 本周
+ * 从可见活动列表拆出今日 / 本周（按本场 occurrence 日期）
  */
 function splitSchedule(visibleList, now = new Date()) {
   const { today: todayParts, days } = weekDayParts(now)
@@ -312,11 +532,22 @@ function splitSchedule(visibleList, now = new Date()) {
 
   for (const raw of visibleList) {
     const item = decorate(raw, now)
-    if (matchesCalendarDay(raw, todayParts)) today.push(item)
-    for (const day of days) {
-      if (matchesCalendarDay(raw, day)) {
-        weekMap.set(item.id, item)
-        break
+    const occParts = item.occurrenceDateParts
+    if (occParts) {
+      if (sameCalendarDay(occParts, todayParts)) today.push(item)
+      for (const day of days) {
+        if (sameCalendarDay(occParts, day)) {
+          weekMap.set(item.id, item)
+          break
+        }
+      }
+    } else if (matchesCalendarDay(raw, todayParts)) {
+      today.push(item)
+      for (const day of days) {
+        if (matchesCalendarDay(raw, day)) {
+          weekMap.set(item.id, item)
+          break
+        }
       }
     }
   }
@@ -352,6 +583,10 @@ module.exports = {
   weekDayParts,
   resolveStartSchedule,
   matchesCalendarDay,
+  isAnchoredStart,
+  isPeriodicTemplate,
+  resolveOccurrence,
+  resolveOccurrenceEndMs,
   resolveRelevantStartMs,
   resolveUrgency,
   decorate,

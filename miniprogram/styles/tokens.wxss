@@ -4,11 +4,11 @@
  * 小程序把变量挂在 page 上（无 :root）。
  */
 page {
-  /* Brand — olive bronze（再提一档） */
-  --color-brand: #877450;
-  --color-brand-hover: #a39268;
-  --color-brand-muted: rgba(135, 116, 80, 0.22);
-  --color-brand-glow: rgba(135, 116, 80, 0.4);
+  /* Brand — olive bronze（再提两档） */
+  --color-brand: #bda377;
+  --color-brand-hover: #d9c18f;
+  --color-brand-muted: rgba(189, 163, 119, 0.22);
+  --color-brand-glow: rgba(189, 163, 119, 0.4);
 
   /* Surface — deep charcoal（微暖） */
   --color-bg: #0e0f14;
@@ -17,7 +17,7 @@ page {
   --color-surface-elevated: #22252e;
   --color-surface-glass: rgba(26, 28, 34, 0.92);
   --color-border: #3a3428;
-  --color-border-strong: #95845c;
+  --color-border-strong: #cbb383;
 
   /* Text — 奶油白微偏暖橄榄 */
   --color-text: #f3ecdf;

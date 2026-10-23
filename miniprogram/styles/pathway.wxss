@@ -59,13 +59,16 @@
   background: var(--pathway-muted);
 }
 
-/* 队伍详情队员行：同管理端行渐变 */
+/* 队伍详情队员行：同管理端行渐变；上下等距，文字垂直居中 */
 .member-line.pathway-tint {
   border-left: none;
-  padding-left: 16rpx;
-  margin: 4rpx 0;
+  margin: 6rpx 0;
+  padding: 18rpx 16rpx 18rpx 20rpx;
+  min-height: 72rpx;
+  box-sizing: border-box;
   border-radius: var(--radius-sm);
   border-bottom-color: transparent;
+  align-items: center;
   background: linear-gradient(
     90deg,
     var(--pathway) 0,
@@ -73,4 +76,8 @@
     var(--pathway-muted) 6rpx,
     transparent 100%
   );
+}
+
+.member-line.pathway-tint:last-child {
+  padding-bottom: 18rpx;
 }

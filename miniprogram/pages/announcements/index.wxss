@@ -1,0 +1,92 @@
+@import "../../styles/shell.wxss";
+
+.announce-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.announce-card {
+  display: flex;
+  flex-direction: row;
+  border-radius: var(--radius-md);
+  border: 1rpx solid var(--color-border);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.announce-card.pinned {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface);
+}
+
+.announce-accent {
+  width: 6rpx;
+  flex-shrink: 0;
+  background: var(--color-border);
+}
+
+.announce-card.pinned .announce-accent {
+  background: var(--color-brand);
+}
+
+.announce-body {
+  flex: 1;
+  min-width: 0;
+  padding: 22rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.announce-head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+  flex-wrap: wrap;
+}
+
+.announce-title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.announce-date {
+  font-size: 22rpx;
+  color: var(--color-text-muted);
+  line-height: 1.2;
+}
+
+.pin {
+  flex-shrink: 0;
+  font-size: 20rpx;
+  line-height: 1;
+  color: var(--color-brand);
+  border: 1rpx solid var(--color-brand);
+  border-radius: var(--radius-sm);
+  padding: 4rpx 10rpx;
+}
+
+.announce-content {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  white-space: pre-wrap;
+}
+
+.announce-card.open .announce-content {
+  -webkit-line-clamp: unset;
+  display: block;
+  color: var(--color-text);
+}
+
+.announce-hint {
+  font-size: 22rpx;
+  color: var(--color-text-muted);
+}

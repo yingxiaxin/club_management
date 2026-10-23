@@ -2,7 +2,12 @@
  * 成员端：已发布活动只读 + 今日/本周日程 + RSVP 挂载
  */
 const cloud = require('wx-server-sdk')
-const { decorate, splitSchedule } = require('./scheduleMatch')
+const {
+  decorate,
+  splitSchedule,
+  resolveOccurrence,
+  isPeriodicTemplate,
+} = require('./scheduleMatch')
 const rsvpsDb = require('./rsvpsDb')
 const teamsDb = require('./teamsDb')
 const clubDb = require('./clubDb')
@@ -59,9 +64,65 @@ async function attachRsvpCounts(list) {
   }))
 }
 
+async function patchActivityCycle(id, data) {
+  await db()
+    .collection(COLLECTION)
+    .doc(String(id))
+    .update({
+      data: {
+        ...data,
+        updatedAt: new Date().toISOString(),
+      },
+    })
+}
+
+/**
+ * 周期模板：本场结束后清空 RSVP + 队伍，并记下清档/下场 key
+ */
+async function ensureCycleRollover(raw) {
+  if (!raw || !isPeriodicTemplate(raw)) return raw
+  const occ = resolveOccurrence(raw)
+  if (!occ.dateKey) return raw
+
+  const patch = {}
+
+  if (occ.ended) {
+    if (raw.cycleClearedKey !== occ.dateKey) {
+      await rsvpsDb.deleteAllByActivity(raw.id)
+      await teamsDb.dissolveAllByActivity(raw.id)
+      patch.cycleClearedKey = occ.dateKey
+      if (occ.nextDateKey) patch.activeCycleKey = occ.nextDateKey
+    }
+  } else {
+    if (raw.activeCycleKey && raw.activeCycleKey !== occ.dateKey) {
+      if (raw.cycleClearedKey !== raw.activeCycleKey) {
+        await rsvpsDb.deleteAllByActivity(raw.id)
+        await teamsDb.dissolveAllByActivity(raw.id)
+        patch.cycleClearedKey = raw.activeCycleKey
+      }
+    }
+    if (raw.activeCycleKey !== occ.dateKey) {
+      patch.activeCycleKey = occ.dateKey
+    }
+  }
+
+  if (!Object.keys(patch).length) return raw
+  try {
+    await patchActivityCycle(raw.id, patch)
+    return { ...raw, ...patch }
+  } catch (e) {
+    console.warn('[activitiesDb] ensureCycleRollover', raw.id, e?.message || e)
+    return raw
+  }
+}
+
 async function listSchedule(now = new Date()) {
   const visible = await listVisibleActivities()
-  const schedule = splitSchedule(visible, now)
+  const rolled = []
+  for (const a of visible) {
+    rolled.push(await ensureCycleRollover(a))
+  }
+  const schedule = splitSchedule(rolled, now)
   const [today, week] = await Promise.all([
     attachRsvpCounts(schedule.today),
     attachRsvpCounts(schedule.week),
@@ -96,8 +157,9 @@ async function getPublishedActivity(
   id,
   { memberId = null, openid = null } = {},
 ) {
-  const row = await getRawPublished(id)
+  let row = await getRawPublished(id)
   if (!row) return null
+  row = await ensureCycleRollover(row)
   const activity = decorate(row)
   const [rsvp, club, sub, teamList] = await Promise.all([
     rsvpsDb.summarize(id, memberId),
@@ -111,6 +173,7 @@ async function getPublishedActivity(
   const canSubscribeReminder =
     activity.reminderCycle !== 'none' &&
     offsets.length > 0 &&
+    !activity.occurrenceEnded &&
     Boolean(activity.canChangeRsvp || activity.minutesUntil == null || activity.minutesUntil > 0)
 
   return {
@@ -131,5 +194,6 @@ module.exports = {
   listSchedule,
   getPublishedActivity,
   getRawPublished,
+  ensureCycleRollover,
   VISIBLE_STATUSES,
 }

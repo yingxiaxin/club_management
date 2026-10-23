@@ -1,0 +1,31 @@
+/**
+ * 次级页回首页：右下角小房子，色值只用 tokens
+ */
+.home-fab {
+  position: fixed;
+  right: 28rpx;
+  bottom: calc(48rpx + env(safe-area-inset-bottom));
+  z-index: 100;
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1rpx solid var(--color-border-strong);
+  background: var(--color-surface-elevated);
+  box-shadow:
+    0 10rpx 32rpx rgba(0, 0, 0, 0.42),
+    0 0 20rpx var(--color-brand-glow);
+}
+
+.home-fab-hover {
+  background: var(--color-brand-muted);
+  border-color: var(--color-brand);
+}
+
+.home-fab-icon {
+  width: 44rpx;
+  height: 44rpx;
+}

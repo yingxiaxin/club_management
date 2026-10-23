@@ -90,10 +90,15 @@
       <button class="btn-primary" bindtap="goJoin">邀请码关联角色</button>
     </view>
 
-    <!-- 公告 -->
+    <!-- 公告：轮播；查看更多进全部列表 -->
     <view class="section" wx:if="{{canViewMembers}}">
       <view class="section-head">
         <text class="section-title">公告</text>
+        <text
+          class="section-link"
+          wx:if="{{announcements.length}}"
+          bindtap="goAnnouncements"
+        >查看更多</text>
       </view>
       <view class="panel soft" wx:if="{{announceLoading}}">
         <text class="muted">加载公告…</text>
@@ -102,24 +107,36 @@
         <text class="muted">暂无公告</text>
         <text class="muted tiny">有新通知时会出现在这里</text>
       </view>
-      <view class="announce-list" wx:else>
-        <view
-          class="announce-card {{item.pinned ? 'pinned' : ''}} {{expandedAnnounceId === item.id ? 'open' : ''}}"
-          wx:for="{{announcements}}"
-          wx:key="id"
-          data-id="{{item.id}}"
-          bindtap="toggleAnnounce"
+      <view class="announce-swiper-wrap" wx:else>
+        <swiper
+          class="announce-swiper"
+          autoplay="{{announcements.length > 1}}"
+          circular="{{announcements.length > 1}}"
+          interval="4500"
+          duration="480"
+          indicator-dots="{{announcements.length > 1}}"
+          indicator-color="rgba(154, 140, 120, 0.35)"
+          indicator-active-color="#bda377"
+          bindchange="onAnnounceSwiperChange"
         >
-          <view class="announce-accent" />
-          <view class="announce-body">
-            <view class="announce-head">
-              <text class="announce-title">{{item.title}}</text>
-              <text wx:if="{{item.pinned}}" class="pin">置顶</text>
+          <swiper-item wx:for="{{announcements}}" wx:key="id">
+            <view
+              class="announce-card {{item.pinned ? 'pinned' : ''}}"
+              data-id="{{item.id}}"
+              bindtap="goAnnounceDetail"
+            >
+              <view class="announce-accent" />
+              <view class="announce-body">
+                <view class="announce-head">
+                  <text class="announce-title">{{item.title}}</text>
+                  <text wx:if="{{item.pinned}}" class="pin">置顶</text>
+                </view>
+                <text class="announce-date" wx:if="{{item.publishedText}}">{{item.publishedText}}</text>
+                <text class="announce-content">{{item.content}}</text>
+              </view>
             </view>
-            <text class="announce-content">{{item.content}}</text>
-            <text class="announce-hint">{{expandedAnnounceId === item.id ? '收起' : '展开'}}</text>
-          </view>
-        </view>
+          </swiper-item>
+        </swiper>
       </view>
     </view>
 
@@ -153,7 +170,10 @@
                 <text wx:if="{{item.urgencyIcon}}" class="tag-icon">{{item.urgencyIcon}}</text>{{item.typeLabel}}
               </text>
             </view>
-            <text class="event-time">{{item.startText}}</text>
+            <view class="event-meta">
+              <text class="event-time">{{item.startText}}</text>
+              <text class="event-phase phase-{{item.occurrencePhase}}">{{item.occurrencePhaseLabel}}</text>
+            </view>
           </view>
         </view>
         <text class="muted tiny more" wx:if="{{todayCount > todayPreview.length}}">

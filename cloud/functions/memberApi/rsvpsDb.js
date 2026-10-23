@@ -170,6 +170,23 @@ async function countByActivityIds(activityIds) {
   return result
 }
 
+/** 周期换场：删除该活动下全部 RSVP */
+async function deleteAllByActivity(activityId) {
+  const rows = await listByActivity(activityId)
+  if (!rows.length) return 0
+  const coll = db().collection(COLLECTION)
+  let n = 0
+  for (const row of rows) {
+    try {
+      await coll.doc(String(row.id)).remove()
+      n += 1
+    } catch (e) {
+      console.warn('[rsvpsDb] deleteAllByActivity', row.id, e?.message || e)
+    }
+  }
+  return n
+}
+
 async function upsert({ activityId, memberId, status, characterName }) {
   await ensureCollection()
   const aid = String(activityId || '').trim()
@@ -214,6 +231,7 @@ module.exports = {
   getMine,
   summarize,
   countByActivityIds,
+  deleteAllByActivity,
   upsert,
   ensureCollection,
 }

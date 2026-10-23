@@ -1,4 +1,5 @@
 const { callMemberApi } = require('../../utils/api')
+const { mapWithPublishedText } = require('../../utils/datetime')
 
 const ROLE_LABELS = {
   guest: '访客',
@@ -23,7 +24,7 @@ Page({
     clubIntro: '',
     announcements: [],
     announceLoading: false,
-    expandedAnnounceId: '',
+    announceSwiperIndex: 0,
     scheduleLoading: false,
     todayPreview: [],
     todayCount: 0,
@@ -90,14 +91,30 @@ Page({
   async loadAnnouncements() {
     this.setData({ announceLoading: true })
     try {
-      const list = await callMemberApi('listAnnouncements', { limit: 5 })
+      const list = await callMemberApi('listAnnouncements', { limit: 8 })
       this.setData({
         announceLoading: false,
-        announcements: Array.isArray(list) ? list : [],
+        announcements: mapWithPublishedText(list),
+        announceSwiperIndex: 0,
       })
     } catch {
       this.setData({ announceLoading: false, announcements: [] })
     }
+  },
+
+  onAnnounceSwiperChange(e) {
+    const idx = e.detail && typeof e.detail.current === 'number' ? e.detail.current : 0
+    this.setData({ announceSwiperIndex: idx })
+  },
+
+  goAnnouncements() {
+    wx.navigateTo({ url: '/pages/announcements/index' })
+  },
+
+  goAnnounceDetail(e) {
+    const id = e.currentTarget.dataset.id
+    const q = id ? `?id=${encodeURIComponent(id)}` : ''
+    wx.navigateTo({ url: `/pages/announcements/index${q}` })
   },
 
   async loadSchedulePreview() {
@@ -120,14 +137,6 @@ Page({
         weekCount: 0,
       })
     }
-  },
-
-  toggleAnnounce(e) {
-    const id = e.currentTarget.dataset.id
-    if (!id) return
-    this.setData({
-      expandedAnnounceId: this.data.expandedAnnounceId === id ? '' : id,
-    })
   },
 
   onMeHeadTap() {

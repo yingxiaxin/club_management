@@ -78,8 +78,11 @@
       <text class="sec-hint" wx:if="{{!activity.canChangeRsvp}}">
         {{activity.rsvpLockedReason || '当前不可修改意向'}}
       </text>
-      <text class="sec-hint" wx:elif="{{activity.myRsvp}}">可在活动开始前再次修改</text>
-      <text class="sec-hint" wx:else>请选择：参加 / 待定 / 请假</text>
+      <text class="sec-hint" wx:if="{{activity.occurrenceEnded && activity.nextOccurrenceText}}">
+        下一场：{{activity.nextOccurrenceText}}
+      </text>
+      <text class="sec-hint" wx:elif="{{activity.canChangeRsvp && activity.myRsvp}}">本场结束前可再次修改</text>
+      <text class="sec-hint" wx:elif="{{activity.canChangeRsvp}}">请选择：参加 / 待定 / 请假（开始后仍可改，结束后不可）</text>
 
       <view class="rsvp-groups">
         <view class="rsvp-group">
@@ -143,3 +146,5 @@
     </block>
   </view>
 </view>
+
+<home-fab />

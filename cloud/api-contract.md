@@ -59,7 +59,7 @@
 | `getClubProfile` | P1-e：`{ name, iconUrl, intro }`；未绑定也可调 |
 | `listAnnouncements` | P1-e：公告列表（须可查看成员）；可选 `limit` |
 | `subscribeActivityReminder` | P1-d：body `id` + `accepted`；写入 `subscriptions` |
-| `setRsvp` | P1-c：body `id` + `status(going\|maybe\|decline)`；须绑定成员；开始前可改；返回更新后的详情 |
+| `setRsvp` | P1-c：body `id` + `status(going\|maybe\|decline)`；须绑定成员；开始后可改、本场结束后锁定；周期换场清 RSVP；返回更新后的详情 |
 
 定时云函数 `reminderDispatch`：每分钟扫描到期提醒并 `subscribeMessage.send`（见 `docs/P1-d提醒与订阅消息.md`）。
 

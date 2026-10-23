@@ -3,6 +3,7 @@
  * 约定见 docs/P2组队.md
  */
 const cloud = require('wx-server-sdk')
+const { resolveOccurrence } = require('./scheduleMatch')
 
 const TEAMS = 'teams'
 const APPS = 'team_applications'
@@ -166,6 +167,10 @@ function assertCanWriteOnActivity(activity, { needEnableTeam = true } = {}) {
   }
   if (needEnableTeam && !activity.enableTeam) {
     throw err('该活动未开启组队', 409)
+  }
+  const occ = resolveOccurrence(activity)
+  if (occ.ended) {
+    throw err('本场活动已结束，无法进行组队操作', 409)
   }
 }
 
@@ -672,6 +677,26 @@ async function resumeTeamRecruiting(teamId, actorMemberId) {
 }
 
 /** 撤销队伍：解散并从活动队伍列表隐藏 */
+/** 周期换场：将该活动下未隐藏队伍全部 dissolved */
+async function dissolveAllByActivity(activityId) {
+  const teams = await listTeamsByActivityId(activityId)
+  const now = new Date().toISOString()
+  let n = 0
+  for (const t of teams) {
+    if (HIDDEN_LIST_STATUSES.has(t.status)) continue
+    try {
+      await db()
+        .collection(TEAMS)
+        .doc(String(t.id))
+        .update({ data: { status: 'dissolved', updatedAt: now } })
+      n += 1
+    } catch (e) {
+      console.warn('[teamsDb] dissolveAllByActivity', t.id, e?.message || e)
+    }
+  }
+  return n
+}
+
 async function dissolveTeam(teamId, actorMemberId, { asAdmin = false } = {}) {
   const team = await getTeam(teamId)
   if (!team) throw err('队伍不存在', 404)
@@ -781,6 +806,7 @@ module.exports = {
   pauseTeamRecruiting,
   resumeTeamRecruiting,
   dissolveTeam,
+  dissolveAllByActivity,
   closeTeam,
   markTeamStarted,
   expireTeamsDue,

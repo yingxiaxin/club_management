@@ -19,14 +19,45 @@
   color: var(--color-text);
 }
 
+.meta-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
 .time {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
 
-.status {
-  font-size: 22rpx;
+.phase {
+  flex-shrink: 0;
+  font-size: 20rpx;
+  line-height: 1;
+  padding: 6rpx 12rpx;
+  border-radius: var(--radius-sm);
+  border: 1rpx solid var(--color-border);
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+}
+
+.phase-upcoming {
+  color: var(--color-text-secondary);
+  border-color: var(--color-border);
+}
+
+.phase-live {
   color: var(--color-success);
+  border-color: var(--color-success);
+  background: var(--color-bg);
+}
+
+.phase-ended {
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+  opacity: 0.9;
 }
 
 .rsvp-brief {

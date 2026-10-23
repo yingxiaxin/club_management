@@ -1,0 +1,10 @@
+<view
+  class="home-fab"
+  hover-class="home-fab-hover"
+  hover-stay-time="80"
+  bindtap="onTap"
+  aria-role="button"
+  aria-label="返回首页"
+>
+  <image class="home-fab-icon" src="/assets/tab/home-active.png" mode="aspectFit" />
+</view>

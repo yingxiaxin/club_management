@@ -33,3 +33,5 @@
     <text class="msg" wx:if="{{message}}">{{message}}</text>
   </view>
 </view>
+
+<home-fab />

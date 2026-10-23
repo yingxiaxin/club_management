@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "活动组队",
-  "usingComponents": {}
+  "usingComponents": {
+    "home-fab": "/components/home-fab/index"
+  }
 }

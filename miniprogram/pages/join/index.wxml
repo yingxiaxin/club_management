@@ -72,3 +72,5 @@
     </view>
   </block>
 </view>
+
+<home-fab />

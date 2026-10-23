@@ -5,7 +5,7 @@
   border-radius: var(--radius-md);
   border: 1rpx solid var(--color-border-strong);
   background:
-    linear-gradient(165deg, rgba(135, 116, 80, 0.07), transparent 38%),
+    linear-gradient(165deg, rgba(189, 163, 119, 0.07), transparent 38%),
     var(--color-surface);
   overflow: hidden;
 }
@@ -42,8 +42,14 @@
 
 .status-chip {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 44rpx;
+  padding: 0 14rpx;
   font-size: 22rpx;
-  padding: 6rpx 14rpx;
+  line-height: 1;
   border-radius: var(--radius-sm);
   border: 1rpx solid var(--color-border-strong);
   color: var(--color-brand);
@@ -67,22 +73,30 @@
 .leave-row {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 16rpx;
+  gap: 12rpx;
   margin-top: 8rpx;
 }
 
 .cap-btn {
   margin: 0 !important;
-  padding: 0 28rpx !important;
-  height: 56rpx !important;
-  line-height: 56rpx !important;
-  font-size: var(--font-size-sm) !important;
+  padding: 0 18rpx !important;
+  width: auto !important;
+  min-width: 0 !important;
+  flex: 0 0 auto !important;
+  height: 52rpx !important;
+  min-height: 52rpx !important;
+  line-height: 1 !important;
+  font-size: 24rpx !important;
   border-radius: var(--radius-sm) !important;
   background: var(--color-bg) !important;
   color: var(--color-brand) !important;
   border: 1rpx solid var(--color-border-strong) !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .cap-btn.primary {
@@ -100,6 +114,10 @@
 
 .cap-btn::after {
   border: none;
+}
+
+.cap-btn-hover {
+  opacity: 0.85;
 }
 
 .cap-btn[disabled] {
@@ -130,13 +148,12 @@
   align-items: center;
   justify-content: space-between;
   gap: 12rpx;
-  padding: 12rpx 0;
+  padding: 16rpx 0;
   border-bottom: 1rpx solid var(--color-border);
 }
 
 .member-line:last-child {
   border-bottom: none;
-  padding-bottom: 0;
 }
 
 .member-left {
@@ -144,7 +161,7 @@
   min-width: 0;
   display: flex;
   flex-direction: row;
-  align-items: baseline;
+  align-items: center;
   flex-wrap: nowrap;
   gap: 8rpx;
   overflow: hidden;
@@ -156,6 +173,7 @@
 
 .member-name {
   font-size: var(--font-size-md);
+  line-height: 1.35;
   color: var(--color-text);
   font-weight: 600;
   overflow: hidden;
@@ -166,15 +184,21 @@
 .dot,
 .member-meta {
   font-size: var(--font-size-sm);
+  line-height: 1.35;
   color: var(--color-text-muted);
   flex-shrink: 0;
 }
 
 .role-chip {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 40rpx;
+  padding: 0 12rpx;
   font-size: 20rpx;
-  line-height: 1.2;
-  padding: 4rpx 12rpx;
+  line-height: 1;
   border-radius: var(--radius-sm);
   border: 1rpx solid var(--color-border-strong);
   color: var(--color-brand);

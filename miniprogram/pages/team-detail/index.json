@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "队伍详情",
-  "usingComponents": {}
+  "usingComponents": {
+    "home-fab": "/components/home-fab/index"
+  }
 }

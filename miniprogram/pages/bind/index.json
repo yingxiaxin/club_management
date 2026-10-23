@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "绑定角色",
-  "usingComponents": {}
+  "usingComponents": {
+    "home-fab": "/components/home-fab/index"
+  }
 }

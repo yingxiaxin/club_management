@@ -1,0 +1,40 @@
+<view class="page">
+  <view class="page-state" wx:if="{{loading}}">
+    <text class="muted">加载中…</text>
+  </view>
+  <view class="page-state" wx:elif="{{error}}">
+    <text class="danger">{{error}}</text>
+    <button class="btn-primary retry" size="mini" bindtap="load">重试</button>
+  </view>
+
+  <block wx:else>
+    <view class="empty-panel" wx:if="{{!list.length}}">
+      <text class="muted">暂无公告</text>
+      <text class="muted tiny">管理员发布后会出现在这里</text>
+    </view>
+
+    <view class="announce-list" wx:else>
+      <view
+        id="ann-{{item.id}}"
+        class="announce-card {{item.pinned ? 'pinned' : ''}} {{expandedId === item.id ? 'open' : ''}}"
+        wx:for="{{list}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="toggle"
+      >
+        <view class="announce-accent" />
+        <view class="announce-body">
+          <view class="announce-head">
+            <text class="announce-title">{{item.title}}</text>
+            <text wx:if="{{item.pinned}}" class="pin">置顶</text>
+          </view>
+          <text class="announce-date" wx:if="{{item.publishedText}}">{{item.publishedText}}</text>
+          <text class="announce-content">{{item.content}}</text>
+          <text class="announce-hint">{{expandedId === item.id ? '收起' : '展开全文'}}</text>
+        </view>
+      </view>
+    </view>
+  </block>
+</view>
+
+<home-fab />

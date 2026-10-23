@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "邀请码入会",
-  "usingComponents": {}
+  "usingComponents": {
+    "home-fab": "/components/home-fab/index"
+  }
 }

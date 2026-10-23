@@ -33,7 +33,10 @@
                 <text wx:if="{{item.urgencyIcon}}" class="tag-icon">{{item.urgencyIcon}}</text>{{item.typeLabel}}
               </text>
             </view>
-            <text class="time">{{item.startText}}</text>
+            <view class="meta-row">
+              <text class="time">{{item.startText}}</text>
+              <text class="phase phase-{{item.occurrencePhase}}">{{item.occurrencePhaseLabel}}</text>
+            </view>
             <text class="rsvp-brief" wx:if="{{item.rsvpCounts.total}}">
               参加 {{item.rsvpCounts.going}} · 待定 {{item.rsvpCounts.maybe}} · 请假 {{item.rsvpCounts.decline}}
             </text>
@@ -67,11 +70,13 @@
                 <text wx:if="{{item.urgencyIcon}}" class="tag-icon">{{item.urgencyIcon}}</text>{{item.typeLabel}}
               </text>
             </view>
-            <text class="time">{{item.startText}}</text>
+            <view class="meta-row">
+              <text class="time">{{item.startText}}</text>
+              <text class="phase phase-{{item.occurrencePhase}}">{{item.occurrencePhaseLabel}}</text>
+            </view>
             <text class="rsvp-brief" wx:if="{{item.rsvpCounts.total}}">
               参加 {{item.rsvpCounts.going}} · 待定 {{item.rsvpCounts.maybe}} · 请假 {{item.rsvpCounts.decline}}
             </text>
-            <text class="status" wx:if="{{item.status === 'ongoing'}}">{{item.statusLabel}}</text>
           </view>
         </view>
       </view>

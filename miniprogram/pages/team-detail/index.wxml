@@ -24,31 +24,31 @@
           <button
             wx:if="{{team.canPauseRecruit}}"
             class="cap-btn"
-            size="mini"
             bindtap="onPauseRecruit"
             disabled="{{busy}}"
+            hover-class="cap-btn-hover"
           >关闭招募</button>
           <button
             wx:if="{{team.canResumeRecruit}}"
             class="cap-btn primary"
-            size="mini"
             bindtap="onResumeRecruit"
             disabled="{{busy}}"
+            hover-class="cap-btn-hover"
           >开启招募</button>
           <button
             wx:if="{{team.canDissolve}}"
             class="cap-btn danger"
-            size="mini"
             bindtap="onDissolve"
             disabled="{{busy}}"
+            hover-class="cap-btn-hover"
           >撤销队伍</button>
         </view>
         <view class="leave-row" wx:if="{{team.canLeave}}">
           <button
             class="cap-btn"
-            size="mini"
             bindtap="onLeave"
             disabled="{{busy}}"
+            hover-class="cap-btn-hover"
           >离开队伍</button>
         </view>
       </view>
@@ -142,3 +142,5 @@
     </view>
   </block>
 </view>
+
+<home-fab />

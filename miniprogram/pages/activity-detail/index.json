@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "活动详情",
-  "usingComponents": {}
+  "usingComponents": {
+    "home-fab": "/components/home-fab/index"
+  }
 }

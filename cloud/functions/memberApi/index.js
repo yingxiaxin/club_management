@@ -233,8 +233,9 @@ exports.main = async (event) => {
         const access = await requireBoundMember(openid, '订阅提醒')
         const id = event.id || event.activityId
         if (!id) return fail('缺少活动 id', 400)
-        const raw = await activitiesDb.getRawPublished(id)
+        let raw = await activitiesDb.getRawPublished(id)
         if (!raw) return fail('活动不存在', 404)
+        raw = await activitiesDb.ensureCycleRollover(raw)
         const activity = decorate(raw)
         if (activity.reminderCycle === 'none') {
           return fail('该活动未开启提醒', 409)
@@ -259,8 +260,9 @@ exports.main = async (event) => {
         const access = await requireBoundMember(openid, '表态')
         const id = event.id || event.activityId
         if (!id) return fail('缺少活动 id', 400)
-        const raw = await activitiesDb.getRawPublished(id)
+        let raw = await activitiesDb.getRawPublished(id)
         if (!raw) return fail('活动不存在', 404)
+        raw = await activitiesDb.ensureCycleRollover(raw)
         const activity = decorate(raw)
         if (!activity.canChangeRsvp) {
           return fail(activity.rsvpLockedReason || '当前无法修改意向', 409)

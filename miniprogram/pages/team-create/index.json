@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "创建队伍",
-  "usingComponents": {}
+  "usingComponents": {
+    "home-fab": "/components/home-fab/index"
+  }
 }
