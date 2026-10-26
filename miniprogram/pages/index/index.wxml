@@ -31,55 +31,37 @@
   </view>
 
   <block wx:else>
-    <!-- 个人信息（俱乐部信息栏下方）：管理员在此展开管理工具 -->
-    <view class="me-card">
-      <view class="me-head {{isAdmin ? 'tappable' : ''}}" bindtap="onMeHeadTap">
-        <view class="identity-dot {{canViewMembers ? 'ok' : 'wait'}}" />
-        <view class="me-text">
-          <text class="me-label">我的身份</text>
-          <text class="identity-main">{{identityLine}}</text>
+    <!-- 会务条：身份 + 日程（紧跟）；解绑靠右；成员走底 Tab -->
+    <view class="hub">
+      <view class="hub-row">
+        <view class="hub-identity">
+          <view class="identity-dot {{canViewMembers ? 'ok' : 'wait'}}" />
+          <text class="hub-role">{{roleLabel}}</text>
+          <text class="hub-name {{identityPathwayTint}}">{{identityLine}}</text>
         </view>
-        <text class="identity-role">{{roleLabel}}</text>
-        <text wx:if="{{isAdmin}}" class="me-chevron {{showAdminTools ? 'open' : ''}}">›</text>
-      </view>
-      <view class="me-tools" wx:if="{{isAdmin && showAdminTools}}">
-        <view class="me-tool" bindtap="goAdminLogin">
-          <view class="me-tool-text">
-            <text class="me-tool-title">管理端扫码登录</text>
-            <text class="me-tool-desc">确认 PC 后台登录票</text>
-          </view>
-          <text class="me-tool-arrow">›</text>
+        <view class="hub-schedule" wx:if="{{canViewMembers}}" bindtap="goActivities">
+          <text class="hub-schedule-text">日程 · 今日 {{todayCount}} · 本周 {{weekCount}}</text>
+          <text class="hub-schedule-arrow">›</text>
         </view>
-        <view class="me-tool" bindtap="goJoin">
-          <view class="me-tool-text">
-            <text class="me-tool-title">{{memberId ? '关联联调' : '邀请码关联（联调）'}}</text>
-            <text class="me-tool-desc">{{memberId ? '进入关联页 / 解除测试绑定' : '用邀请码测试关联流程'}}</text>
-          </view>
-          <text class="me-tool-arrow">›</text>
+        <view
+          wx:if="{{isAdmin && memberId}}"
+          class="hub-unbind"
+          catchtap="onUnbindTap"
+        >
+          <text class="hub-unbind-mark">⊘</text>
+          <text class="hub-unbind-label">解绑</text>
         </view>
       </view>
     </view>
 
-    <!-- 快捷入口 -->
-    <view class="shortcuts" wx:if="{{canViewMembers}}">
-      <view class="shortcut" bindtap="goActivities">
-        <text class="shortcut-title">活动日程</text>
-        <text class="shortcut-desc">今日 {{todayCount}} · 本周 {{weekCount}}</text>
-      </view>
-      <view class="shortcut" bindtap="goMembers">
-        <text class="shortcut-title">成员列表</text>
-        <text class="shortcut-desc">查看档案与备注</text>
-      </view>
-    </view>
-
-    <!-- 访客：待审 / 引导关联 -->
-    <view class="guest-cta" wx:elif="{{joinPending}}">
+    <!-- 访客：待审 / 引导关联（未关联时；与 hub 并列） -->
+    <view class="guest-cta" wx:if="{{!canViewMembers && joinPending}}">
       <text class="guest-title">关联申请审核中</text>
       <text class="hint">管理员确认后，即可查看公告、活动与成员。也可点下方查看申请详情。</text>
       <button class="btn-primary" bindtap="goJoin">查看申请状态</button>
       <button class="btn-ghost" bindtap="refresh">刷新</button>
     </view>
-    <view class="guest-cta" wx:else>
+    <view class="guest-cta" wx:elif="{{!canViewMembers}}">
       <text class="guest-title">加入俱乐部</text>
       <text class="hint">名单由管理员维护。请按下面三步关联你的游戏角色：</text>
       <view class="steps">
@@ -130,8 +112,8 @@
                 <view class="announce-head">
                   <text class="announce-title">{{item.title}}</text>
                   <text wx:if="{{item.pinned}}" class="pin">置顶</text>
+                  <text class="announce-date" wx:if="{{item.publishedText}}">{{item.publishedText}}</text>
                 </view>
-                <text class="announce-date" wx:if="{{item.publishedText}}">{{item.publishedText}}</text>
                 <text class="announce-content">{{item.content}}</text>
               </view>
             </view>

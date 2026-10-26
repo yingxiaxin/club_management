@@ -8,19 +8,23 @@
       <text class="title">你已关联角色</text>
       <text class="meta" wx:if="{{boundName}}">当前角色：{{boundName}}</text>
       <text class="meta">可以查看公告、活动日程与成员列表了。</text>
-      <button class="btn-primary" bindtap="goHome">回首页</button>
-      <button class="btn-ghost" bindtap="goMembers">查看成员列表</button>
-      <view class="admin-box" wx:if="{{isAdmin}}">
-        <text class="admin-label">管理员联调</text>
-        <button
-          class="btn-ghost"
-          loading="{{unbinding}}"
+      <view class="icon-actions">
+        <view class="icon-action" bindtap="goHome" hover-class="icon-action-hover" hover-stay-time="80">
+          <image class="icon-action-img" src="/assets/tab/home-active.png" mode="aspectFit" />
+          <text class="icon-action-label">首页</text>
+        </view>
+        <view
+          wx:if="{{isAdmin}}"
+          class="icon-action {{unbinding ? 'disabled' : ''}}"
           bindtap="onUnbindForTest"
+          hover-class="icon-action-hover"
+          hover-stay-time="80"
         >
-          解除关联（联调）
-        </button>
-        <text class="muted">解除后可再用邀请码重测关联流程。</text>
+          <text class="icon-action-mark">⊘</text>
+          <text class="icon-action-label">解绑</text>
+        </view>
       </view>
+      <text class="muted tiny" wx:if="{{isAdmin}}">解绑后可用邀请码重新关联。</text>
       <text class="msg" wx:if="{{message}}">{{message}}</text>
     </view>
   </block>
@@ -49,7 +53,7 @@
         <text class="step">2. 角色名须与名单完全一致（含标点与空格）</text>
         <text class="step">3. 提交后等待管理员确认</text>
       </view>
-      <text class="meta admin-tip" wx:if="{{isAdmin}}">当前为管理员微信，可用于联调测试关联流程。</text>
+      <text class="meta admin-tip" wx:if="{{isAdmin}}">当前为管理员微信，可用于代测或协助成员关联。</text>
       <view class="field">
         <text class="label">邀请码</text>
         <input class="input" value="{{inviteCode}}" bindinput="onInviteInput" placeholder="管理员发给你的邀请码" />

@@ -85,23 +85,23 @@ async function attachMember(openid, member) {
 }
 
 /**
- * 仅看 users 行：管理员恒可看；普通成员须仍挂着 memberId。
+ * 仅看 users 行：须仍挂着 memberId（管理员也不例外；小程序内容权看绑定）。
  * 调用方还应再校验对应 members 仍为 active（见 memberApi.resolveAccess）。
  */
 function canViewMembers(user) {
   if (!user) return false
-  if (ADMIN_ROLES.has(user.role)) return true
   return Boolean(user.memberId)
 }
 
 /**
- * 解除 users.memberId；非管理员降为 guest（移出/解绑后不再能看名单）。
+ * 解除 users.memberId；非管理员降为 guest。管理员保留 role（可扫码进 PC），但小程序不可再看名单直至重新关联。
  */
 async function detachMember(openid) {
   const user = await ensureUser(openid)
   const prevMemberId = user.memberId
   const patch = {
     memberId: null,
+    displayName: '',
     lastLoginAt: new Date(),
   }
   if (!ADMIN_ROLES.has(user.role)) {

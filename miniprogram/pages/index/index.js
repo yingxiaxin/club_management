@@ -1,5 +1,6 @@
 const { callMemberApi } = require('../../utils/api')
 const { mapWithPublishedText } = require('../../utils/datetime')
+const { pathwayClass } = require('../../utils/pathway')
 
 const ROLE_LABELS = {
   guest: '访客',
@@ -30,7 +31,8 @@ Page({
     todayCount: 0,
     weekCount: 0,
     identityLine: '',
-    showAdminTools: false,
+    identityPathwayTint: '',
+    unbinding: false,
   },
 
   onShow() {
@@ -54,6 +56,10 @@ Page({
       let identityLine = '尚未关联游戏角色'
       if (displayName) identityLine = displayName
       else if (joinPending) identityLine = '关联申请审核中'
+      const pathwayCls =
+        data.memberId && data.member
+          ? pathwayClass(data.member.pathway)
+          : ''
       this.setData({
         loading: false,
         role: data.role || 'guest',
@@ -67,6 +73,7 @@ Page({
         clubIconUrl: (club && club.iconUrl) || '',
         clubIntro: (club && club.intro) || '',
         identityLine,
+        identityPathwayTint: pathwayCls ? `${pathwayCls} pathway-tint` : '',
       })
       if (canViewMembers) {
         if (awaitExtras) {
@@ -147,15 +154,6 @@ Page({
     }
   },
 
-  onMeHeadTap() {
-    if (!this.data.isAdmin) return
-    this.setData({ showAdminTools: !this.data.showAdminTools })
-  },
-
-  goMembers() {
-    wx.switchTab({ url: '/pages/members/index' })
-  },
-
   goActivities() {
     wx.switchTab({ url: '/pages/activities/index' })
   },
@@ -170,7 +168,29 @@ Page({
     wx.navigateTo({ url: '/pages/join/index' })
   },
 
-  goAdminLogin() {
-    wx.navigateTo({ url: '/pages/admin-login/index' })
+  onUnbindTap() {
+    if (!this.data.isAdmin || !this.data.memberId || this.data.unbinding) return
+    wx.showModal({
+      title: '解除微信关联',
+      content: '解除后可用邀请码重新关联。确定继续？',
+      confirmText: '解除',
+      success: (res) => {
+        if (res.confirm) this.doUnbind()
+      },
+    })
+  },
+
+  async doUnbind() {
+    if (this.data.unbinding) return
+    this.setData({ unbinding: true })
+    try {
+      await callMemberApi('unbindSelfForTest')
+      wx.showToast({ title: '已解除关联', icon: 'success' })
+      wx.navigateTo({ url: '/pages/join/index' })
+    } catch (e) {
+      wx.showToast({ title: e.message || '解除失败', icon: 'none' })
+    } finally {
+      this.setData({ unbinding: false })
+    }
   },
 })

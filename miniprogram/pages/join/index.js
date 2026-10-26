@@ -60,7 +60,19 @@ Page({
     }
   },
 
-  async onUnbindForTest() {
+  onUnbindForTest() {
+    if (this.data.unbinding || !this.data.isAdmin) return
+    wx.showModal({
+      title: '解除微信关联',
+      content: '解除后可用邀请码重新关联。确定继续？',
+      confirmText: '解除',
+      success: (res) => {
+        if (res.confirm) this.doUnbind()
+      },
+    })
+  },
+
+  async doUnbind() {
     if (this.data.unbinding) return
     this.setData({ unbinding: true, message: '' })
     try {
@@ -100,10 +112,6 @@ Page({
     } finally {
       this.setData({ submitting: false })
     }
-  },
-
-  goMembers() {
-    wx.switchTab({ url: '/pages/members/index' })
   },
 
   goHome() {

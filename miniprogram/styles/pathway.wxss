@@ -59,6 +59,11 @@
   background: var(--pathway-muted);
 }
 
+/* 首页会务条角色名 */
+.hub-name.pathway-tint {
+  color: var(--pathway);
+}
+
 /* 队伍详情队员行：同管理端行渐变；上下等距，文字垂直居中 */
 .member-line.pathway-tint {
   border-left: none;

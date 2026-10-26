@@ -17,7 +17,7 @@
 1. 匹配 `status=active` 的档案  
 2. 若 `boundOpenid` 已被其他微信占用 → 拒绝  
 3. 写入 `members.boundOpenid`，并更新/创建 `users`：`memberId`；非管理员角色升为 `member`（不降级 `admin` / `super_admin`）  
-4. 仅 `canViewMembers`（已绑定的 `member`，或管理员）可拉列表/详情  
+4. 仅 `canViewMembers`（已绑定有效角色）可拉列表/详情；管理员未关联同样不可看  
 
 未绑定访客不可浏览名单（符合说明书访客权限；入会申请页留给 P0-e）。
 

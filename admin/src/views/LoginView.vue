@@ -44,7 +44,7 @@ async function refreshQr() {
   try {
     const data = await startQrLogin()
     qr.value = data
-    qrStatus.value = '等待手机确认…'
+    qrStatus.value = '请在手机上确认登录…'
     pollTimer = setInterval(async () => {
       if (!qr.value?.ticketId) return
       try {
@@ -61,15 +61,15 @@ async function refreshQr() {
           qrStatus.value = '已过期'
           qrError.value = '二维码已过期，请点击刷新'
         } else if (st.status === 'pending') {
-          qrStatus.value = '等待手机确认…'
+          qrStatus.value = '请在手机上确认登录…'
         }
       } catch (e) {
         stopPoll()
-        qrError.value = e instanceof Error ? e.message : '轮询失败'
+        qrError.value = e instanceof Error ? e.message : '登录状态获取失败'
       }
     }, 2000)
   } catch (e) {
-    qrError.value = e instanceof Error ? e.message : '无法创建扫码登录'
+    qrError.value = e instanceof Error ? e.message : '无法发起扫码登录'
   } finally {
     qrLoading.value = false
   }
@@ -80,7 +80,7 @@ async function copyTicket() {
   if (!id) return
   try {
     await navigator.clipboard.writeText(id)
-    ElMessage.success('票号已复制')
+    ElMessage.success('登录编号已复制')
   } catch {
     ElMessage.info(id)
   }
@@ -115,34 +115,34 @@ onUnmounted(() => {
   <div class="login-page">
     <div class="panel">
       <h1 class="title">俱乐部管理后台</h1>
-      <p class="hint">微信扫码登录（管理员）</p>
+      <p class="hint">请使用管理员微信扫码登录</p>
 
       <div class="qr-box">
-        <div v-if="qrLoading" class="qr-placeholder">正在创建登录票…</div>
+        <div v-if="qrLoading" class="qr-placeholder">正在生成登录码…</div>
         <img v-else-if="qr?.qrBase64" class="qr-img" :src="qr.qrBase64" alt="登录小程序码" />
         <p v-if="qr?.qrBase64" class="qr-tip">
-          若提示「开发版已过期」：先在开发者工具点「预览」用手机扫一次，再扫本码；或上传体验版后把
-          <code>CLOUD_QR_ENV_VERSION=trial</code> 并重启 API。
+          使用已绑定管理员身份的微信扫码，在手机上确认后即可进入后台。
         </p>
         <div v-else class="qr-fallback">
-          <p class="fallback-title">当前环境无法出小程序码</p>
+          <p class="fallback-title">暂时无法显示登录码</p>
           <p class="ticket" v-if="qr?.ticketId">
-            票号 <strong>{{ qr.ticketId }}</strong>
+            登录编号 <strong>{{ qr.ticketId }}</strong>
           </p>
-          <el-button v-if="qr?.ticketId" size="small" @click="copyTicket">复制票号</el-button>
-          <ol class="steps">
-            <li>开发者工具打开「管理端扫码登录」页</li>
-            <li>粘贴票号 → 点「确认登录管理端」</li>
-            <li>回到本页，应自动进入后台</li>
+          <el-button v-if="qr?.ticketId" size="small" @click="copyTicket">复制登录编号</el-button>
+          <ol class="steps" v-if="qr?.ticketId">
+            <li>打开俱乐部小程序「管理端登录确认」页</li>
+            <li>粘贴登录编号并确认</li>
+            <li>返回本页，将自动进入后台</li>
           </ol>
+          <p class="qr-tip" v-else>请点击下方刷新重试；若仍无法显示，可使用应急账号登录或联系超管。</p>
           <p v-if="qrError" class="err">{{ qrError }}</p>
         </div>
         <p v-if="qrStatus" class="status">{{ qrStatus }}</p>
-        <el-button class="refresh" :loading="qrLoading" @click="refreshQr">刷新登录票</el-button>
+        <el-button class="refresh" :loading="qrLoading" @click="refreshQr">刷新二维码</el-button>
       </div>
 
       <el-collapse v-model="emergencyOpen" class="emergency">
-        <el-collapse-item title="应急账号密码登录" name="1">
+        <el-collapse-item title="应急账号登录" name="1">
           <el-form label-position="top" @submit.prevent="onEmergencySubmit">
             <el-form-item label="账号">
               <el-input v-model="form.username" autocomplete="username" />
@@ -156,7 +156,7 @@ onUnmounted(() => {
               />
             </el-form-item>
             <el-button type="primary" class="submit" :loading="emergencyLoading" native-type="submit">
-              应急登录
+              登录
             </el-button>
           </el-form>
         </el-collapse-item>

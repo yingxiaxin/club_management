@@ -25,9 +25,9 @@ function fail(message, status = 400) {
 }
 
 /**
- * 解析查看权：
- * - 管理员：始终可看（即使用测微信号做过邀请码关联，移出角色后仍可看——这是管理权限）
- * - 普通用户：须挂着 active 成员档案；若档案已 left / 不存在 / 绑定被清，自动 detach 为 guest
+ * 解析查看权（小程序侧）：
+ * - 须挂着 active 成员档案（管理员/超管也不例外；PC 后台另走 adminApi）
+ * - 若档案已 left / 不存在 / 绑定被清，自动 detach
  */
 async function resolveAccess(openid) {
   let user = await usersDb.ensureUser(openid)
@@ -50,7 +50,7 @@ async function resolveAccess(openid) {
     user,
     member,
     isAdmin,
-    canViewMembers: isAdmin || Boolean(user.memberId && bindingOk),
+    canViewMembers: Boolean(user.memberId && bindingOk),
   }
 }
 
@@ -147,7 +147,7 @@ exports.main = async (event) => {
         if (!openid) return fail('无法获取微信身份', 401)
         const user = await usersDb.ensureUser(openid)
         if (!usersDb.ADMIN_ROLES.has(user.role)) {
-          return fail('仅管理员可解除绑定（联调）', 403)
+          return fail('仅管理员可解除微信关联', 403)
         }
         if (!user.memberId) {
           return ok({ unbound: false, message: '当前未绑定成员' })

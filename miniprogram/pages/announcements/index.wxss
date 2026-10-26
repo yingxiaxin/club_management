@@ -44,16 +44,23 @@
   flex-direction: row;
   align-items: center;
   gap: 12rpx;
-  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .announce-title {
+  flex: 1;
+  min-width: 0;
   font-size: var(--font-size-md);
   font-weight: 600;
   color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .announce-date {
+  flex-shrink: 0;
+  margin-left: auto;
   font-size: 22rpx;
   color: var(--color-text-muted);
   line-height: 1.2;

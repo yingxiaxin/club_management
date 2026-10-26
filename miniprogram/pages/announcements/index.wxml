@@ -27,8 +27,8 @@
           <view class="announce-head">
             <text class="announce-title">{{item.title}}</text>
             <text wx:if="{{item.pinned}}" class="pin">置顶</text>
+            <text class="announce-date" wx:if="{{item.publishedText}}">{{item.publishedText}}</text>
           </view>
-          <text class="announce-date" wx:if="{{item.publishedText}}">{{item.publishedText}}</text>
           <text class="announce-content">{{item.content}}</text>
           <text class="announce-hint">{{expandedId === item.id ? '收起' : '展开全文'}}</text>
         </view>

@@ -14,10 +14,10 @@
     </view>
 
     <view class="openid" wx:if="{{openid}}">
-      <text class="label">当前 openid（以系统为准，j/J 肉眼易混）</text>
+      <text class="label">当前微信标识（排障用，请以复制结果为准）</text>
       <text class="value" selectable>{{openid}}</text>
-      <button class="btn-copy" size="mini" bindtap="onCopyOpenid">复制 openid</button>
-      <text class="hint">若提示非管理员：把复制结果写入云库 users（role=super_admin）</text>
+      <button class="btn-copy" size="mini" bindtap="onCopyOpenid">复制标识</button>
+      <text class="hint">若提示非管理员：请确认本微信已关联管理员角色，或联系超管在后台任命</text>
     </view>
 
     <button

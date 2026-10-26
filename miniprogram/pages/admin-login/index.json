@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "管理端扫码登录",
+  "navigationBarTitleText": "管理端登录确认",
   "enablePullDownRefresh": true,
   "usingComponents": {
     "home-fab": "/components/home-fab/index"
