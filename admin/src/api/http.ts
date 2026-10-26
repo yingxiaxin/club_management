@@ -23,6 +23,15 @@ http.interceptors.response.use(
         location.href = '/login'
       }
     }
+    const serverMsg =
+      err.response?.data &&
+      typeof err.response.data === 'object' &&
+      typeof (err.response.data as { message?: unknown }).message === 'string'
+        ? (err.response.data as { message: string }).message.trim()
+        : ''
+    if (serverMsg) {
+      return Promise.reject(new Error(serverMsg))
+    }
     return Promise.reject(err)
   },
 )

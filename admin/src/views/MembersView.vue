@@ -15,7 +15,13 @@ import { getUser } from '@/auth/session'
 import { commitOcrImport, parseOcrImages } from '@/api/ocr'
 import type { Member, MemberInput } from '@/types/member'
 import type { OcrCandidate } from '@/types/ocr'
-import { pathwayRowClassName, pathwayTagClass } from '@/utils/pathway'
+import {
+  PATHWAY_FILTER_OPTIONS,
+  PATHWAY_FORM_OPTIONS,
+  normalizePathwayFormValue,
+  pathwayRowClassName,
+  pathwayTagClass,
+} from '@/utils/pathway'
 
 const OCR_MAX_FILES = 12
 /** 结果表可视高度：只滚表格，上传区保持固定 */
@@ -25,7 +31,8 @@ const loading = ref(false)
 const rows = ref<Member[]>([])
 const query = reactive({
   q: '',
-  pathway: '',
+  /** 途径多选（逗号传给 API） */
+  pathways: [] as string[],
   title: '',
   accountRole: '',
   sort: 'powerScore',
@@ -122,7 +129,7 @@ async function load() {
       order: query.order,
     }
     if (query.q.trim()) params.q = query.q.trim()
-    if (query.pathway.trim()) params.pathway = query.pathway.trim()
+    if (query.pathways.length) params.pathway = query.pathways.join(',')
     if (query.title.trim()) params.title = query.title.trim()
     if (query.accountRole.trim()) params.accountRole = query.accountRole.trim()
     rows.value = await fetchMembers(params)
@@ -168,7 +175,7 @@ function openEdit(row: Member) {
     level: Number(row.level) || 0,
     powerScore: Number(row.powerScore) || 0,
     fashionScore: Number(row.fashionScore) || 0,
-    pathway: row.pathway ?? '',
+    pathway: normalizePathwayFormValue(row.pathway),
     title: row.title ?? '成员',
     remark: row.remark ?? '',
   })
@@ -198,8 +205,10 @@ async function save() {
       await updateMember(editingId.value, payload)
       ElMessage.success('已更新')
     } else {
-      await createMember(payload)
-      ElMessage.success('已创建')
+      const created = await createMember(payload)
+      ElMessage.success(
+        created?.restoredFromLeft ? '已恢复该成员（此前已移出）' : '已创建',
+      )
     }
     dialogVisible.value = false
     await load()
@@ -415,11 +424,22 @@ onUnmounted(() => window.removeEventListener('paste', onOcrPaste))
 
     <div class="filters card">
       <el-input v-model="query.q" clearable placeholder="搜索角色名 / 途径 / 备注" class="filter-item" />
-      <el-input v-model="query.pathway" clearable placeholder="途径筛选" class="filter-item" />
+      <el-select
+        v-model="query.pathways"
+        multiple
+        clearable
+        collapse-tags
+        collapse-tags-tooltip
+        placeholder="途径筛选"
+        class="filter-item"
+      >
+        <el-option v-for="p in PATHWAY_FILTER_OPTIONS" :key="p" :label="p" :value="p" />
+      </el-select>
       <el-select v-model="query.title" clearable placeholder="职位" class="filter-item">
         <el-option v-for="t in TITLE_OPTIONS" :key="t" :label="t" :value="t" />
       </el-select>
       <el-select v-model="query.accountRole" clearable placeholder="后台身份" class="filter-item">
+        <el-option label="超管" value="super_admin" />
         <el-option label="管理员" value="admin" />
         <el-option label="成员（已关联）" value="member" />
         <el-option label="未关联" value="unbound" />
@@ -535,7 +555,19 @@ onUnmounted(() => window.removeEventListener('paste', onOcrPaste))
           <el-input-number v-model="form.fashionScore" :min="0" :step="1" style="width: 100%" />
         </el-form-item>
         <el-form-item label="序列/途径">
-          <el-input v-model="form.pathway" placeholder="如：愚者途径" />
+          <el-select
+            v-model="form.pathway"
+            clearable
+            placeholder="选择途径"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="p in PATHWAY_FORM_OPTIONS"
+              :key="p"
+              :label="p"
+              :value="p"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="职位">
           <el-select v-model="form.title" style="width: 100%">

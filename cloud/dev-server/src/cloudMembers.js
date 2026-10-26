@@ -6,6 +6,7 @@ import tcb from '@cloudbase/node-sdk'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { memberMatchesPathways } from './pathwayFilter.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const COLLECTION = 'members'
@@ -76,7 +77,7 @@ async function fetchAll() {
 
 export async function listMembers({ sort = 'powerScore', order = 'desc', pathway, title, q } = {}) {
   let list = (await fetchAll()).map(toClient).filter((m) => m.status !== 'left')
-  if (pathway) list = list.filter((m) => m.pathway === pathway)
+  if (pathway) list = list.filter((m) => memberMatchesPathways(m.pathway, pathway))
   if (title) list = list.filter((m) => m.title === title)
   if (q) {
     const key = String(q).trim().toLowerCase()
@@ -118,10 +119,30 @@ async function findAnyByName(name) {
   return rows[0] || null
 }
 
+function isDupNameError(e) {
+  const msg = String(e?.message || e?.errMsg || '')
+  return msg.includes('E11000') || /duplicate key/i.test(msg)
+}
+
 export async function createMember(payload) {
   const name = String(payload.characterName || '').trim()
   if (!name) throw err('角色名必填', 400)
-  if (await findActiveByName(name)) throw err('角色名已存在', 409)
+  const existing = await findAnyByName(name)
+  if (existing) {
+    // 云库 characterName 唯一索引含已移出；手录同名时恢复在职（与 OCR 导入一致）
+    if (existing.status === 'active') throw err('角色名已存在', 409)
+    const restored = await updateMember(existing.id, {
+      characterName: name,
+      level: Number(payload.level) || 0,
+      powerScore: Number(payload.powerScore) || 0,
+      fashionScore: Number(payload.fashionScore) || 0,
+      pathway: String(payload.pathway || '').trim() || '未填写',
+      title: String(payload.title || '').trim() || '成员',
+      remark: String(payload.remark || '').trim(),
+      status: 'active',
+    })
+    return { ...restored, restoredFromLeft: true }
+  }
   const now = new Date().toISOString()
   const id = payload.id || `m_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
   const row = {
@@ -139,7 +160,12 @@ export async function createMember(payload) {
     boundOpenid: payload.boundOpenid || null,
     lastOcrJobId: payload.lastOcrJobId || null,
   }
-  await getDb().collection(COLLECTION).doc(id).set(row)
+  try {
+    await getDb().collection(COLLECTION).doc(id).set(row)
+  } catch (e) {
+    if (isDupNameError(e)) throw err('角色名已存在', 409)
+    throw e
+  }
   return { id, ...row }
 }
 
@@ -151,7 +177,8 @@ export async function updateMember(id, payload) {
   if (body.characterName !== undefined) {
     const name = String(body.characterName ?? '').trim()
     if (!name) throw err('角色名必填', 400)
-    const other = await findActiveByName(name)
+    // 唯一索引含已移出；改名不可撞上任意同名文档
+    const other = await findAnyByName(name)
     if (other && other.id !== id) throw err('角色名已存在', 409)
     patch.characterName = name
   }

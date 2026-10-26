@@ -373,7 +373,11 @@ app.post('/api/members', requireAdmin, async (req, res) => {
     const data = await membersApi.create(req.body || {})
     res.status(201).json({ ok: true, data })
   } catch (err) {
-    res.status(err.status || 500).json({ ok: false, message: err.message })
+    const status = err.status || 500
+    if (status >= 500) {
+      console.error('[POST /api/members]', err.message, err.code || err.errCode || '')
+    }
+    res.status(status).json({ ok: false, message: err.message || '创建成员失败' })
   }
 })
 
@@ -382,7 +386,11 @@ app.put('/api/members/:id', requireAdmin, async (req, res) => {
     const data = await membersApi.update(req.params.id, req.body || {})
     res.json({ ok: true, data })
   } catch (err) {
-    res.status(err.status || 500).json({ ok: false, message: err.message })
+    const status = err.status || 500
+    if (status >= 500) {
+      console.error('[PUT /api/members]', err.message, err.code || err.errCode || '')
+    }
+    res.status(status).json({ ok: false, message: err.message || '更新成员失败' })
   }
 })
 

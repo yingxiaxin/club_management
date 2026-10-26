@@ -73,6 +73,7 @@ function pickPrimaryRole(docs) {
  * - 无 boundOpenid → null（前端显示「未关联」）
  * - 有绑定但无 users → null（前端按 boundOpenid 显示「成员」）
  * - 否则为 users.role
+ * - 兜底：members 缺 boundOpenid 但 users.memberId 已指向该成员时，用 users 反填展示（避免「已关联却显示未关联」）
  */
 export async function attachAccountRoles(members) {
   const list = members || []
@@ -80,9 +81,9 @@ export async function attachAccountRoles(members) {
     ...new Set(list.map((m) => m.boundOpenid).filter(Boolean).map(String)),
   ]
   const roleByOpenid = new Map()
+  const col = getDb().collection(USERS)
+  const _ = getDb().command
   if (openids.length) {
-    const col = getDb().collection(USERS)
-    const _ = getDb().command
     const byId = new Map()
     const remember = (rows) => {
       for (const row of rows || []) {
@@ -117,10 +118,48 @@ export async function attachAccountRoles(members) {
       roleByOpenid.set(oid, pickPrimaryRole(grouped.get(oid) || []))
     }
   }
+
+  // 反查：无 boundOpenid 的成员，看是否有 users.memberId 指向自己
+  const missing = list.filter((m) => !m.boundOpenid && m.id)
+  if (missing.length) {
+    const byMemberId = new Map()
+    const chunkSize = 50
+    for (let i = 0; i < missing.length; i += chunkSize) {
+      const chunk = missing.slice(i, i + chunkSize).map((m) => String(m.id))
+      try {
+        const res = await col.where({ memberId: _.in(chunk) }).limit(100).get()
+        for (const row of res.data || []) {
+          if (!row?.memberId) continue
+          const mid = String(row.memberId)
+          if (!byMemberId.has(mid)) byMemberId.set(mid, [])
+          byMemberId.get(mid).push(row)
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    for (const m of missing) {
+      const docs = byMemberId.get(String(m.id)) || []
+      if (!docs.length) continue
+      const primary = docs.slice().sort((a, b) => {
+        const rank = { super_admin: 4, admin: 3, member: 2, guest: 1 }
+        return (rank[b.role] || 0) - (rank[a.role] || 0)
+      })[0]
+      const oid = String(primary.openid || primary._openid || '')
+      if (!oid) continue
+      m.boundOpenid = oid
+      m.accountRole = primary.role || null
+      // 异步修补库内不一致（不阻塞列表）
+      cloudMembers
+        .updateMember(m.id, { boundOpenid: oid })
+        .catch(() => {})
+    }
+  }
+
   for (const m of list) {
     if (!m.boundOpenid) {
       m.accountRole = null
-    } else {
+    } else if (m.accountRole == null) {
       m.accountRole = roleByOpenid.get(String(m.boundOpenid)) || null
     }
   }

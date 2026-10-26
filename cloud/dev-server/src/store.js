@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { v4 as uuid } from 'uuid'
+import { memberMatchesPathways } from './pathwayFilter.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const dataDir = path.join(__dirname, '../data')
@@ -27,7 +28,7 @@ function writeMembers(list) {
 
 export function listMembers({ sort = 'powerScore', order = 'desc', pathway, title, q } = {}) {
   let list = readMembers().filter((m) => m.status !== 'left')
-  if (pathway) list = list.filter((m) => m.pathway === pathway)
+  if (pathway) list = list.filter((m) => memberMatchesPathways(m.pathway, pathway))
   if (title) list = list.filter((m) => m.title === title)
   if (q) {
     const key = String(q).trim().toLowerCase()
@@ -59,8 +60,22 @@ export function createMember(payload) {
   const list = readMembers()
   const name = String(payload.characterName || '').trim()
   if (!name) throw Object.assign(new Error('角色名必填'), { status: 400 })
-  if (list.some((m) => m.characterName === name && m.status !== 'left')) {
-    throw Object.assign(new Error('角色名已存在'), { status: 409 })
+  const existing = list.find((m) => m.characterName === name)
+  if (existing) {
+    if (existing.status !== 'left') {
+      throw Object.assign(new Error('角色名已存在'), { status: 409 })
+    }
+    const restored = updateMember(existing.id, {
+      characterName: name,
+      level: Number(payload.level) || 0,
+      powerScore: Number(payload.powerScore) || 0,
+      fashionScore: Number(payload.fashionScore) || 0,
+      pathway: String(payload.pathway || '').trim() || '未填写',
+      title: String(payload.title || '').trim() || '成员',
+      remark: String(payload.remark || '').trim(),
+      status: 'active',
+    })
+    return { ...restored, restoredFromLeft: true }
   }
   const now = new Date().toISOString()
   const row = {
@@ -92,7 +107,7 @@ export function updateMember(id, payload) {
   if (body.characterName !== undefined) {
     const name = String(body.characterName ?? '').trim()
     if (!name) throw Object.assign(new Error('角色名必填'), { status: 400 })
-    if (list.some((m) => m.id !== id && m.characterName === name && m.status !== 'left')) {
+    if (list.some((m) => m.id !== id && m.characterName === name)) {
       throw Object.assign(new Error('角色名已存在'), { status: 409 })
     }
     current.characterName = name
