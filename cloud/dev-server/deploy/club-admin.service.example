@@ -1,0 +1,21 @@
+# systemd 单元示例（方案甲）
+# 1. 仓库放到例如 /opt/club_management
+# 2. 复制为 /etc/systemd/system/club-admin.service 并改路径
+# 3. sudo systemctl daemon-reload && sudo systemctl enable --now club-admin
+
+[Unit]
+Description=Club admin API + static (scheme A)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/club_management/cloud/dev-server
+Environment=NODE_ENV=production
+EnvironmentFile=/opt/club_management/cloud/dev-server/.env
+ExecStart=/usr/bin/node src/index.js
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

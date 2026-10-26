@@ -87,13 +87,73 @@ const membersApi = {
 
 const app = express()
 const PORT = Number(process.env.PORT) || 3789
+/** 生产公网：HOST=0.0.0.0；本机开发默认 127.0.0.1 */
+const HOST = process.env.HOST || '127.0.0.1'
+/**
+ * 同域托管管理端静态页：SERVE_ADMIN=1，或显式 ADMIN_DIST。
+ * 默认目录：仓库 admin/dist（相对 cloud/dev-server）
+ */
+const adminDistEnv = String(process.env.ADMIN_DIST || '').trim()
+const serveAdmin =
+  process.env.SERVE_ADMIN === '1' ||
+  process.env.SERVE_ADMIN === 'true' ||
+  Boolean(adminDistEnv)
+const adminDist = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  adminDistEnv || '../../admin/dist',
+)
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 12 * 1024 * 1024, files: 12 },
 })
 
-app.use(cors())
+/** 公网：ADMIN_CORS_ORIGIN=https://你的域名（多个用逗号）；同域托管未设时不反射任意 Origin */
+const corsOriginRaw = String(process.env.ADMIN_CORS_ORIGIN || '').trim()
+if (corsOriginRaw) {
+  const allow = new Set(
+    corsOriginRaw
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
+  )
+  app.use(
+    cors({
+      origin(origin, cb) {
+        if (!origin || allow.has(origin)) return cb(null, true)
+        return cb(null, false)
+      },
+    }),
+  )
+} else if (serveAdmin) {
+  app.use(cors({ origin: false }))
+} else {
+  app.use(cors())
+}
 app.use(express.json({ limit: '2mb' }))
+
+/** 简易限流：登录 / 扫码开票（内存；单机够用） */
+const authHits = new Map()
+function rateLimitAuth(req, res, next) {
+  const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '')
+    .split(',')[0]
+    .trim()
+  const key = `${ip}|${req.path}`
+  const now = Date.now()
+  const windowMs = 60_000
+  const max = 30
+  let bucket = authHits.get(key)
+  if (!bucket || now - bucket.start > windowMs) {
+    bucket = { start: now, count: 0 }
+    authHits.set(key, bucket)
+  }
+  bucket.count += 1
+  if (bucket.count > max) {
+    return res.status(429).json({ ok: false, message: '请求过于频繁，请稍后再试' })
+  }
+  next()
+}
+app.use('/api/auth', rateLimitAuth)
 
 function requireAdmin(req, res, next) {
   const header = req.headers.authorization || ''
@@ -162,7 +222,7 @@ app.get('/api/health', (_req, res) => {
     activities: useCloudMembers(),
     teams: useCloudMembers(),
   })
-}
+})
 
 function requireCloudTeams(res) {
   if (!useCloudMembers()) {
@@ -173,7 +233,7 @@ function requireCloudTeams(res) {
     return false
   }
   return true
-})
+}
 
 function requireCloudInvites(res) {
   if (!useCloudMembers()) {
@@ -703,11 +763,30 @@ app.post('/api/ocr/commit', requireAdmin, async (req, res) => {
   }
 })
 
-app.listen(PORT, () => {
-  console.log(`[club-dev-server] http://127.0.0.1:${PORT}`)
+// —— 生产：同域托管 admin 构建产物（须放在全部 /api 路由之后）——
+if (serveAdmin) {
+  if (!fs.existsSync(path.join(adminDist, 'index.html'))) {
+    console.warn(
+      `[club-dev-server] SERVE_ADMIN 已开，但未找到 ${adminDist}/index.html。请先在 admin/ 执行 npm run build`,
+    )
+  } else {
+    app.use(express.static(adminDist, { index: false, maxAge: '1h' }))
+    app.get('*', (req, res, next) => {
+      if (req.path.startsWith('/api')) return next()
+      res.sendFile(path.join(adminDist, 'index.html'), (err) => {
+        if (err) next(err)
+      })
+    })
+    console.log(`[club-dev-server] 托管管理端静态目录: ${adminDist}`)
+  }
+}
+
+app.listen(PORT, HOST, () => {
+  console.log(`[club-dev-server] http://${HOST}:${PORT}`)
   console.log(
     `成员数据源: ${useCloudMembers() ? '云数据库 members' : '本地 JSON'}（DATA_BACKEND=${process.env.DATA_BACKEND || 'json'}）`,
   )
+  console.log(`SERVE_ADMIN=${serveAdmin ? 'on' : 'off'}  HOST=${HOST}`)
   const emergency = getEmergencyAccounts()
   if (emergency.length) {
     console.log(
