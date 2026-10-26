@@ -207,7 +207,7 @@ async function listSubs(activityId) {
   return [...byOpenid.values()]
 }
 
-function resolveOffsets(activity, clubOffsets) {
+function resolveOffsets(_activity, clubOffsets) {
   const allowed = new Set([5, 10, 15, 30, 60, 120])
   const pick = (arr, fb) => {
     const nums = [
@@ -219,9 +219,7 @@ function resolveOffsets(activity, clubOffsets) {
     ].sort((a, b) => a - b)
     return nums.length ? nums : fb
   }
-  if (Array.isArray(activity.reminderOffsetsMinutes) && activity.reminderOffsetsMinutes.length) {
-    return pick(activity.reminderOffsetsMinutes, [10])
-  }
+  // 提前量一律俱乐部提醒设置（活动字段忽略）
   return pick(clubOffsets, [10])
 }
 

@@ -64,3 +64,39 @@ export function updateActivity(id: string, body: Partial<ActivityCreateBody>) {
 export function transitionActivity(id: string, action: 'publish' | 'cancel' | 'start' | 'end') {
   return unwrap<Activity>(http.post(`/api/activities/${id}/transition`, { action }))
 }
+
+export type RsvpOccurrenceOption = {
+  dateKey: string
+  label: string
+  source: 'live' | 'snapshot'
+  rowCount: number
+}
+
+export function fetchActivityRsvpOccurrences(id: string) {
+  return unwrap<{ options: RsvpOccurrenceOption[] }>(
+    http.get(`/api/activities/${id}/rsvps/occurrences`),
+  )
+}
+
+/** RSVP CSV；dateKey=live 本场，或 YYYY-MM-DD 快照 */
+export async function exportActivityRsvpsCsv(id: string, dateKey = 'live') {
+  try {
+    const res = await http.get(`/api/activities/${id}/rsvps/export.csv`, {
+      params: { dateKey },
+      responseType: 'blob',
+    })
+    return res.data as Blob
+  } catch (e) {
+    const err = e as { response?: { data?: Blob }; message?: string }
+    const data = err.response?.data
+    if (data instanceof Blob) {
+      try {
+        const parsed = JSON.parse(await data.text()) as { message?: string }
+        if (parsed.message) throw new Error(parsed.message)
+      } catch (inner) {
+        if (inner instanceof Error && inner.message !== 'Unexpected end of JSON input') throw inner
+      }
+    }
+    throw e instanceof Error ? e : new Error(err.message || '导出失败')
+  }
+}

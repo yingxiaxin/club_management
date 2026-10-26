@@ -38,11 +38,13 @@
 | DELETE | `/api/announcements/:id` | 删除 |
 | GET | `/api/activities` | query: status/from/to/q |
 | GET | `/api/activities/:id` | 详情 |
-| POST | `/api/activities` | 创建；body 含 `startSchedule` / `endSchedule?` / `reminderCycle` / `reminderOffsetsMinutes`；status: draft\|published |
+| GET | `/api/activities/:id/rsvps/occurrences` | 可导出场次：`{ options:[{ dateKey, label, source: live\|snapshot, rowCount }] }` |
+| GET | `/api/activities/:id/rsvps/export.csv` | query `dateKey` 缺省/`live`=本场；否则快照日 `YYYY-MM-DD`；CSV 列见 `docs/P1-c出席意向RSVP.md` |
+| POST | `/api/activities` | 创建；body 含 `startSchedule` / `endSchedule?` / `reminderCycle`；status: draft\|published；`reminderOffsetsMinutes` 可忽略（服务端存空，提前量跟俱乐部） |
 | PUT | `/api/activities/:id` | 更新（cancelled/ended 不可改） |
 | POST | `/api/activities/:id/transition` | body: `{ action: publish\|cancel\|start\|end }` |
 
-日程分量 `*Schedule`：`{ year, month, day, weekday(1–7), time:"HH:mm" }`（均可 null）。开始至少一项非空。`reminderCycle`：无 time→`none`；年月日+time→仅`once`；日+time→`once|daily`；weekday+time→`once|weekly`；仅 time→`daily`。
+日程分量 `*Schedule`：`{ year, month, day, weekday(1–7), time:"HH:mm" }`（均可 null）。开始至少一项非空。`reminderCycle`：管理端「开启提醒」关→`none`；开则无 time→`none`，有完整年月日→`once`，有 weekday→`weekly`，有 day→`daily`，仅 time→`daily`。提前量一律 `club_profile.reminderOffsetsMinutes`。
 
 ### 成员端云函数 `memberApi`（P0-e + P1-b）
 

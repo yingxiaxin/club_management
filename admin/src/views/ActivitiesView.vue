@@ -3,13 +3,16 @@ import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   createActivity,
+  exportActivityRsvpsCsv,
   fetchActivities,
+  fetchActivityRsvpOccurrences,
   transitionActivity,
   updateActivity,
   type Activity,
   type ActivityStatus,
   type ActivityType,
   type ReminderCycle,
+  type RsvpOccurrenceOption,
   type ScheduleParts,
 } from '@/api/activities'
 
@@ -108,6 +111,37 @@ function syncEndFromStart() {
   Object.assign(form.end, endFromStart(form.start, END_OFFSET_MINUTES))
 }
 
+/** 本机当前：仅年月日 + 星期（1=周一…7=周日），不含时间 */
+function todayDateParts(): Pick<ScheduleParts, 'year' | 'month' | 'day' | 'weekday'> {
+  const d = new Date()
+  const wd = d.getDay()
+  return {
+    year: d.getFullYear(),
+    month: d.getMonth() + 1,
+    day: d.getDate(),
+    weekday: wd === 0 ? 7 : wd,
+  }
+}
+
+/** 开始：写入今天的年月日星期，保留已选时间；并联动结束 */
+function fillStartToday() {
+  const parts = todayDateParts()
+  form.start.year = parts.year
+  form.start.month = parts.month
+  form.start.day = parts.day
+  form.start.weekday = parts.weekday
+  syncEndFromStart()
+}
+
+/** 结束：仅写入今天的年月日星期，保留已选时间（不触发开始联动） */
+function fillEndToday() {
+  const parts = todayDateParts()
+  form.end.year = parts.year
+  form.end.month = parts.month
+  form.end.day = parts.day
+  form.end.weekday = parts.weekday
+}
+
 function withSkipEndSync(fn: () => void) {
   skipEndSync.value = true
   try {
@@ -125,10 +159,9 @@ const form = reactive({
   start: emptySchedule(),
   end: emptySchedule(),
   description: '',
-  enableTeam: false,
-  reminderCycle: 'none' as ReminderCycle,
-  reminderMinutes: 10,
-  publishNow: false,
+  enableTeam: true,
+  enableReminder: true,
+  publishNow: true,
 })
 
 const yearOptions = computed(() => {
@@ -145,40 +178,15 @@ const filteredActivities = computed(() => {
   return activities.value.filter((a) => a.status === statusFilter.value)
 })
 
-/** 根据开始日程分量决定可选提醒周期 */
-const allowedCycles = computed((): ReminderCycle[] => {
-  const s = form.start
-  if (!s.time) return ['none']
+/** 开启提醒时按开始分量自动选周期（提前量跟俱乐部设置） */
+function preferredReminderCycle(s: ScheduleParts): ReminderCycle {
+  if (!s.time) return 'none'
   const full = s.year != null && s.month != null && s.day != null
-  if (full) return ['once']
-  const opts: ReminderCycle[] = []
-  const push = (c: ReminderCycle) => {
-    if (!opts.includes(c)) opts.push(c)
-  }
-  if (s.day != null) {
-    push('once')
-    push('daily')
-  }
-  if (s.weekday != null) {
-    push('once')
-    push('weekly')
-  }
-  if (opts.length) return opts
-  return ['daily']
-})
-
-watch(
-  allowedCycles,
-  (opts) => {
-    if (!opts.includes(form.reminderCycle)) {
-      form.reminderCycle = opts[0] || 'none'
-    }
-    if (form.reminderCycle === 'none') {
-      /* 无时间或不提醒 */
-    }
-  },
-  { immediate: true },
-)
+  if (full) return 'once'
+  if (s.weekday != null) return 'weekly'
+  if (s.day != null) return 'daily'
+  return 'daily'
+}
 
 watch(
   () => [
@@ -235,10 +243,9 @@ function openCreate() {
     Object.assign(form.start, emptySchedule())
     Object.assign(form.end, emptySchedule())
     form.description = ''
-    form.enableTeam = false
-    form.reminderCycle = 'none'
-    form.reminderMinutes = 10
-    form.publishNow = false
+    form.enableTeam = true
+    form.enableReminder = true
+    form.publishNow = true
     dialogOpen.value = true
   })
 }
@@ -256,8 +263,7 @@ function openEdit(row: Activity) {
     Object.assign(form.end, scheduleFromActivity(row, 'end'))
     form.description = row.description || ''
     form.enableTeam = Boolean(row.enableTeam)
-    form.reminderCycle = resolveReminderCycle(row)
-    form.reminderMinutes = row.reminderOffsetsMinutes?.[0] || 10
+    form.enableReminder = resolveReminderCycle(row) !== 'none'
     form.publishNow = false
     dialogOpen.value = true
   })
@@ -288,10 +294,14 @@ async function onSubmit() {
     ElMessage.warning('请填写开始的年月日、时间或星期几（至少一项）')
     return
   }
-  if (!allowedCycles.value.includes(form.reminderCycle)) {
-    ElMessage.warning('当前开始时间分量下，提醒周期不可用，请重选')
+  if (form.enableReminder && !form.start.time) {
+    ElMessage.warning('开启提醒需要填写开始时间')
     return
   }
+
+  const reminderCycle = form.enableReminder
+    ? preferredReminderCycle(form.start)
+    : 'none'
 
   const body = {
     title: form.title.trim(),
@@ -300,9 +310,8 @@ async function onSubmit() {
     endSchedule: hasAnySchedule(form.end) ? toPayloadSchedule(form.end) : null,
     description: form.description.trim(),
     enableTeam: form.enableTeam,
-    reminderCycle: form.reminderCycle,
-    reminderOffsetsMinutes:
-      form.reminderCycle === 'none' ? [] : [form.reminderMinutes],
+    reminderCycle,
+    reminderOffsetsMinutes: [],
   }
 
   try {
@@ -320,6 +329,62 @@ async function onSubmit() {
     await load()
   } catch (e) {
     ElMessage.error(e instanceof Error ? e.message : '保存失败')
+  }
+}
+
+const exportOpen = ref(false)
+const exportLoading = ref(false)
+const exportDownloading = ref(false)
+const exportActivity = ref<Activity | null>(null)
+const exportOptions = ref<RsvpOccurrenceOption[]>([])
+const exportDateKey = ref('live')
+
+async function onExportRsvp(row: Activity) {
+  exportActivity.value = row
+  exportDateKey.value = 'live'
+  exportOptions.value = []
+  exportOpen.value = true
+  exportLoading.value = true
+  try {
+    const data = await fetchActivityRsvpOccurrences(row.id)
+    exportOptions.value = data.options || []
+    if (!exportOptions.value.some((o) => o.dateKey === exportDateKey.value)) {
+      exportDateKey.value = exportOptions.value[0]?.dateKey || 'live'
+    }
+  } catch (e) {
+    ElMessage.error(e instanceof Error ? e.message : '加载场次失败')
+    exportOpen.value = false
+  } finally {
+    exportLoading.value = false
+  }
+}
+
+async function confirmExportRsvp() {
+  const row = exportActivity.value
+  if (!row) return
+  exportDownloading.value = true
+  try {
+    const key = exportDateKey.value || 'live'
+    const blob = await exportActivityRsvpsCsv(row.id, key)
+    // 错误时接口可能仍以 blob 返回 JSON
+    if (blob.type && blob.type.includes('application/json')) {
+      const text = await blob.text()
+      const parsed = JSON.parse(text) as { message?: string }
+      throw new Error(parsed.message || '导出失败')
+    }
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    const safe = String(row.title || 'activity').replace(/[\\/:*?"<>|]+/g, '_').slice(0, 40)
+    const slot = key === 'live' ? '本场' : key
+    a.download = `rsvp-${safe}-${slot}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    exportOpen.value = false
+  } catch (e) {
+    ElMessage.error(e instanceof Error ? e.message : '导出失败')
+  } finally {
+    exportDownloading.value = false
   }
 }
 
@@ -372,21 +437,15 @@ function resolveReminderCycle(row: Activity): ReminderCycle {
   const raw = row.reminderCycle
   if (raw === 'none') return 'none'
   if (raw && ['once', 'daily', 'weekly', 'monthly'].includes(raw)) return raw
+  // 历史：无 cycle 但有提前量 → 视为曾开启，按开始分量推断
   if (!row.reminderOffsetsMinutes?.length) return 'none'
-  const s = scheduleFromActivity(row, 'start')
-  if (!s.time) return 'none'
-  const full = s.year != null && s.month != null && s.day != null
-  if (full) return 'once'
-  if (s.day != null) return 'once'
-  if (s.weekday != null) return 'weekly'
-  return 'daily'
+  return preferredReminderCycle(scheduleFromActivity(row, 'start'))
 }
 
 function formatCycle(row: Activity) {
   const c = resolveReminderCycle(row)
-  if (c === 'none' || !row.reminderOffsetsMinutes?.length) return CYCLE_LABEL.none
-  const mins = row.reminderOffsetsMinutes[0]
-  return `${CYCLE_LABEL[c] || c}（提前${mins}分）`
+  if (c === 'none') return '关'
+  return `开（${CYCLE_LABEL[c] || c}）`
 }
 
 function statusClass(status: ActivityStatus) {
@@ -456,7 +515,7 @@ onMounted(load)
               </span>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="240" min-width="240" fixed="right">
+          <el-table-column label="操作" width="300" min-width="300" fixed="right">
             <template #default="{ row }">
               <el-button
                 v-if="row.status !== 'cancelled' && row.status !== 'ended'"
@@ -474,6 +533,7 @@ onMounted(load)
               >
                 发布
               </el-button>
+              <el-button text type="primary" @click="onExportRsvp(row)">导出 RSVP</el-button>
               <el-button
                 v-if="['draft', 'published', 'ongoing'].includes(row.status)"
                 text
@@ -482,7 +542,6 @@ onMounted(load)
               >
                 取消
               </el-button>
-              <span v-if="row.status === 'cancelled' || row.status === 'ended'" class="muted">—</span>
             </template>
           </el-table-column>
         </el-table>
@@ -538,6 +597,9 @@ onMounted(load)
               clearable
               class="sched-time"
             />
+            <el-button text type="primary" class="sched-quick" @click="fillStartToday">
+              填入今天
+            </el-button>
           </div>
         </el-form-item>
 
@@ -569,41 +631,17 @@ onMounted(load)
               clearable
               class="sched-time"
             />
+            <el-button text type="primary" class="sched-quick" @click="fillEndToday">
+              填入今天
+            </el-button>
           </div>
-          <p class="field-tip">随开始联动：年月日星期与开始相同，时间默认 +30 分钟（可再改）。</p>
+          <p class="field-tip">随开始联动：年月日星期与开始相同，时间默认 +30 分钟（可再改）。「填入今天」只写日期与星期，不改时间。</p>
         </el-form-item>
 
-        <el-form-item label="提醒周期">
-          <el-select v-model="form.reminderCycle" style="width: 100%">
-            <el-option
-              v-for="c in allowedCycles"
-              :key="c"
-              :label="CYCLE_LABEL[c]"
-              :value="c"
-            />
-          </el-select>
-          <p class="field-tip">
-            未填时间 → 不提醒；年月日+时间 → 仅一次；日+时间 → 一次/每天；周几+时间 → 一次/每周；仅时间 → 每天。
-          </p>
+        <el-form-item label="开启提醒">
+          <el-switch v-model="form.enableReminder" />
+          <span class="hint">提前量一律用「提醒设置」；须填开始时间。成员需在小程序点「提醒我」。</span>
         </el-form-item>
-        <el-form-item label="提前量">
-          <el-select v-model="form.reminderMinutes" style="width: 100%">
-            <el-option :value="5" label="5 分钟" />
-            <el-option :value="10" label="10 分钟（默认）" />
-            <el-option :value="15" label="15 分钟" />
-            <el-option :value="30" label="30 分钟" />
-            <el-option :value="60" label="1 小时" />
-            <el-option :value="120" label="2 小时" />
-          </el-select>
-          <p class="field-tip">
-            {{
-              form.reminderCycle === 'none'
-                ? '当前为「不提醒」时，提前量不会发送。'
-                : '将按所选周期与提前量发送提醒；成员需在小程序点「提醒我」授权。俱乐部默认提前量见「提醒设置」。'
-            }}
-          </p>
-        </el-form-item>
-
         <el-form-item label="开启组队">
           <el-switch v-model="form.enableTeam" />
           <span class="hint">开启后，小程序活动详情可建队 / 申请入队</span>
@@ -618,6 +656,47 @@ onMounted(load)
       <template #footer>
         <el-button @click="dialogOpen = false">返回</el-button>
         <el-button type="primary" @click="onSubmit">保存</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="exportOpen"
+      title="导出 RSVP"
+      width="420px"
+      destroy-on-close
+      append-to-body
+      class="rsvp-export-dialog"
+    >
+      <div v-loading="exportLoading">
+        <p class="export-lead">
+          选择场次后下载 CSV。历史场次来自周期换场快照；换场前未部署新版云函数的场次无法补导。
+        </p>
+        <el-form label-width="72px">
+          <el-form-item label="活动">
+            <span>{{ exportActivity?.title || '—' }}</span>
+          </el-form-item>
+          <el-form-item label="场次">
+            <el-select v-model="exportDateKey" style="width: 100%" :disabled="!exportOptions.length">
+              <el-option
+                v-for="o in exportOptions"
+                :key="o.dateKey"
+                :label="`${o.label}（${o.rowCount} 人）`"
+                :value="o.dateKey"
+              />
+            </el-select>
+          </el-form-item>
+        </el-form>
+      </div>
+      <template #footer>
+        <el-button @click="exportOpen = false">返回</el-button>
+        <el-button
+          type="primary"
+          :loading="exportDownloading"
+          :disabled="exportLoading || !exportDateKey"
+          @click="confirmExportRsvp"
+        >
+          下载 CSV
+        </el-button>
       </template>
     </el-dialog>
   </div>
@@ -704,6 +783,13 @@ onMounted(load)
   min-height: 2.8em; /* 占位，避免说明显隐导致表单高度跳动 */
 }
 
+.export-lead {
+  margin: var(--space-2) 0 var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
 .sched {
   display: flex;
   flex-wrap: wrap;
@@ -725,5 +811,33 @@ onMounted(load)
 
 .sched-time {
   width: 120px;
+}
+
+.sched-quick.el-button.is-text.el-button--primary {
+  padding: 0 var(--space-2);
+  height: auto;
+  flex-shrink: 0;
+  cursor: pointer;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.sched-quick.el-button.is-text.el-button--primary:hover,
+.sched-quick.el-button.is-text.el-button--primary:focus,
+.sched-quick.el-button.is-text.el-button--primary:focus-visible {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none;
+  color: var(--color-brand) !important;
+  cursor: pointer;
+}
+</style>
+
+<style>
+/* append-to-body 弹窗：拉大标题下边线与正文间距 */
+.rsvp-export-dialog.el-dialog .el-dialog__body {
+  padding-top: var(--space-3, 12px);
 }
 </style>

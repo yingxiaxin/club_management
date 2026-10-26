@@ -5,6 +5,7 @@
 const cloud = require('wx-server-sdk')
 
 const COLLECTION = 'activity_rsvps'
+const SNAPSHOTS = 'activity_rsvp_snapshots'
 const MEMBERS = 'members'
 const STATUSES = new Set(['going', 'maybe', 'decline'])
 const STATUS_LABELS = {
@@ -14,6 +15,7 @@ const STATUS_LABELS = {
 }
 
 let collectionsReady = false
+let snapshotsReady = false
 
 function db() {
   return cloud.database()
@@ -35,17 +37,31 @@ function docId(activityId, memberId) {
   return `${String(activityId)}__${String(memberId)}`
 }
 
-async function ensureCollection() {
-  if (collectionsReady) return
+function snapshotDocId(activityId, occurrenceDateKey) {
+  return `${String(activityId)}__${String(occurrenceDateKey)}`
+}
+
+async function ensureNamedCollection(name) {
   try {
-    await db().createCollection(COLLECTION)
+    await db().createCollection(name)
   } catch (e) {
     const msg = String(e?.message || e || '')
     if (!/exist|已存在|RESOURCE_EXIST|DATABASE_COLLECTION_EXIST/i.test(msg)) {
-      console.warn('[rsvpsDb] createCollection', msg)
+      console.warn('[rsvpsDb] createCollection', name, msg)
     }
   }
+}
+
+async function ensureCollection() {
+  if (collectionsReady) return
+  await ensureNamedCollection(COLLECTION)
   collectionsReady = true
+}
+
+async function ensureSnapshotsCollection() {
+  if (snapshotsReady) return
+  await ensureNamedCollection(SNAPSHOTS)
+  snapshotsReady = true
 }
 
 async function listByActivity(activityId) {
@@ -170,8 +186,62 @@ async function countByActivityIds(activityIds) {
   return result
 }
 
-/** 周期换场：删除该活动下全部 RSVP */
-async function deleteAllByActivity(activityId) {
+/**
+ * 周期换场前落档；已有同场次快照则跳过（避免清空后重试写成空档）
+ * @returns {Promise<boolean>} 是否新写入
+ */
+async function snapshotBeforeClear(activityId, occurrenceDateKey) {
+  const aid = String(activityId || '').trim()
+  const dateKey = String(occurrenceDateKey || '').trim()
+  if (!aid || !dateKey) return false
+  await ensureSnapshotsCollection()
+  const id = snapshotDocId(aid, dateKey)
+  try {
+    const prev = await db().collection(SNAPSHOTS).doc(id).get()
+    if (prev && prev.data) return false
+  } catch {
+    /* 不存在则继续写 */
+  }
+
+  const rows = await listByActivity(aid)
+  const briefMap = await fetchMemberBriefs(rows.map((r) => r.memberId))
+  const snapRows = []
+  for (const row of rows) {
+    if (!STATUSES.has(row.status)) continue
+    const brief = briefMap.get(String(row.memberId)) || {}
+    snapRows.push({
+      memberId: row.memberId,
+      characterName: brief.characterName || row.characterName || row.memberId || '',
+      pathway: brief.pathway || '',
+      status: row.status,
+      updatedAt: row.updatedAt || row.createdAt || '',
+    })
+  }
+  const now = new Date().toISOString()
+  await db()
+    .collection(SNAPSHOTS)
+    .doc(id)
+    .set({
+      data: {
+        activityId: aid,
+        occurrenceDateKey: dateKey,
+        rowCount: snapRows.length,
+        rows: snapRows,
+        createdAt: now,
+      },
+    })
+  return true
+}
+
+/** 周期换场：先快照（若给了 dateKey）再删该活动下全部 RSVP */
+async function deleteAllByActivity(activityId, occurrenceDateKey = null) {
+  if (occurrenceDateKey) {
+    try {
+      await snapshotBeforeClear(activityId, occurrenceDateKey)
+    } catch (e) {
+      console.warn('[rsvpsDb] snapshotBeforeClear', activityId, occurrenceDateKey, e?.message || e)
+    }
+  }
   const rows = await listByActivity(activityId)
   if (!rows.length) return 0
   const coll = db().collection(COLLECTION)
@@ -231,7 +301,9 @@ module.exports = {
   getMine,
   summarize,
   countByActivityIds,
+  snapshotBeforeClear,
   deleteAllByActivity,
   upsert,
   ensureCollection,
+  ensureSnapshotsCollection,
 }

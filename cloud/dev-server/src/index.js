@@ -24,6 +24,7 @@ import * as cloudMembers from './cloudMembers.js'
 import * as cloudAuth from './cloudAuth.js'
 import * as cloudInvites from './cloudInvites.js'
 import * as cloudActivities from './cloudActivities.js'
+import * as cloudRsvps from './cloudRsvps.js'
 import * as cloudTeams from './cloudTeams.js'
 import * as cloudClub from './cloudClub.js'
 import * as cloudAnnouncements from './cloudAnnouncements.js'
@@ -646,6 +647,55 @@ app.get('/api/activities/:id', requireAdmin, async (req, res) => {
     res.json({ ok: true, data })
   } catch (err) {
     res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+/** P1-c：可导出场次（本场 + 快照日） */
+app.get('/api/activities/:id/rsvps/occurrences', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const activity = await cloudActivities.getActivity(req.params.id)
+    if (!activity) return res.status(404).json({ ok: false, message: '活动不存在' })
+    const data = await cloudRsvps.listRsvpOccurrences(req.params.id)
+    res.json({ ok: true, data })
+  } catch (err) {
+    console.error('[GET /api/activities/:id/rsvps/occurrences]', err.message)
+    res.status(err.status || 500).json({ ok: false, message: err.message || '加载场次失败' })
+  }
+})
+
+/** P1-c：导出 RSVP CSV；query dateKey=live|YYYY-MM-DD */
+app.get('/api/activities/:id/rsvps/export.csv', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const activity = await cloudActivities.getActivity(req.params.id)
+    if (!activity) return res.status(404).json({ ok: false, message: '活动不存在' })
+    const dateKey = String(req.query.dateKey || 'live').trim() || 'live'
+    const rows = await cloudRsvps.listRsvpsForExport(req.params.id, dateKey, activity)
+    const header = ['角色名', '途径', '状态', '活动时间']
+    const lines = [header.join(',')]
+    for (const r of rows) {
+      const cells = [r.characterName, r.pathway, r.statusLabel, r.activityTime].map(
+        (v) => `"${String(v ?? '').replace(/"/g, '""')}"`,
+      )
+      lines.push(cells.join(','))
+    }
+    const slot = dateKey === 'live' || dateKey === 'current' ? 'live' : dateKey
+    const asciiName = `rsvp-${String(activity.id || 'activity').replace(/[^\w.-]+/g, '_')}-${slot}.csv`
+    const utfName = encodeURIComponent(
+      `rsvp-${String(activity.title || activity.id || 'activity')
+        .replace(/[\\/:*?"<>|]+/g, '_')
+        .slice(0, 40)}-${slot}.csv`,
+    )
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${asciiName}"; filename*=UTF-8''${utfName}`,
+    )
+    res.send('\uFEFF' + lines.join('\n'))
+  } catch (err) {
+    console.error('[GET /api/activities/:id/rsvps/export.csv]', err.message, err.code || err.errCode || '')
+    res.status(err.status || 500).json({ ok: false, message: err.message || '导出失败' })
   }
 })
 

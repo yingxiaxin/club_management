@@ -88,7 +88,7 @@ async function ensureCycleRollover(raw) {
 
   if (occ.ended) {
     if (raw.cycleClearedKey !== occ.dateKey) {
-      await rsvpsDb.deleteAllByActivity(raw.id)
+      await rsvpsDb.deleteAllByActivity(raw.id, occ.dateKey)
       await teamsDb.dissolveAllByActivity(raw.id)
       patch.cycleClearedKey = occ.dateKey
       if (occ.nextDateKey) patch.activeCycleKey = occ.nextDateKey
@@ -96,7 +96,7 @@ async function ensureCycleRollover(raw) {
   } else {
     if (raw.activeCycleKey && raw.activeCycleKey !== occ.dateKey) {
       if (raw.cycleClearedKey !== raw.activeCycleKey) {
-        await rsvpsDb.deleteAllByActivity(raw.id)
+        await rsvpsDb.deleteAllByActivity(raw.id, raw.activeCycleKey)
         await teamsDb.dissolveAllByActivity(raw.id)
         patch.cycleClearedKey = raw.activeCycleKey
       }
@@ -147,10 +147,8 @@ async function getRawPublished(id) {
 
 function effectiveOffsets(activity, clubOffsets) {
   if (activity.reminderCycle === 'none') return []
-  if (Array.isArray(activity.reminderOffsetsMinutes) && activity.reminderOffsetsMinutes.length) {
-    return clubDb.normalizeOffsets(activity.reminderOffsetsMinutes, clubOffsets)
-  }
-  return clubOffsets.slice()
+  // 提前量一律俱乐部提醒设置
+  return clubDb.normalizeOffsets(clubOffsets, [10])
 }
 
 async function getPublishedActivity(

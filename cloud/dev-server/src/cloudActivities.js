@@ -222,10 +222,8 @@ function resolveSchedules(payload) {
   }
 
   const reminderCycle = normalizeReminderCycle(payload.reminderCycle, startSchedule)
-  let reminderOffsetsMinutes = []
-  if (reminderCycle !== 'none') {
-    reminderOffsetsMinutes = normalizeOffsets(payload.reminderOffsetsMinutes, [10])
-  }
+  // 提前量一律跟俱乐部提醒设置；活动侧不再存覆盖值
+  const reminderOffsetsMinutes = []
 
   return {
     startSchedule,

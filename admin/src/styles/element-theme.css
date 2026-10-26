@@ -174,27 +174,29 @@
   margin: 0 auto !important;
   position: relative;
   top: auto;
-  /* 高度不超过遮罩内容区，避免再被固定位移顶出视口 */
-  max-height: calc(100vh - 4vh - 10vh - 40px);
-}
-
-/* 截图导入：整窗限制在视口内；上传区固定，仅结果表滚动 */
-.el-dialog.ocr-dialog {
+  /* 高度不超过遮罩内容区；过高时头/脚固定、正文滚动，避免页脚掉出边框 */
   max-height: calc(100vh - 4vh - 10vh - 40px);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
-.el-dialog.ocr-dialog .el-dialog__body {
+.el-dialog:not(.is-fullscreen) .el-dialog__header,
+.el-dialog:not(.is-fullscreen) .el-dialog__footer {
+  flex-shrink: 0;
+}
+
+.el-dialog:not(.is-fullscreen) .el-dialog__body {
   flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* 截图导入：正文不滚，内部结果表自滚 */
+.el-dialog.ocr-dialog .el-dialog__body {
   overflow: hidden;
   padding-top: var(--space-3);
   padding-bottom: var(--space-3);
-}
-
-.el-dialog.ocr-dialog .el-dialog__header,
-.el-dialog.ocr-dialog .el-dialog__footer {
-  flex-shrink: 0;
 }
 
 .el-dialog__header {
