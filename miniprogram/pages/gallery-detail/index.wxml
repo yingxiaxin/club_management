@@ -11,7 +11,7 @@
     <view class="head-row">
       <view class="head-text">
         <text class="work-title">{{album.title}}</text>
-        <text class="author">{{album.characterName || '成员'}}</text>
+        <text class="author text-pathway {{album.pathwayTint}}">{{album.characterName || '成员'}}</text>
         <text class="muted tiny" wx:if="{{album.createdAtLabel}}">{{album.createdAtLabel}}</text>
       </view>
       <view class="head-actions">

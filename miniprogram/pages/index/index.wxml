@@ -31,25 +31,20 @@
   </view>
 
   <block wx:else>
-    <!-- 会务条：身份 + 日程（紧跟）；解绑靠右；成员走底 Tab -->
+    <!-- 会务条：身份进「我的」；日程走活动 Tab；解绑在「我的」管理区 -->
     <view class="hub">
       <view class="hub-row">
-        <view class="hub-identity">
+        <view class="hub-identity" bindtap="goMine">
           <view class="identity-dot {{canViewMembers ? 'ok' : 'wait'}}" />
           <text class="hub-role">{{roleLabel}}</text>
-          <text class="hub-name {{identityPathwayTint}}">{{identityLine}}</text>
+          <view class="hub-name-group">
+            <text class="hub-name {{identityPathwayTint}}">{{identityLine}}</text>
+            <text class="hub-mine-arrow">›</text>
+          </view>
         </view>
         <view class="hub-schedule" wx:if="{{canViewMembers}}" bindtap="goActivities">
           <text class="hub-schedule-text">日程 · 今日 {{todayCount}} · 本周 {{weekCount}}</text>
           <text class="hub-schedule-arrow">›</text>
-        </view>
-        <view
-          wx:if="{{isAdmin && memberId}}"
-          class="hub-unbind"
-          catchtap="onUnbindTap"
-        >
-          <text class="hub-unbind-mark">⊘</text>
-          <text class="hub-unbind-label">解绑</text>
         </view>
       </view>
     </view>
@@ -175,7 +170,7 @@
                 <view class="gallery-chip-meta">
                   <text class="gallery-chip-title">{{work.caption || '未命名作品'}}</text>
                   <view class="gallery-chip-foot">
-                    <text class="gallery-chip-name">{{work.characterName || '成员'}}</text>
+                    <text class="gallery-chip-name text-pathway {{work.pathwayTint}}">{{work.characterName || '成员'}}</text>
                     <text class="gallery-chip-likes">♡ {{work.likeCount || 0}}</text>
                   </view>
                 </view>

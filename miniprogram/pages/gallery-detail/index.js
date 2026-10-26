@@ -1,5 +1,6 @@
 const { callMemberApi } = require('../../utils/api')
 const { MAX_PICK, pickCompressAndUploadMany } = require('../../utils/galleryUpload')
+const { withPathwayClass } = require('../../utils/pathway')
 
 function pad2(n) {
   return String(n).padStart(2, '0')
@@ -77,14 +78,14 @@ Page({
       const caption = String(album.caption || '').trim()
       this.setData({
         loading: false,
-        album: {
+        album: withPathwayClass({
           ...album,
           images,
           title: caption || '未命名作品',
           createdAtLabel: formatDateTime(album.createdAt),
           likeCount: Number(album.likeCount) || 0,
           likedByMe: Boolean(album.likedByMe),
-        },
+        }),
         canDelete,
         canAppend,
         canLike,

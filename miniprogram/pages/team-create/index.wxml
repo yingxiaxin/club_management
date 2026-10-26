@@ -7,7 +7,7 @@
     <view class="form">
       <view class="field">
         <text class="label">队长</text>
-        <text class="readonly">{{leaderName || '—'}}</text>
+        <text class="readonly text-pathway {{leaderPathwayTint}}">{{leaderName || '—'}}</text>
       </view>
       <view class="field">
         <text class="label">人数上限</text>

@@ -6,6 +6,7 @@ const {
   matchTeamTimeFilter,
   matchTeamMineFilter,
 } = require('../../utils/teams')
+const { pathwayClass } = require('../../utils/pathway')
 
 Page({
   data: {
@@ -75,12 +76,16 @@ Page({
       const allTeams = (list || [])
         .map((t) => {
           const hasOwnStart = Boolean(t.startAt)
+          const leaderCls = pathwayClass(t.leaderPathway)
+          const leaderName = t.leaderCharacterName || '队长'
           return {
             ...t,
             statusLabel: teamStatusLabel(t.status),
             startText: hasOwnStart ? formatStartAt(t.startAt) : activityStartText,
             startIsActivity: !hasOwnStart,
-            line1: `${t.leaderCharacterName || '队长'} · ${t.memberCount || 0}/${t.maxMembers}`,
+            leaderName,
+            line1Rest: ` · ${t.memberCount || 0}/${t.maxMembers}`,
+            leaderPathwayTint: leaderCls ? `${leaderCls} pathway-tint` : '',
             badge: t.myInTeam
               ? t.myIsLeader
                 ? '我的队伍·队长'

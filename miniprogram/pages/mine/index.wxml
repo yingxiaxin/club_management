@@ -1,0 +1,182 @@
+<view class="page">
+  <view class="page-state" wx:if="{{loading}}">
+    <text class="muted">加载中…</text>
+  </view>
+  <view class="page-state" wx:elif="{{error}}">
+    <text class="danger">{{error}}</text>
+    <button class="btn-primary retry" size="mini" bindtap="load">重试</button>
+  </view>
+
+  <block wx:else>
+    <!-- 未绑定 -->
+    <view class="guest-panel" wx:if="{{!canViewMembers}}">
+      <text class="guest-title" wx:if="{{joinPending}}">关联申请审核中</text>
+      <text class="guest-title" wx:else>尚未关联角色</text>
+      <text class="muted">关联游戏角色后，可在此查看报名、队伍与提醒。</text>
+      <button class="btn-primary" bindtap="goJoin">
+        {{joinPending ? '查看申请状态' : '邀请码关联角色'}}
+      </button>
+    </view>
+
+    <block wx:else>
+      <!-- 身份卡片：管理员扫码/解绑图标靠右 -->
+      <view class="profile-card">
+        <view class="profile-top">
+          <view class="profile-main" bindtap="goProfile">
+            <text class="profile-role">{{roleLabel}}</text>
+            <view class="profile-name-group">
+              <text class="profile-name {{pathwayTint}}">{{displayName || '未命名'}}</text>
+              <text class="profile-arrow">›</text>
+            </view>
+          </view>
+          <view class="profile-actions" wx:if="{{isAdmin}}">
+            <view class="profile-action" catchtap="goAdminLogin">
+              <text class="profile-action-mark">▣</text>
+              <text class="profile-action-label">扫码</text>
+            </view>
+            <view
+              class="profile-action danger"
+              wx:if="{{memberId}}"
+              catchtap="onUnbindTap"
+            >
+              <text class="profile-action-mark">⊘</text>
+              <text class="profile-action-label">解绑</text>
+            </view>
+          </view>
+        </view>
+        <view class="profile-meta" wx:if="{{member}}" bindtap="goProfile">
+          <text class="meta-chip" wx:if="{{member.title}}">{{member.title}}</text>
+          <text class="meta-chip" wx:if="{{member.pathway}}">{{member.pathway}}</text>
+          <text class="meta-chip" wx:if="{{member.powerScore != null}}">评分 {{member.powerScore}}</text>
+          <text class="meta-chip" wx:if="{{member.fashionScore != null}}">风尚 {{member.fashionScore}}</text>
+        </view>
+        <text class="profile-hint" bindtap="goProfile">查看档案</text>
+      </view>
+
+      <!-- 待我处理 -->
+      <view class="section" wx:if="{{pendingApprovalCount > 0}}">
+        <view class="section-head">
+          <text class="section-title">待我处理</text>
+          <text class="section-meta">{{pendingApprovalCount}} 条申请</text>
+        </view>
+        <view
+          class="list-row"
+          wx:for="{{pendingTeams}}"
+          wx:key="teamId"
+          data-id="{{item.teamId}}"
+          bindtap="goTeam"
+        >
+          <view class="row-main">
+            <text class="row-title">{{item.activityTitle || '活动'}} · {{item.modeName || '队伍'}}</text>
+            <text class="row-sub">{{item.pendingCount}} 人待审批</text>
+          </view>
+          <text class="row-chevron">›</text>
+        </view>
+      </view>
+
+      <!-- 我的 RSVP -->
+      <view class="section">
+        <view class="section-head">
+          <text class="section-title">我的报名</text>
+          <text class="section-meta">{{rsvpsActive.length}} 场进行中</text>
+        </view>
+        <view class="empty-panel" wx:if="{{!rsvpsActive.length && !rsvpsEnded.length}}">
+          <text class="muted">还没有活动意向</text>
+          <text class="muted tiny">在活动详情可表态参加 / 待定 / 请假</text>
+        </view>
+        <block wx:else>
+          <view
+            class="list-row"
+            wx:for="{{rsvpsActive}}"
+            wx:key="activityId"
+            data-id="{{item.activityId}}"
+            bindtap="goActivity"
+          >
+            <view class="row-main">
+              <view class="row-top">
+                <text class="row-title">{{item.title}}</text>
+                <text class="chip-tag status-{{item.status}}">{{item.statusLabel}}</text>
+              </view>
+              <text class="row-sub">{{item.startText}} · {{item.occurrencePhaseLabel}}</text>
+            </view>
+            <text class="row-chevron">›</text>
+          </view>
+          <view class="sub-head" wx:if="{{rsvpsEnded.length}}">
+            <text class="sub-title">近 14 天已结束</text>
+          </view>
+          <view
+            class="list-row dim"
+            wx:for="{{rsvpsEnded}}"
+            wx:key="activityId"
+            data-id="{{item.activityId}}"
+            bindtap="goActivity"
+          >
+            <view class="row-main">
+              <view class="row-top">
+                <text class="row-title">{{item.title}}</text>
+                <text class="chip-tag status-{{item.status}}">{{item.statusLabel}}</text>
+              </view>
+              <text class="row-sub">{{item.startText}}</text>
+            </view>
+            <text class="row-chevron">›</text>
+          </view>
+        </block>
+      </view>
+
+      <!-- 我的队伍 -->
+      <view class="section">
+        <view class="section-head">
+          <text class="section-title">我的队伍</text>
+          <text class="section-meta">{{teams.length}} 支</text>
+        </view>
+        <view class="empty-panel" wx:if="{{!teams.length}}">
+          <text class="muted">尚未加入或创建队伍</text>
+        </view>
+        <view
+          class="list-row"
+          wx:for="{{teams}}"
+          wx:key="id"
+          data-id="{{item.id}}"
+          bindtap="goTeam"
+        >
+          <view class="row-main">
+            <view class="row-top">
+              <text class="row-title">{{item.line1}}</text>
+              <text class="chip-tag">{{item.statusLabel}}</text>
+            </view>
+            <text class="row-sub">{{item.line2}}</text>
+          </view>
+          <text class="row-chevron">›</text>
+        </view>
+      </view>
+
+      <!-- 提醒 -->
+      <view class="section">
+        <view class="section-head">
+          <text class="section-title">提醒</text>
+          <text class="section-meta">已订阅 {{reminders.length}}</text>
+        </view>
+        <view class="empty-panel" wx:if="{{!reminders.length}}">
+          <text class="muted">暂无进行中的活动提醒</text>
+          <text class="muted tiny">在活动详情点「提醒我」授权订阅</text>
+        </view>
+        <view
+          class="list-row"
+          wx:for="{{reminders}}"
+          wx:key="activityId"
+          data-id="{{item.activityId}}"
+          bindtap="goActivity"
+        >
+          <view class="row-main">
+            <text class="row-title">{{item.title}}</text>
+            <text class="row-sub">{{item.startText}}</text>
+          </view>
+          <text class="row-chevron">›</text>
+        </view>
+      </view>
+
+    </block>
+  </block>
+</view>
+
+<home-fab />

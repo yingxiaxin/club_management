@@ -34,10 +34,19 @@
 .info-main {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
   font-size: 34rpx;
   font-weight: 700;
   color: var(--color-text);
   line-height: 1.35;
+}
+
+.info-main-rest {
+  font-weight: 700;
+  color: var(--color-text);
 }
 
 .status-chip {

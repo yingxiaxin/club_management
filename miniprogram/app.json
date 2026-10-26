@@ -12,6 +12,7 @@
     "pages/gallery/index",
     "pages/gallery-create/index",
     "pages/gallery-detail/index",
+    "pages/mine/index",
     "pages/bind/index",
     "pages/join/index",
     "pages/admin-login/index"

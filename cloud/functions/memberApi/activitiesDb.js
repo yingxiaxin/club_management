@@ -8,6 +8,8 @@ const {
   resolveOccurrence,
   isPeriodicTemplate,
 } = require('./scheduleMatch')
+
+const ENDABLE_STATUSES = new Set(['published', 'ongoing'])
 const rsvpsDb = require('./rsvpsDb')
 const teamsDb = require('./teamsDb')
 const clubDb = require('./clubDb')
@@ -77,7 +79,8 @@ async function patchActivityCycle(id, data) {
 }
 
 /**
- * 周期模板：本场结束后清空 RSVP + 队伍，并记下清档/下场 key
+ * 周期模板：本场结束后清空 RSVP + 队伍，并记下清档/下场 key；
+ * **保持 status=published/ongoing**（可滚下一场）。
  */
 async function ensureCycleRollover(raw) {
   if (!raw || !isPeriodicTemplate(raw)) return raw
@@ -116,11 +119,59 @@ async function ensureCycleRollover(raw) {
   }
 }
 
+/**
+ * 一次性活动（锚定开始）：本场结束后 → status=ended，并关闭仍在招募的队伍。
+ * 周期模板不走本逻辑。
+ */
+async function ensureOneTimeEnded(raw, now = new Date()) {
+  if (!raw || isPeriodicTemplate(raw)) return raw
+  if (!ENDABLE_STATUSES.has(raw.status)) return raw
+  const occ = resolveOccurrence(raw, now)
+  if (!occ.ended) return raw
+
+  const nowIso = new Date().toISOString()
+  try {
+    await teamsDb.closeActiveTeamsByActivity(raw.id, '活动已结束')
+    await db()
+      .collection(COLLECTION)
+      .doc(String(raw.id))
+      .update({
+        data: {
+          status: 'ended',
+          updatedAt: nowIso,
+        },
+      })
+    return { ...raw, status: 'ended', updatedAt: nowIso }
+  } catch (e) {
+    console.warn('[activitiesDb] ensureOneTimeEnded', raw.id, e?.message || e)
+    return raw
+  }
+}
+
+/** 定时/联调：扫所有已发布一次性活动，到点标 ended */
+async function expireOneTimeActivitiesDue(now = new Date()) {
+  const list = await fetchAllActivities()
+  const ended = []
+  for (const raw of list) {
+    if (!ENDABLE_STATUSES.has(raw.status)) continue
+    if (isPeriodicTemplate(raw)) continue
+    const next = await ensureOneTimeEnded(raw, now)
+    if (next.status === 'ended' && raw.status !== 'ended') {
+      ended.push(raw.id)
+    }
+  }
+  return { ended }
+}
+
 async function listSchedule(now = new Date()) {
   const visible = await listVisibleActivities()
   const rolled = []
   for (const a of visible) {
-    rolled.push(await ensureCycleRollover(a))
+    let row = await ensureOneTimeEnded(a, now)
+    if (!ENDABLE_STATUSES.has(row.status)) continue
+    row = await ensureCycleRollover(row)
+    if (!ENDABLE_STATUSES.has(row.status)) continue
+    rolled.push(row)
   }
   const schedule = splitSchedule(rolled, now)
   const [today, week] = await Promise.all([
@@ -157,6 +208,10 @@ async function getPublishedActivity(
 ) {
   let row = await getRawPublished(id)
   if (!row) return null
+  row = await ensureOneTimeEnded(row)
+  if (!VISIBLE_STATUSES.has(row.status)) {
+    throw err('活动不可见或不存在', 404)
+  }
   row = await ensureCycleRollover(row)
   const activity = decorate(row)
   const [rsvp, club, sub, teamList] = await Promise.all([
@@ -193,5 +248,7 @@ module.exports = {
   getPublishedActivity,
   getRawPublished,
   ensureCycleRollover,
+  ensureOneTimeEnded,
+  expireOneTimeActivitiesDue,
   VISIBLE_STATUSES,
 }

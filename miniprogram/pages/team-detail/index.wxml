@@ -11,7 +11,10 @@
     <view class="sheet">
       <view class="block">
         <view class="info-row">
-          <text class="info-main">{{team.leaderCharacterName || '队长'}} · {{team.memberCount || 0}}/{{team.maxMembers}}</text>
+          <view class="info-main">
+            <text class="text-pathway {{team.leaderPathwayTint}}">{{team.leaderCharacterName || '队长'}}</text>
+            <text class="info-main-rest"> · {{team.memberCount || 0}}/{{team.maxMembers}}</text>
+          </view>
           <text class="status-chip">{{team.statusLabel}}</text>
         </view>
         <text class="info-sub">开打 {{team.startText}}</text>

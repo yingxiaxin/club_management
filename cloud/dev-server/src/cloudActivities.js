@@ -2,9 +2,16 @@
  * 云库 activities（管理端本机 API · P1-a）
  */
 import tcb from '@cloudbase/node-sdk'
+import { createRequire } from 'module'
 import * as cloudMembers from './cloudMembers.js'
 
+const require = createRequire(import.meta.url)
+const { isPeriodicTemplate, resolveOccurrence } = require(
+  '../../functions/memberApi/scheduleMatch.js',
+)
+
 const ACTIVITIES = 'activities'
+const ENDABLE_STATUSES = new Set(['published', 'ongoing'])
 
 const ACTIVITY_TYPES = new Set(['daily', 'weekly', 'pvp', 'custom'])
 const ACTIVITY_STATUSES = new Set(['draft', 'published', 'ongoing', 'ended', 'cancelled'])
@@ -447,4 +454,48 @@ export async function transitionActivity(id, action) {
   }
 
   return { ...row, ...patch }
+}
+
+/**
+ * 一次性活动本场结束后 → ended，并关闭下属招募中队伍。
+ * 周期模板不改 status（保持已发布）。
+ */
+export async function expireOneTimeActivitiesDue(now = new Date()) {
+  await ensureActivityCollections()
+  const db = getDb()
+  const pageSize = 100
+  let offset = 0
+  const all = []
+  for (;;) {
+    const res = await db.collection(ACTIVITIES).skip(offset).limit(pageSize).get()
+    const rows = res.data || []
+    all.push(...rows)
+    if (rows.length < pageSize) break
+    offset += pageSize
+  }
+
+  const ended = []
+  for (const doc of all) {
+    const id = doc._id
+    const status = doc.status
+    if (!ENDABLE_STATUSES.has(status)) continue
+    const raw = { id, ...doc }
+    delete raw._id
+    if (isPeriodicTemplate(raw)) continue
+    const occ = resolveOccurrence(raw, now)
+    if (!occ.ended) continue
+    try {
+      const { closeTeamsForActivity } = await import('./cloudTeams.js')
+      await closeTeamsForActivity(id)
+      const updatedAt = new Date().toISOString()
+      await db.collection(ACTIVITIES).doc(String(id)).update({
+        status: 'ended',
+        updatedAt,
+      })
+      ended.push(id)
+    } catch (e) {
+      console.warn('[cloudActivities] expireOneTimeActivitiesDue', id, e?.message || e)
+    }
+  }
+  return { ended }
 }

@@ -1,6 +1,6 @@
 const { callMemberApi } = require('../../utils/api')
 const { mapWithPublishedText } = require('../../utils/datetime')
-const { pathwayClass } = require('../../utils/pathway')
+const { pathwayClass, mapWithPathwayClass } = require('../../utils/pathway')
 
 const ROLE_LABELS = {
   guest: '访客',
@@ -35,7 +35,6 @@ Page({
     weekCount: 0,
     identityLine: '',
     identityPathwayTint: '',
-    unbinding: false,
   },
 
   onShow() {
@@ -152,7 +151,7 @@ Page({
     this.setData({ galleryLoading: true })
     try {
       const list = await callMemberApi('listGalleryPosts', { limit: 8, sort: 'likes' })
-      const preview = Array.isArray(list) ? list.slice(0, 6) : []
+      const preview = mapWithPathwayClass(Array.isArray(list) ? list.slice(0, 6) : [])
       this.setData({
         galleryLoading: false,
         galleryPreview: preview,
@@ -221,29 +220,7 @@ Page({
     wx.navigateTo({ url: '/pages/join/index' })
   },
 
-  onUnbindTap() {
-    if (!this.data.isAdmin || !this.data.memberId || this.data.unbinding) return
-    wx.showModal({
-      title: '解除微信关联',
-      content: '解除后可用邀请码重新关联。确定继续？',
-      confirmText: '解除',
-      success: (res) => {
-        if (res.confirm) this.doUnbind()
-      },
-    })
-  },
-
-  async doUnbind() {
-    if (this.data.unbinding) return
-    this.setData({ unbinding: true })
-    try {
-      await callMemberApi('unbindSelfForTest')
-      wx.showToast({ title: '已解除关联', icon: 'success' })
-      wx.navigateTo({ url: '/pages/join/index' })
-    } catch (e) {
-      wx.showToast({ title: e.message || '解除失败', icon: 'none' })
-    } finally {
-      this.setData({ unbinding: false })
-    }
+  goMine() {
+    wx.navigateTo({ url: '/pages/mine/index' })
   },
 })

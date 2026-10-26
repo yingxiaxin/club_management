@@ -7,7 +7,7 @@
   </view>
   <block wx:elif="{{member}}">
     <view class="hero panel-card framed">
-      <text class="name">{{member.characterName}}</text>
+      <text class="name text-pathway {{namePathwayTint}}">{{member.characterName}}</text>
       <view class="tags">
         <text class="tag">{{member.title}}</text>
         <text class="tag muted-tag">{{member.pathway}}</text>

@@ -1,10 +1,12 @@
 const { callMemberApi } = require('../../utils/api')
 const { shanghaiToIso } = require('../../utils/teams')
+const { pathwayClass } = require('../../utils/pathway')
 
 Page({
   data: {
     activityId: '',
     leaderName: '',
+    leaderPathwayTint: '',
     activityStartText: '',
     maxMembers: '6',
     minPowerScore: '',
@@ -43,6 +45,7 @@ Page({
         callMemberApi('getActivity', { id: this.activityId }),
       ])
       const leaderName = me?.member?.characterName || me?.displayName || ''
+      const leaderCls = pathwayClass(me?.member?.pathway)
       if (!me?.memberId || !leaderName) {
         wx.showModal({
           title: '需要先关联角色',
@@ -56,6 +59,7 @@ Page({
       this.setData({
         loading: false,
         leaderName,
+        leaderPathwayTint: leaderCls ? `${leaderCls} pathway-tint` : '',
         activityStartText: activity?.startText || '未定（活动无绝对开始时刻）',
       })
     } catch (e) {

@@ -1,9 +1,11 @@
 /**
- * P2-d：到点自动结束招募。
- * 触发：云函数定时器每分钟；亦可手动 callFunction({ name: 'teamLifecycle' })
+ * 定时到点结算（每分钟）。
+ * 触发：云函数定时器；亦可手动 callFunction({ name: 'teamLifecycle' })
  *
- * 逻辑落在 memberApi.teamsDb.expireTeamsDue（recruiting/full/paused 且 startAt<=now → started，待审 rejected）。
- * 本函数只做定时入口，避免与 memberApi 业务分叉。
+ * memberApi.expireTeamsDue：
+ * 1) 一次性活动本场结束后 → status=ended + 关闭下属招募中队伍
+ * 2) 队伍 startAt 到点 → started
+ * 周期活动保持 published，仅换场清 RSVP/队伍（读路径 ensureCycleRollover）。
  */
 const cloud = require('wx-server-sdk')
 
@@ -26,12 +28,20 @@ exports.main = async () => {
       }
     }
     const expired = (result.data && result.data.expired) || []
-    if (expired.length) {
-      console.log('[teamLifecycle] expired', expired.length, expired)
+    const activitiesEnded = (result.data && result.data.activitiesEnded) || []
+    if (expired.length || activitiesEnded.length) {
+      console.log(
+        '[teamLifecycle] teams',
+        expired.length,
+        'activities',
+        activitiesEnded.length,
+        { expired, activitiesEnded },
+      )
     }
     return {
       ok: true,
       expired,
+      activitiesEnded,
       startedAt,
       finishedAt: new Date().toISOString(),
     }

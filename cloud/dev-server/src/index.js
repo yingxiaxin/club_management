@@ -750,8 +750,15 @@ app.get('/api/teams', requireAdmin, async (req, res) => {
 app.post('/api/teams/expire-due', requireAdmin, async (req, res) => {
   try {
     if (!requireCloudTeams(res)) return
-    const data = await cloudTeams.expireTeamsDue()
-    res.json({ ok: true, data })
+    const activities = await cloudActivities.expireOneTimeActivitiesDue()
+    const teams = await cloudTeams.expireTeamsDue()
+    res.json({
+      ok: true,
+      data: {
+        expired: teams.expired || [],
+        activitiesEnded: activities.ended || [],
+      },
+    })
   } catch (err) {
     res.status(err.status || 500).json({ ok: false, message: err.message })
   }

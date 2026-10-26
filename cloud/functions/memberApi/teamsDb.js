@@ -312,6 +312,18 @@ function summarizeTeam(team, { myMemberId = null, myApp = null } = {}) {
   }
 }
 
+async function attachLeaderPathway(teams) {
+  const list = Array.isArray(teams) ? teams : []
+  if (!list.length) return list
+  const ids = [...new Set(list.map((t) => String(t.leaderMemberId || '')).filter(Boolean))]
+  const briefs = await fetchMemberBriefs(ids)
+  const pathMap = new Map(briefs.map((b) => [String(b.memberId), b.pathway || '']))
+  return list.map((t) => ({
+    ...t,
+    leaderPathway: pathMap.get(String(t.leaderMemberId || '')) || '',
+  }))
+}
+
 /**
  * @param {string} activityId
  * @param {string} viewerMemberId
@@ -354,7 +366,7 @@ async function listTeamsByActivity(activityId, viewerMemberId, opts = {}) {
     if (mineFilter === 'joined' && !row.myInTeam) continue
     out.push(row)
   }
-  return out
+  return attachLeaderPathway(out)
 }
 
 async function getTeamDetail(teamId, viewerMemberId) {
@@ -379,8 +391,10 @@ async function getTeamDetail(teamId, viewerMemberId) {
       }),
     )
   }
+  const leader = members.find((m) => String(m.memberId) === String(team.leaderMemberId))
   return {
     ...summary,
+    leaderPathway: (leader && leader.pathway) || '',
     members,
     pendingApplications,
     myApplication: myApp,
@@ -783,6 +797,30 @@ async function dissolveAllByActivity(activityId) {
   return n
 }
 
+/**
+ * 活动结束/取消：关闭仍在招募的队伍（reject pending → dissolved）。
+ * 已 started / dissolved 不动。与管理端 closeTeamsForActivity 对齐。
+ */
+async function closeActiveTeamsByActivity(activityId, reasonNote = '活动已结束') {
+  const teams = await listTeamsByActivityId(activityId)
+  const now = nowIso()
+  let n = 0
+  for (const t of teams) {
+    if (!MANAGE_TEAM_STATUSES.has(t.status)) continue
+    try {
+      await rejectAllPending(t.id, reasonNote)
+      await db()
+        .collection(TEAMS)
+        .doc(String(t.id))
+        .update({ data: { status: 'dissolved', updatedAt: now } })
+      n += 1
+    } catch (e) {
+      console.warn('[teamsDb] closeActiveTeamsByActivity', t.id, e?.message || e)
+    }
+  }
+  return n
+}
+
 async function dissolveTeam(teamId, actorMemberId, { asAdmin = false } = {}) {
   const team = await getTeam(teamId)
   if (!team) throw err('队伍不存在', 404)
@@ -869,7 +907,35 @@ async function listMyTeams(memberId, filterOrOpts) {
     rows = rows.filter((t) => matchTeamTimeFilter(t.startAt, timeFilter))
   }
   rows.sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')))
-  return rows.map((t) => summarizeTeam(t, { myMemberId: mid }))
+  return attachLeaderPathway(rows.map((t) => summarizeTeam(t, { myMemberId: mid })))
+}
+
+/** 我任队长且可管理的队伍上，待审批申请汇总 */
+async function listPendingApprovalsForLeader(memberId) {
+  await ensureCollections()
+  const mid = String(memberId || '').trim()
+  if (!mid) return { pendingApprovalCount: 0, pendingTeams: [] }
+  const all = await fetchAll(TEAMS)
+  const led = all.filter(
+    (t) =>
+      String(t.leaderMemberId) === mid &&
+      !HIDDEN_LIST_STATUSES.has(t.status) &&
+      MANAGE_TEAM_STATUSES.has(t.status),
+  )
+  const pendingTeams = []
+  let pendingApprovalCount = 0
+  for (const t of led) {
+    const pending = await listPendingByTeam(t.id)
+    if (!pending.length) continue
+    pendingApprovalCount += pending.length
+    pendingTeams.push({
+      teamId: t.id,
+      activityId: t.activityId,
+      modeName: t.modeName || '',
+      pendingCount: pending.length,
+    })
+  }
+  return { pendingApprovalCount, pendingTeams }
 }
 
 /** 管理端列表 */
@@ -906,9 +972,11 @@ module.exports = {
   resumeTeamRecruiting,
   dissolveTeam,
   dissolveAllByActivity,
+  closeActiveTeamsByActivity,
   closeTeam,
   markTeamStarted,
   expireTeamsDue,
   listMyTeams,
+  listPendingApprovalsForLeader,
   adminListTeams,
 }

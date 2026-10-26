@@ -1,0 +1,250 @@
+@import "../../styles/shell.wxss";
+@import "../../styles/pathway.wxss";
+
+.guest-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  padding: 36rpx 28rpx;
+  border-radius: var(--radius-md);
+  border: 1rpx solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.guest-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.profile-card {
+  padding: 28rpx;
+  border-radius: var(--radius-md);
+  border: 1rpx solid var(--color-border-strong);
+  background:
+    linear-gradient(165deg, rgba(189, 163, 119, 0.1), transparent 48%),
+    var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.profile-top {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+  min-width: 0;
+}
+
+.profile-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.profile-main:active {
+  opacity: 0.88;
+}
+
+.profile-role {
+  font-size: 20rpx;
+  color: var(--color-brand);
+  border: 1rpx solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  padding: 2rpx 10rpx;
+  background: var(--color-brand-muted);
+  flex-shrink: 0;
+}
+
+/* 名字 + › 成组，箭头紧跟角色名 */
+.profile-name-group {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.profile-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-arrow {
+  color: var(--color-brand);
+  font-size: 28rpx;
+  flex-shrink: 0;
+}
+
+.profile-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx;
+  flex-shrink: 0;
+}
+
+.profile-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rpx;
+  min-width: 64rpx;
+  padding: 6rpx 8rpx;
+  border-radius: var(--radius-sm);
+  border: 1rpx solid var(--color-border);
+  background: var(--color-surface-elevated);
+}
+
+.profile-action:active {
+  background: var(--color-brand-muted);
+  border-color: var(--color-border-strong);
+}
+
+.profile-action-mark {
+  font-size: 26rpx;
+  line-height: 1;
+  color: var(--color-text-secondary);
+}
+
+.profile-action-label {
+  font-size: 18rpx;
+  line-height: 1.2;
+  color: var(--color-text-muted);
+}
+
+.profile-action.danger .profile-action-mark,
+.profile-action.danger .profile-action-label {
+  color: var(--color-danger);
+}
+
+.profile-meta {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.meta-chip {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  padding: 4rpx 12rpx;
+  border-radius: var(--radius-sm);
+  border: 1rpx solid var(--color-border);
+  background: var(--color-surface-elevated);
+}
+
+.profile-hint {
+  font-size: 22rpx;
+  color: var(--color-text-muted);
+}
+
+.list-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+  padding: 22rpx 24rpx;
+  border-radius: var(--radius-md);
+  border: 1rpx solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.list-row:active {
+  background: var(--color-brand-muted);
+}
+
+.list-row.dim {
+  opacity: 0.78;
+}
+
+.row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.row-top {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+  min-width: 0;
+}
+
+.row-title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row-sub {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.row-chevron {
+  color: var(--color-brand);
+  font-size: 28rpx;
+  flex-shrink: 0;
+}
+
+.chip-tag {
+  flex-shrink: 0;
+  font-size: 20rpx;
+  line-height: 1.3;
+  padding: 2rpx 10rpx;
+  border-radius: var(--radius-sm);
+  border: 1rpx solid var(--color-border);
+  color: var(--color-text-secondary);
+  background: var(--color-surface-elevated);
+}
+
+.chip-tag.status-going {
+  color: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.chip-tag.status-maybe {
+  color: var(--color-warning);
+  border-color: var(--color-warning);
+}
+
+.chip-tag.status-decline {
+  color: var(--color-text-muted);
+}
+
+.sub-head {
+  padding: 8rpx 4rpx 0;
+}
+
+.sub-title {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.tiny {
+  font-size: 22rpx;
+}

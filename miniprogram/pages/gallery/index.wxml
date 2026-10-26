@@ -51,7 +51,7 @@
         <view class="cell-meta">
           <text class="cell-name">{{item.caption || '未命名作品'}}</text>
           <view class="cell-foot">
-            <text class="cell-cap">{{item.characterName || '成员'}}</text>
+            <text class="cell-cap text-pathway {{item.pathwayTint}}">{{item.characterName || '成员'}}</text>
             <text class="cell-likes">♡ {{item.likeCount || 0}}</text>
           </view>
         </view>

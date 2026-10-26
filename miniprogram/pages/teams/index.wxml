@@ -69,7 +69,10 @@
         <view class="bar accent"></view>
         <view class="bar-main">
           <view class="row-top">
-            <text class="row-title">{{item.line1}}</text>
+            <view class="row-title">
+              <text class="text-pathway {{item.leaderPathwayTint}}">{{item.leaderName}}</text>
+              <text class="row-title-rest">{{item.line1Rest}}</text>
+            </view>
             <text class="chip-tag">{{item.statusLabel}}</text>
           </view>
           <text class="row-sub">{{item.startIsActivity ? '活动开始 ' : '开打 '}}{{item.startText}}</text>

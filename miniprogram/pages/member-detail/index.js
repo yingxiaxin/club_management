@@ -1,4 +1,5 @@
 const { callMemberApi } = require('../../utils/api')
+const { pathwayClass } = require('../../utils/pathway')
 
 const STATUS_TEXT = {
   active: '正常',
@@ -21,6 +22,7 @@ Page({
     loading: true,
     error: '',
     member: null,
+    namePathwayTint: '',
     joinedAtText: '',
     statusText: '',
   },
@@ -42,9 +44,11 @@ Page({
     this.setData({ loading: true, error: '' })
     try {
       const member = await callMemberApi('getMember', { id: this.memberId })
+      const cls = pathwayClass(member.pathway)
       this.setData({
         loading: false,
         member,
+        namePathwayTint: cls ? `${cls} pathway-tint` : '',
         joinedAtText: formatJoinedAt(member.joinedAt),
         statusText: STATUS_TEXT[member.status] || member.status || '—',
       })

@@ -106,9 +106,33 @@ async function listActiveByActivity(activityId) {
   return all
 }
 
+/** 某微信用户当前有效的「提醒我」订阅（「我的」聚合） */
+async function listActiveByOpenid(openid) {
+  await ensureCollection()
+  const oid = String(openid || '').trim()
+  if (!oid) return []
+  const pageSize = 100
+  let offset = 0
+  const all = []
+  for (;;) {
+    const res = await db()
+      .collection(COLLECTION)
+      .where({ openid: oid, status: 'active' })
+      .skip(offset)
+      .limit(pageSize)
+      .get()
+    const rows = (res.data || []).map(toClient)
+    all.push(...rows)
+    if (rows.length < pageSize) break
+    offset += pageSize
+  }
+  return all
+}
+
 module.exports = {
   getMine,
   upsertActive,
   listActiveByActivity,
+  listActiveByOpenid,
   ensureCollection,
 }

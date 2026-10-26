@@ -13,6 +13,7 @@ const clubDb = require('./clubDb')
 const subscriptionsDb = require('./subscriptionsDb')
 const announcementsDb = require('./announcementsDb')
 const galleryDb = require('./galleryDb')
+const deskDb = require('./deskDb')
 const { decorate } = require('./scheduleMatch')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
@@ -104,6 +105,23 @@ exports.main = async (event) => {
           isAdmin,
           joinApplication,
         })
+      }
+
+      /** P3-desk-a：「我的」页聚合（暂不含请假/实到写） */
+      case 'myDesk': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        const access = await resolveAccess(openid)
+        const joinApplication =
+          access.user.memberId && access.member
+            ? null
+            : await invitesDb.getMyApplication(openid)
+        return ok(
+          await deskDb.buildMyDesk({
+            openid,
+            access,
+            joinApplication,
+          }),
+        )
       }
 
       case 'bindByCharacterName': {
@@ -426,10 +444,15 @@ exports.main = async (event) => {
         )
       }
 
-      /** P2-d：到点结算；仅系统（定时器 / 其它云函数互调）。带 OPENID 的小程序调用拒绝。 */
+      /** P2-d / 活动到点：仅系统（定时器）。带 OPENID 拒绝。先结束一次性活动，再扫队伍 startAt。 */
       case 'expireTeamsDue': {
         if (openid) return fail('仅系统可触发到点结算', 403)
-        return ok(await teamsDb.expireTeamsDue())
+        const activities = await activitiesDb.expireOneTimeActivitiesDue()
+        const teams = await teamsDb.expireTeamsDue()
+        return ok({
+          expired: teams.expired || [],
+          activitiesEnded: activities.ended || [],
+        })
       }
 
       case 'listGalleryPosts': {
@@ -503,7 +526,7 @@ exports.main = async (event) => {
 
       default:
         return fail(
-          `未知 action: ${action || '(空)'}。支持 health/whoami/.../listGalleryPosts/getGalleryPost/createGalleryPost/deleteGalleryPost/deleteGalleryAlbum/toggleGalleryLike/expireTeamsDue`,
+          `未知 action: ${action || '(空)'}。支持 health/whoami/myDesk/.../listGalleryPosts/getGalleryPost/createGalleryPost/deleteGalleryPost/deleteGalleryAlbum/toggleGalleryLike/expireTeamsDue`,
           400,
         )
     }

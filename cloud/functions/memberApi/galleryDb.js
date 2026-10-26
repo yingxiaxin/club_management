@@ -6,6 +6,7 @@ const cloud = require('wx-server-sdk')
 
 const COLLECTION = 'gallery_posts'
 const LIKES_COLLECTION = 'gallery_likes'
+const MEMBERS = 'members'
 const DEFAULT_QUOTA_BYTES = 2147483648
 const MAX_CAPTION = 200
 const MAX_BYTE_SIZE = 8 * 1024 * 1024
@@ -104,6 +105,7 @@ function buildAlbum(aid, images) {
     albumId: aid,
     memberId: cover.memberId,
     characterName: cover.characterName,
+    pathway: '',
     caption: cover.caption,
     createdAt: cover.createdAt,
     updatedAt: latest.updatedAt || latest.createdAt,
@@ -113,6 +115,27 @@ function buildAlbum(aid, images) {
     thumbFileId: cover.thumbFileId,
     images: sorted.map(toImageBrief),
   }
+}
+
+/** 作者途径：供小程序角色名上色 */
+async function attachAuthorPathway(albums) {
+  const list = Array.isArray(albums) ? albums : []
+  if (!list.length) return list
+  const ids = [...new Set(list.map((a) => String(a.memberId || '')).filter(Boolean))]
+  const pathMap = new Map()
+  for (const id of ids) {
+    try {
+      const res = await db().collection(MEMBERS).doc(id).get()
+      const row = Array.isArray(res.data) ? res.data[0] : res.data
+      pathMap.set(id, (row && row.pathway) || '')
+    } catch {
+      pathMap.set(id, '')
+    }
+  }
+  return list.map((a) => ({
+    ...a,
+    pathway: pathMap.get(String(a.memberId || '')) || a.pathway || '',
+  }))
 }
 
 function clusterLegacyPosts(loose) {
@@ -282,7 +305,8 @@ async function listGalleryPosts({ limit = 30, sort = 'likes', viewerMemberId } =
   const lim = Math.min(Math.max(Number(limit) || 30, 1), 50)
   const [all, likes] = await Promise.all([fetchAllVisible(), fetchAllLikes()])
   const albums = attachLikes(groupIntoAlbums(all), likes, viewerMemberId)
-  return sortAlbums(albums, sort).slice(0, lim)
+  const sorted = sortAlbums(albums, sort).slice(0, lim)
+  return attachAuthorPathway(sorted)
 }
 
 async function findAlbumByRef(refId) {
@@ -301,7 +325,10 @@ async function findAlbumByRef(refId) {
 async function getGalleryPost(id, { viewerMemberId } = {}) {
   const album = await findAlbumByRef(id)
   const likes = await fetchAllLikes()
-  return attachLikes([album], likes, viewerMemberId)[0]
+  const [enriched] = await attachAuthorPathway(
+    attachLikes([album], likes, viewerMemberId),
+  )
+  return enriched
 }
 
 /**

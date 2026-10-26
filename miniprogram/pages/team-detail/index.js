@@ -4,7 +4,7 @@ const {
   appStatusLabel,
   formatStartAt,
 } = require('../../utils/teams')
-const { mapWithPathwayClass } = require('../../utils/pathway')
+const { mapWithPathwayClass, pathwayClass } = require('../../utils/pathway')
 
 Page({
   data: {
@@ -33,10 +33,12 @@ Page({
       team.status === 'recruiting' ||
       team.status === 'full' ||
       team.status === 'paused'
+    const leaderCls = pathwayClass(team.leaderPathway)
     return {
       ...team,
       members: mapWithPathwayClass(team.members),
       pendingApplications: mapWithPathwayClass(team.pendingApplications),
+      leaderPathwayTint: leaderCls ? `${leaderCls} pathway-tint` : '',
       statusLabel: teamStatusLabel(team.status),
       startText: formatStartAt(team.startAt),
       myAppLabel: team.myApplicationStatus

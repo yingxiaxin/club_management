@@ -59,8 +59,19 @@
   background: var(--pathway-muted);
 }
 
-/* 首页会务条角色名 */
-.hub-name.pathway-tint {
+/* 纯文字角色名（会务条 / 我的 / 详情 / 踏云 / 队长名等） */
+.hub-name.pathway-tint,
+.profile-name.pathway-tint,
+.text-pathway.pathway-tint,
+.cell-cap.text-pathway.pathway-tint,
+.gallery-chip-name.text-pathway.pathway-tint,
+.author.text-pathway.pathway-tint {
+  color: var(--pathway);
+}
+
+/* 成员列表、队伍队员行：名字本身也用途径色 */
+.bar-row.pathway-tint .name,
+.member-line.pathway-tint .member-name {
   color: var(--pathway);
 }
 

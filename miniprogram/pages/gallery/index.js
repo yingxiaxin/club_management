@@ -1,4 +1,5 @@
 const { callMemberApi } = require('../../utils/api')
+const { mapWithPathwayClass } = require('../../utils/pathway')
 
 Page({
   data: {
@@ -32,7 +33,7 @@ Page({
       })
       this.setData({
         loading: false,
-        list: Array.isArray(list) ? list : [],
+        list: mapWithPathwayClass(Array.isArray(list) ? list : []),
       })
     } catch (e) {
       this.setData({

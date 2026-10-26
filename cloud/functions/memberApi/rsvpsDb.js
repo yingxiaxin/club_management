@@ -96,6 +96,29 @@ async function getMine(activityId, memberId) {
   }
 }
 
+/** 某成员全部 RSVP（「我的」聚合） */
+async function listByMember(memberId) {
+  await ensureCollection()
+  const mid = String(memberId || '').trim()
+  if (!mid) return []
+  const pageSize = 100
+  let offset = 0
+  const all = []
+  for (;;) {
+    const res = await db()
+      .collection(COLLECTION)
+      .where({ memberId: mid })
+      .skip(offset)
+      .limit(pageSize)
+      .get()
+    const rows = (res.data || []).map(toClient)
+    all.push(...rows)
+    if (rows.length < pageSize) break
+    offset += pageSize
+  }
+  return all
+}
+
 async function fetchMemberBriefs(memberIds) {
   const ids = [...new Set(memberIds.filter(Boolean).map(String))]
   const map = new Map()
@@ -298,6 +321,7 @@ module.exports = {
   STATUSES,
   STATUS_LABELS,
   listByActivity,
+  listByMember,
   getMine,
   summarize,
   countByActivityIds,
