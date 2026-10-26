@@ -1,0 +1,47 @@
+<view class="page">
+  <view class="toolbar">
+    <text class="toolbar-hint">风景与自拍 · 已入会成员可发</text>
+    <button class="btn-primary btn-publish" size="mini" bindtap="goCreate">发布</button>
+  </view>
+
+  <view class="page-state" wx:if="{{loading}}">
+    <text class="muted">加载中…</text>
+  </view>
+  <view class="page-state" wx:elif="{{error}}">
+    <text class="danger">{{error}}</text>
+    <button class="btn-primary retry" size="mini" bindtap="load">重试</button>
+  </view>
+
+  <block wx:else>
+    <view class="empty-panel" wx:if="{{!list.length}}">
+      <text class="muted">暂无作品</text>
+      <text class="muted tiny">点右上角「发布」分享风景或自拍</text>
+    </view>
+    <view class="grid" wx:else>
+      <view
+        class="cell"
+        wx:for="{{list}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="goDetail"
+      >
+        <view class="photo-stack">
+          <view class="photo-stack-layer back2" />
+          <view class="photo-stack-layer back1" />
+          <image
+            class="photo-stack-front"
+            src="{{item.thumbFileId || item.imageFileId}}"
+            mode="aspectFill"
+            lazy-load
+          />
+        </view>
+        <view class="cell-meta">
+          <text class="cell-name">{{item.characterName || '成员'}}</text>
+          <text class="cell-cap" wx:if="{{item.caption}}">{{item.caption}}</text>
+        </view>
+      </view>
+    </view>
+  </block>
+</view>
+
+<home-fab />

@@ -36,8 +36,10 @@ async function getClubProfile() {
         name: '',
         iconUrl: '',
         intro: '',
+        galleryStorageQuotaBytes: null,
       }
     }
+    const quota = Number(row.galleryStorageQuotaBytes)
     return {
       name: row.name || '',
       iconUrl: String(row.iconUrl || '').trim(),
@@ -49,6 +51,8 @@ async function getClubProfile() {
       )
         ? row.subscribeMiniprogramState
         : 'developer',
+      galleryStorageQuotaBytes:
+        Number.isFinite(quota) && quota > 0 ? Math.floor(quota) : null,
     }
   } catch {
     return {
@@ -58,6 +62,7 @@ async function getClubProfile() {
       name: '',
       iconUrl: '',
       intro: '',
+      galleryStorageQuotaBytes: null,
     }
   }
 }

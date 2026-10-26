@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "踏云寻芳",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "home-fab": "/components/home-fab/index"
+  }
+}

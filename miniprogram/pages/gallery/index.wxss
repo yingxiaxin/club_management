@@ -1,0 +1,83 @@
+@import "../../styles/shell.wxss";
+@import "../../styles/photo-stack.wxss";
+
+.toolbar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 0 4rpx;
+}
+
+.toolbar-hint {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.btn-publish {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0 28rpx;
+}
+
+.empty-panel {
+  padding: 80rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  border-radius: var(--radius-md);
+  border: 1rpx dashed var(--color-border);
+  background: var(--color-surface);
+}
+
+.tiny {
+  font-size: 22rpx;
+}
+
+.grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 28rpx 20rpx;
+  padding: 8rpx 4rpx 12rpx;
+}
+
+.cell {
+  width: calc((100% - 16rpx) / 2);
+  border-radius: var(--radius-md);
+  border: 1rpx solid var(--color-border);
+  background: var(--color-surface);
+  overflow: visible;
+}
+
+.cell:active {
+  background: var(--color-brand-muted);
+}
+
+.cell-meta {
+  padding: 14rpx 16rpx 18rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.cell-name {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cell-cap {
+  font-size: 22rpx;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -9,6 +9,9 @@
     "pages/team-detail/index",
     "pages/member-detail/index",
     "pages/announcements/index",
+    "pages/gallery/index",
+    "pages/gallery-create/index",
+    "pages/gallery-detail/index",
     "pages/bind/index",
     "pages/join/index",
     "pages/admin-login/index"

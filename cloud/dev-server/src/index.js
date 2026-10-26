@@ -27,6 +27,7 @@ import * as cloudActivities from './cloudActivities.js'
 import * as cloudTeams from './cloudTeams.js'
 import * as cloudClub from './cloudClub.js'
 import * as cloudAnnouncements from './cloudAnnouncements.js'
+import * as cloudGallery from './cloudGallery.js'
 import * as cloudUsers from './cloudUsers.js'
 import { recognizeMemberScreenshots } from './ocr/recognize.js'
 
@@ -574,6 +575,37 @@ app.delete('/api/announcements/:id', requireAdmin, async (req, res) => {
   try {
     if (!requireCloudActivities(res)) return
     const data = await cloudAnnouncements.deleteAnnouncement(req.params.id)
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+/** —— 踏云寻芳 —— */
+app.get('/api/gallery', requireAdmin, async (_req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const data = await cloudGallery.listGalleryWithStats()
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.get('/api/gallery/:id', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const data = await cloudGallery.getGalleryPost(req.params.id)
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+app.delete('/api/gallery/:id', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const data = await cloudGallery.deleteGalleryPost(req.params.id)
     res.json({ ok: true, data })
   } catch (err) {
     res.status(err.status || 500).json({ ok: false, message: err.message })

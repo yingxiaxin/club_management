@@ -1,5 +1,6 @@
 @import "../../styles/urgency.wxss";
 @import "../../styles/pathway.wxss";
+@import "../../styles/photo-stack.wxss";
 
 .page {
   min-height: 100vh;
@@ -457,6 +458,43 @@
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+}
+
+/* —— 踏云寻芳预览 —— */
+.gallery-preview {
+  display: flex;
+  flex-direction: row;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.gallery-chip {
+  display: inline-flex;
+  flex-direction: column;
+  width: 220rpx;
+  margin-right: 20rpx;
+  border-radius: var(--radius-md);
+  border: 1rpx solid var(--color-border);
+  background: var(--color-surface);
+  overflow: visible;
+  vertical-align: top;
+}
+
+.gallery-chip:active {
+  background: var(--color-brand-muted);
+}
+
+.gallery-chip .photo-stack.compact {
+  width: 220rpx;
+}
+
+.gallery-chip-name {
+  padding: 10rpx 12rpx 14rpx;
+  font-size: 22rpx;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* —— 今日活动 —— */

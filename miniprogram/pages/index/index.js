@@ -26,6 +26,8 @@ Page({
     announcements: [],
     announceLoading: false,
     announceSwiperIndex: 0,
+    galleryPreview: [],
+    galleryLoading: false,
     scheduleLoading: false,
     todayPreview: [],
     todayCount: 0,
@@ -77,10 +79,15 @@ Page({
       })
       if (canViewMembers) {
         if (awaitExtras) {
-          await Promise.all([this.loadSchedulePreview(), this.loadAnnouncements()])
+          await Promise.all([
+            this.loadSchedulePreview(),
+            this.loadAnnouncements(),
+            this.loadGalleryPreview(),
+          ])
         } else {
           this.loadSchedulePreview()
           this.loadAnnouncements()
+          this.loadGalleryPreview()
         }
       } else {
         this.setData({
@@ -88,6 +95,7 @@ Page({
           todayCount: 0,
           weekCount: 0,
           announcements: [],
+          galleryPreview: [],
         })
       }
     } catch (e) {
@@ -124,6 +132,31 @@ Page({
 
   goAnnouncements() {
     wx.navigateTo({ url: '/pages/announcements/index' })
+  },
+
+  async loadGalleryPreview() {
+    this.setData({ galleryLoading: true })
+    try {
+      const list = await callMemberApi('listGalleryPosts', { limit: 8 })
+      this.setData({
+        galleryLoading: false,
+        galleryPreview: Array.isArray(list) ? list.slice(0, 6) : [],
+      })
+    } catch {
+      this.setData({ galleryLoading: false, galleryPreview: [] })
+    }
+  },
+
+  goGallery() {
+    wx.navigateTo({ url: '/pages/gallery/index' })
+  },
+
+  goGalleryDetail(e) {
+    const id = e.currentTarget.dataset.id
+    if (!id) return
+    wx.navigateTo({
+      url: `/pages/gallery-detail/index?id=${encodeURIComponent(id)}`,
+    })
   },
 
   goAnnounceDetail(e) {

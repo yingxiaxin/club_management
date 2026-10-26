@@ -131,6 +131,7 @@ function defaults() {
     reminderOffsetsMinutes: [10],
     subscribeTemplateId: '',
     subscribeMiniprogramState: 'developer',
+    galleryStorageQuotaBytes: null,
     updatedAt: null,
     updatedBy: null,
   }
@@ -139,6 +140,7 @@ function defaults() {
 function toClient(doc) {
   if (!doc) return defaults()
   const { _id, _openid, ...rest } = doc
+  const quota = Number(rest.galleryStorageQuotaBytes)
   return {
     ...defaults(),
     ...rest,
@@ -150,6 +152,8 @@ function toClient(doc) {
     )
       ? rest.subscribeMiniprogramState
       : 'developer',
+    galleryStorageQuotaBytes:
+      Number.isFinite(quota) && quota > 0 ? Math.floor(quota) : null,
   }
 }
 
@@ -202,6 +206,17 @@ export async function updateClubProfile(payload = {}, updatedBy = 'admin') {
       throw err('小程序状态须为 developer/trial/formal', 400)
     }
     patch.subscribeMiniprogramState = s
+  }
+  if (payload.galleryStorageQuotaBytes !== undefined) {
+    if (payload.galleryStorageQuotaBytes === null || payload.galleryStorageQuotaBytes === '') {
+      patch.galleryStorageQuotaBytes = null
+    } else {
+      const n = Math.floor(Number(payload.galleryStorageQuotaBytes))
+      if (!Number.isFinite(n) || n < 1024 * 1024) {
+        throw err('容量上限至少 1MB', 400)
+      }
+      patch.galleryStorageQuotaBytes = n
+    }
   }
 
   const next = { ...current, ...patch }

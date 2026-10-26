@@ -1,0 +1,40 @@
+<view class="page">
+  <view class="panel">
+    <text class="title">踏云寻芳 · 发布</text>
+    <text class="meta">可多选图片（最多 9 张，仅图片）；简介将对本次每张作品共用。</text>
+
+    <view class="pick-grid">
+      <view class="pick-cell" wx:for="{{items}}" wx:key="localKey">
+        <image class="pick-img" src="{{item.localPath || item.imageFileId}}" mode="aspectFill" />
+        <view class="pick-remove" data-index="{{index}}" catchtap="onRemove">×</view>
+      </view>
+      <view class="pick-cell add" wx:if="{{items.length < 9}}" bindtap="onPick">
+        <text class="preview-plus">+</text>
+        <text class="muted tiny">添加 {{items.length}}/9</text>
+      </view>
+    </view>
+
+    <view class="field">
+      <text class="label">简介（可选，最多 200 字）</text>
+      <textarea
+        class="textarea"
+        value="{{caption}}"
+        maxlength="200"
+        placeholder="一句心情或地点…"
+        bindinput="onCaption"
+      />
+    </view>
+
+    <button
+      class="btn-primary"
+      loading="{{submitting}}"
+      disabled="{{submitting || !items.length}}"
+      bindtap="onSubmit"
+    >
+      发布{{items.length ? '（' + items.length + ' 张）' : ''}}
+    </button>
+    <text class="msg" wx:if="{{message}}">{{message}}</text>
+  </view>
+</view>
+
+<home-fab />

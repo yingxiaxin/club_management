@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "作品详情",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "home-fab": "/components/home-fab/index"
+  }
+}

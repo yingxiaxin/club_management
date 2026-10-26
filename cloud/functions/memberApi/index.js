@@ -1,5 +1,5 @@
 /**
- * 成员端云函数：登录身份、入会、成员/活动只读、RSVP、提醒订阅、组队。
+ * 成员端云函数：登录身份、入会、成员/活动只读、RSVP、提醒订阅、组队、踏云寻芳。
  * 调用：cloud.callFunction({ name: 'memberApi', data: { action, ... } })
  */
 const cloud = require('wx-server-sdk')
@@ -12,6 +12,7 @@ const teamsDb = require('./teamsDb')
 const clubDb = require('./clubDb')
 const subscriptionsDb = require('./subscriptionsDb')
 const announcementsDb = require('./announcementsDb')
+const galleryDb = require('./galleryDb')
 const { decorate } = require('./scheduleMatch')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
@@ -431,9 +432,42 @@ exports.main = async (event) => {
         return ok(await teamsDb.expireTeamsDue())
       }
 
+      case 'listGalleryPosts': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        await requireViewer(openid)
+        return ok(await galleryDb.listGalleryPosts({ limit: event.limit }))
+      }
+
+      case 'getGalleryPost': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        await requireViewer(openid)
+        return ok(await galleryDb.getGalleryPost(event.id || event.postId))
+      }
+
+      case 'createGalleryPost': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        const access = await requireBoundMember(openid, '发布')
+        return ok(await galleryDb.createGalleryPost(access.member, event))
+      }
+
+      case 'deleteGalleryPost': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        const access = await resolveAccess(openid)
+        if (!access.canViewMembers && !access.isAdmin) {
+          return fail('请先绑定俱乐部角色或完成入会后再查看', 403)
+        }
+        return ok(
+          await galleryDb.deleteGalleryPost({
+            id: event.id || event.postId,
+            actorMemberId: access.member?.id || null,
+            isAdmin: access.isAdmin,
+          }),
+        )
+      }
+
       default:
         return fail(
-          `未知 action: ${action || '(空)'}。支持 health/whoami/.../setRsvp/listTeamsByActivity/getTeam/createTeam/updateTeam/applyTeam/cancelTeamApplication/reviewTeamApplication/kickTeamMember/leaveTeam/transferTeamLeader/pauseTeamRecruiting/resumeTeamRecruiting/dissolveTeam/listMyTeams/expireTeamsDue`,
+          `未知 action: ${action || '(空)'}。支持 health/whoami/.../listGalleryPosts/getGalleryPost/createGalleryPost/deleteGalleryPost/expireTeamsDue`,
           400,
         )
     }

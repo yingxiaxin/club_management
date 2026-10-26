@@ -1,0 +1,60 @@
+@import "../../styles/shell.wxss";
+@import "../../styles/photo-stack.wxss";
+
+.hero-stack {
+  position: relative;
+  width: 100%;
+  padding: 16rpx 36rpx 28rpx 16rpx;
+  box-sizing: border-box;
+}
+
+.hero-stack .photo-stack-layer {
+  left: 16rpx;
+  right: 36rpx;
+  top: 16rpx;
+  bottom: 28rpx;
+  transform-origin: left center;
+}
+
+.hero-stack .photo-stack-layer.back2 {
+  transform: rotate(7deg) translate(16rpx, 8rpx);
+}
+
+.hero-stack .photo-stack-layer.back1 {
+  transform: rotate(3.5deg) translate(9rpx, 4rpx);
+}
+
+.hero {
+  width: 100%;
+  display: block;
+  border-radius: var(--radius-md);
+  border: 1rpx solid var(--color-border-strong);
+  background: var(--color-surface);
+  box-shadow: 0 10rpx 28rpx rgba(0, 0, 0, 0.35);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  padding: 28rpx;
+  border-radius: var(--radius-md);
+  border: 1rpx solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.author {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-brand);
+}
+
+.caption {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  line-height: 1.55;
+}
+
+.tiny {
+  font-size: 22rpx;
+}

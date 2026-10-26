@@ -1,0 +1,37 @@
+<view class="page">
+  <view class="page-state" wx:if="{{loading}}">
+    <text class="muted">加载中…</text>
+  </view>
+  <view class="page-state" wx:elif="{{error}}">
+    <text class="danger">{{error}}</text>
+    <button class="btn-primary retry" size="mini" bindtap="load">重试</button>
+  </view>
+
+  <block wx:elif="{{post}}">
+    <view class="hero-stack">
+      <view class="photo-stack-layer back2" />
+      <view class="photo-stack-layer back1" />
+      <image
+        class="hero photo-stack-front"
+        src="{{post.imageFileId}}"
+        mode="widthFix"
+        show-menu-by-longpress
+      />
+    </view>
+    <view class="panel">
+      <text class="author">{{post.characterName || '成员'}}</text>
+      <text class="caption" wx:if="{{post.caption}}">{{post.caption}}</text>
+      <text class="muted tiny" wx:if="{{post.createdAt}}">{{post.createdAt}}</text>
+      <button
+        wx:if="{{canDelete}}"
+        class="btn-ghost"
+        loading="{{deleting}}"
+        bindtap="onDelete"
+      >
+        删除
+      </button>
+    </view>
+  </block>
+</view>
+
+<home-fab />

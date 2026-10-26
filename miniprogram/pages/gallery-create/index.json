@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "发布作品",
+  "enablePullDownRefresh": false,
+  "usingComponents": {
+    "home-fab": "/components/home-fab/index"
+  }
+}

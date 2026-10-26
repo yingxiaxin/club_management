@@ -12,6 +12,8 @@ export interface ClubProfile {
   reminderOffsetsMinutes: number[]
   subscribeTemplateId: string
   subscribeMiniprogramState: MiniprogramState
+  /** 踏云寻芳容量上限（字节）；null 表示用服务端默认 */
+  galleryStorageQuotaBytes?: number | null
   updatedAt?: string | null
   updatedBy?: string | null
 }
@@ -34,6 +36,7 @@ export async function updateClubProfile(
       | 'reminderOffsetsMinutes'
       | 'subscribeTemplateId'
       | 'subscribeMiniprogramState'
+      | 'galleryStorageQuotaBytes'
     >
   >,
 ): Promise<ClubProfile> {

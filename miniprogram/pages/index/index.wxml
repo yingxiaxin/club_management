@@ -122,6 +122,42 @@
       </view>
     </view>
 
+    <!-- 踏云寻芳 -->
+    <view class="section" wx:if="{{canViewMembers}}">
+      <view class="section-head">
+        <text class="section-title">踏云寻芳</text>
+        <text class="section-link" bindtap="goGallery">查看更多</text>
+      </view>
+      <view class="panel soft" wx:if="{{galleryLoading}}">
+        <text class="muted">加载作品…</text>
+      </view>
+      <view class="panel soft empty" wx:elif="{{!galleryPreview.length}}">
+        <text class="muted">暂无作品</text>
+        <text class="muted tiny">成员可分享风景与自拍</text>
+      </view>
+      <scroll-view wx:else class="gallery-preview" scroll-x enable-flex>
+        <view
+          class="gallery-chip"
+          wx:for="{{galleryPreview}}"
+          wx:key="id"
+          data-id="{{item.id}}"
+          bindtap="goGalleryDetail"
+        >
+          <view class="photo-stack compact">
+            <view class="photo-stack-layer back2" />
+            <view class="photo-stack-layer back1" />
+            <image
+              class="photo-stack-front"
+              src="{{item.thumbFileId || item.imageFileId}}"
+              mode="aspectFill"
+              lazy-load
+            />
+          </view>
+          <text class="gallery-chip-name">{{item.characterName || '成员'}}</text>
+        </view>
+      </scroll-view>
+    </view>
+
     <!-- 今日活动 -->
     <view class="section" wx:if="{{canViewMembers}}">
       <view class="section-head">
