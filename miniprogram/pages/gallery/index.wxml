@@ -4,6 +4,19 @@
     <button class="btn-primary btn-publish" size="mini" bindtap="goCreate">发布</button>
   </view>
 
+  <view class="sort-row">
+    <view
+      class="chip {{sort === 'likes' ? 'active' : ''}}"
+      data-sort="likes"
+      bindtap="onSort"
+    >点赞最多</view>
+    <view
+      class="chip {{sort === 'newest' ? 'active' : ''}}"
+      data-sort="newest"
+      bindtap="onSort"
+    >最新发布</view>
+  </view>
+
   <view class="page-state" wx:if="{{loading}}">
     <text class="muted">加载中…</text>
   </view>
@@ -21,8 +34,8 @@
       <view
         class="cell"
         wx:for="{{list}}"
-        wx:key="id"
-        data-id="{{item.id}}"
+        wx:key="albumId"
+        data-id="{{item.albumId || item.id}}"
         bindtap="goDetail"
       >
         <view class="photo-stack">
@@ -36,8 +49,11 @@
           />
         </view>
         <view class="cell-meta">
-          <text class="cell-name">{{item.characterName || '成员'}}</text>
-          <text class="cell-cap" wx:if="{{item.caption}}">{{item.caption}}</text>
+          <text class="cell-name">{{item.caption || '未命名作品'}}</text>
+          <view class="cell-foot">
+            <text class="cell-cap">{{item.characterName || '成员'}}</text>
+            <text class="cell-likes">♡ {{item.likeCount || 0}}</text>
+          </view>
         </view>
       </view>
     </view>

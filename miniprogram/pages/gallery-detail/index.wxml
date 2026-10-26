@@ -7,31 +7,72 @@
     <button class="btn-primary retry" size="mini" bindtap="load">重试</button>
   </view>
 
-  <block wx:elif="{{post}}">
-    <view class="hero-stack">
-      <view class="photo-stack-layer back2" />
-      <view class="photo-stack-layer back1" />
-      <image
-        class="hero photo-stack-front"
-        src="{{post.imageFileId}}"
-        mode="widthFix"
-        show-menu-by-longpress
-      />
+  <view class="panel" wx:elif="{{album}}">
+    <view class="head-row">
+      <view class="head-text">
+        <text class="work-title">{{album.title}}</text>
+        <text class="author">{{album.characterName || '成员'}}</text>
+        <text class="muted tiny" wx:if="{{album.createdAtLabel}}">{{album.createdAtLabel}}</text>
+      </view>
+      <view class="head-actions">
+        <view
+          wx:if="{{canLike}}"
+          class="icon-action {{liking ? 'disabled' : ''}} {{album.likedByMe ? 'liked' : ''}}"
+          bindtap="onToggleLike"
+          hover-class="icon-action-hover"
+          hover-stay-time="80"
+        >
+          <text class="icon-action-mark">{{album.likedByMe ? '♥' : '♡'}}</text>
+          <text class="icon-action-label">{{album.likeCount || 0}}</text>
+        </view>
+        <view
+          wx:if="{{canDelete}}"
+          class="icon-action {{withdrawing ? 'disabled' : ''}}"
+          bindtap="onWithdraw"
+          hover-class="icon-action-hover"
+          hover-stay-time="80"
+        >
+          <text class="icon-action-mark">↶</text>
+          <text class="icon-action-label">撤回作品</text>
+        </view>
+      </view>
     </view>
-    <view class="panel">
-      <text class="author">{{post.characterName || '成员'}}</text>
-      <text class="caption" wx:if="{{post.caption}}">{{post.caption}}</text>
-      <text class="muted tiny" wx:if="{{post.createdAt}}">{{post.createdAt}}</text>
-      <button
-        wx:if="{{canDelete}}"
-        class="btn-ghost"
-        loading="{{deleting}}"
-        bindtap="onDelete"
+
+    <view class="images">
+      <view class="img-cell" wx:for="{{album.images}}" wx:key="id">
+        <image
+          class="flat-img"
+          src="{{item.imageFileId}}"
+          mode="aspectFill"
+          data-url="{{item.imageFileId}}"
+          bindtap="onPreview"
+          show-menu-by-longpress
+        />
+        <view
+          wx:if="{{canDelete}}"
+          class="img-remove {{removingId === item.id ? 'disabled' : ''}}"
+          data-id="{{item.id}}"
+          catchtap="onRemoveImage"
+          hover-class="img-remove-hover"
+          hover-stay-time="80"
+        >
+          <text class="img-remove-mark">✕</text>
+        </view>
+      </view>
+
+      <view
+        wx:if="{{canAppend}}"
+        class="img-cell add {{appending ? 'disabled' : ''}}"
+        bindtap="onAppend"
+        hover-class="img-add-hover"
+        hover-stay-time="80"
       >
-        删除
-      </button>
+        <text class="add-plus">+</text>
+        <text class="add-hint">继续上传</text>
+        <text class="add-count">{{album.images.length}}/9</text>
+      </view>
     </view>
-  </block>
+  </view>
 </view>
 
 <home-fab />

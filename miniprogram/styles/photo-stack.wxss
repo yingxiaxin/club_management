@@ -1,49 +1,48 @@
 /**
- * 踏云寻芳预览：照片叠放（最上层为真图）
+ * 踏云寻芳预览：照片叠放（最上层为真图；底层仅向右轻幅错开）
  */
 .photo-stack {
   position: relative;
   width: 100%;
   height: 280rpx;
   box-sizing: border-box;
-  /* 右侧多留空，给错开层位置 */
-  padding: 12rpx 28rpx 24rpx 12rpx;
+  padding: 10rpx 16rpx 16rpx 10rpx;
 }
 
 .photo-stack.compact {
   height: 200rpx;
-  padding: 10rpx 24rpx 18rpx 10rpx;
+  padding: 8rpx 14rpx 12rpx 8rpx;
 }
 
 .photo-stack-layer {
   position: absolute;
-  left: 12rpx;
-  right: 28rpx;
-  top: 12rpx;
-  bottom: 24rpx;
+  left: 10rpx;
+  right: 16rpx;
+  top: 10rpx;
+  bottom: 16rpx;
   border-radius: var(--radius-sm);
   border: 1rpx solid var(--color-border-strong);
   background: var(--color-surface-elevated);
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.28);
+  box-shadow: 0 3rpx 10rpx rgba(0, 0, 0, 0.28);
   transform-origin: left center;
 }
 
 .photo-stack.compact .photo-stack-layer {
-  left: 10rpx;
-  right: 24rpx;
-  top: 10rpx;
-  bottom: 18rpx;
+  left: 8rpx;
+  right: 14rpx;
+  top: 8rpx;
+  bottom: 12rpx;
 }
 
-/* 底层只向右侧错开，形成一摞照片感 */
+/* 底层只向右侧轻幅错开 */
 .photo-stack-layer.back2 {
-  transform: rotate(8deg) translate(14rpx, 6rpx);
+  transform: rotate(3.5deg) translate(5rpx, 2rpx);
   opacity: 0.5;
   background: var(--color-brand-muted);
 }
 
 .photo-stack-layer.back1 {
-  transform: rotate(4deg) translate(8rpx, 3rpx);
+  transform: rotate(1.8deg) translate(3rpx, 1rpx);
   opacity: 0.72;
 }
 
@@ -56,6 +55,6 @@
   border-radius: var(--radius-sm);
   border: 1rpx solid var(--color-border-strong);
   background: var(--color-surface-elevated);
-  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.35);
+  box-shadow: 0 6rpx 16rpx rgba(0, 0, 0, 0.35);
   box-sizing: border-box;
 }

@@ -27,6 +27,7 @@ Page({
     announceLoading: false,
     announceSwiperIndex: 0,
     galleryPreview: [],
+    galleryPages: [],
     galleryLoading: false,
     scheduleLoading: false,
     todayPreview: [],
@@ -96,6 +97,7 @@ Page({
           weekCount: 0,
           announcements: [],
           galleryPreview: [],
+          galleryPages: [],
         })
       }
     } catch (e) {
@@ -134,16 +136,34 @@ Page({
     wx.navigateTo({ url: '/pages/announcements/index' })
   },
 
+  chunkGalleryPages(list) {
+    const pages = []
+    const src = Array.isArray(list) ? list : []
+    for (let i = 0; i < src.length; i += 2) {
+      pages.push({
+        key: `gp-${i}`,
+        items: src.slice(i, i + 2),
+      })
+    }
+    return pages
+  },
+
   async loadGalleryPreview() {
     this.setData({ galleryLoading: true })
     try {
-      const list = await callMemberApi('listGalleryPosts', { limit: 8 })
+      const list = await callMemberApi('listGalleryPosts', { limit: 8, sort: 'likes' })
+      const preview = Array.isArray(list) ? list.slice(0, 6) : []
       this.setData({
         galleryLoading: false,
-        galleryPreview: Array.isArray(list) ? list.slice(0, 6) : [],
+        galleryPreview: preview,
+        galleryPages: this.chunkGalleryPages(preview),
       })
     } catch {
-      this.setData({ galleryLoading: false, galleryPreview: [] })
+      this.setData({
+        galleryLoading: false,
+        galleryPreview: [],
+        galleryPages: [],
+      })
     }
   },
 

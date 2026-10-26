@@ -79,16 +79,23 @@ Page({
     }
   },
 
+  makeAlbumId() {
+    const rand = Math.random().toString(36).slice(2, 10)
+    return `a${Date.now().toString(36)}${rand}`
+  },
+
   async onSubmit() {
     const { items, caption, submitting } = this.data
     if (submitting || !items.length) return
     this.setData({ submitting: true, message: '' })
     let ok = 0
     let lastErr = ''
+    const albumId = this.makeAlbumId()
     try {
       for (const item of items) {
         try {
           await callMemberApi('createGalleryPost', {
+            albumId,
             imageFileId: item.imageFileId,
             thumbFileId: item.thumbFileId,
             byteSize: item.byteSize,

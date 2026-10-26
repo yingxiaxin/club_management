@@ -75,7 +75,10 @@
     <!-- 公告：轮播；查看更多进全部列表 -->
     <view class="section" wx:if="{{canViewMembers}}">
       <view class="section-head">
-        <text class="section-title">公告</text>
+        <view class="section-title-row">
+          <text class="section-title">公告</text>
+          <text class="section-desc">俱乐部重要事项通知</text>
+        </view>
         <text
           class="section-link"
           wx:if="{{announcements.length}}"
@@ -125,43 +128,71 @@
     <!-- 踏云寻芳 -->
     <view class="section" wx:if="{{canViewMembers}}">
       <view class="section-head">
-        <text class="section-title">踏云寻芳</text>
+        <view class="section-title-row">
+          <text class="section-title">踏云寻芳</text>
+          <text class="section-desc">循着团友们的足迹探索世界</text>
+        </view>
         <text class="section-link" bindtap="goGallery">查看更多</text>
       </view>
       <view class="panel soft" wx:if="{{galleryLoading}}">
         <text class="muted">加载作品…</text>
       </view>
-      <view class="panel soft empty" wx:elif="{{!galleryPreview.length}}">
+      <view class="panel soft empty" wx:elif="{{!galleryPages.length}}">
         <text class="muted">暂无作品</text>
         <text class="muted tiny">成员可分享风景与自拍</text>
       </view>
-      <scroll-view wx:else class="gallery-preview" scroll-x enable-flex>
-        <view
-          class="gallery-chip"
-          wx:for="{{galleryPreview}}"
-          wx:key="id"
-          data-id="{{item.id}}"
-          bindtap="goGalleryDetail"
+      <view class="gallery-swiper-wrap" wx:else>
+        <swiper
+          class="gallery-swiper"
+          autoplay="{{galleryPages.length > 1}}"
+          circular="{{galleryPages.length > 1}}"
+          interval="5000"
+          duration="480"
+          indicator-dots="{{galleryPages.length > 1}}"
+          indicator-color="rgba(154, 140, 120, 0.35)"
+          indicator-active-color="#bda377"
         >
-          <view class="photo-stack compact">
-            <view class="photo-stack-layer back2" />
-            <view class="photo-stack-layer back1" />
-            <image
-              class="photo-stack-front"
-              src="{{item.thumbFileId || item.imageFileId}}"
-              mode="aspectFill"
-              lazy-load
-            />
-          </view>
-          <text class="gallery-chip-name">{{item.characterName || '成员'}}</text>
-        </view>
-      </scroll-view>
+          <swiper-item wx:for="{{galleryPages}}" wx:key="key">
+            <view class="gallery-page">
+              <view
+                class="gallery-chip"
+                wx:for="{{item.items}}"
+                wx:for-item="work"
+                wx:key="albumId"
+                data-id="{{work.albumId || work.id}}"
+                bindtap="goGalleryDetail"
+              >
+                <view class="photo-stack compact">
+                  <view class="photo-stack-layer back2" />
+                  <view class="photo-stack-layer back1" />
+                  <image
+                    class="photo-stack-front"
+                    src="{{work.thumbFileId || work.imageFileId}}"
+                    mode="aspectFill"
+                    lazy-load
+                  />
+                </view>
+                <view class="gallery-chip-meta">
+                  <text class="gallery-chip-title">{{work.caption || '未命名作品'}}</text>
+                  <view class="gallery-chip-foot">
+                    <text class="gallery-chip-name">{{work.characterName || '成员'}}</text>
+                    <text class="gallery-chip-likes">♡ {{work.likeCount || 0}}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </swiper-item>
+        </swiper>
+      </view>
     </view>
 
     <!-- 今日活动 -->
     <view class="section" wx:if="{{canViewMembers}}">
       <view class="section-head">
-        <text class="section-title">今日活动</text>
+        <view class="section-title-row">
+          <text class="section-title">今日活动</text>
+          <text class="section-desc">团队需要你</text>
+        </view>
         <text class="section-link" bindtap="goActivities">全部日程</text>
       </view>
       <view class="panel soft" wx:if="{{scheduleLoading}}">

@@ -592,10 +592,20 @@ app.get('/api/gallery', requireAdmin, async (_req, res) => {
   }
 })
 
+app.delete('/api/gallery/albums/:albumId', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const data = await cloudGallery.deleteGalleryAlbum(req.params.albumId)
+    res.json({ ok: true, data })
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
 app.get('/api/gallery/:id', requireAdmin, async (req, res) => {
   try {
     if (!requireCloudActivities(res)) return
-    const data = await cloudGallery.getGalleryPost(req.params.id)
+    const data = await cloudGallery.getGalleryAlbum(req.params.id)
     res.json({ ok: true, data })
   } catch (err) {
     res.status(err.status || 500).json({ ok: false, message: err.message })

@@ -1,28 +1,47 @@
 import http from './http'
 
-export interface GalleryPost {
+export interface GalleryImage {
   id: string
-  memberId: string
-  characterName: string
   imageFileId: string
   thumbFileId?: string | null
   byteSize: number
-  caption: string
-  status: string
   createdAt?: string | null
-  updatedAt?: string | null
   thumbUrl?: string
   imageUrl?: string
 }
 
+/** 作品（同 albumId 聚合；旧数据无 albumId 时以单帖 id 为作品） */
+export interface GalleryAlbum {
+  id: string
+  albumId: string
+  memberId: string
+  characterName: string
+  caption: string
+  status?: string
+  createdAt?: string | null
+  updatedAt?: string | null
+  imageCount: number
+  byteSize: number
+  likeCount?: number
+  imageFileId: string
+  thumbFileId?: string | null
+  thumbUrl?: string
+  imageUrl?: string
+  images: GalleryImage[]
+}
+
+/** @deprecated 兼容旧名 */
+export type GalleryPost = GalleryAlbum
+
 export interface GalleryStats {
   postCount: number
+  albumCount?: number
   usedBytes: number
   quotaBytes: number
 }
 
 export interface GalleryListPayload {
-  list: GalleryPost[]
+  list: GalleryAlbum[]
   stats: GalleryStats
 }
 
@@ -36,8 +55,20 @@ export function fetchGallery() {
   return unwrap<GalleryListPayload>(http.get('/api/gallery'))
 }
 
+export function fetchGalleryAlbum(id: string) {
+  return unwrap<GalleryAlbum>(http.get(`/api/gallery/${encodeURIComponent(id)}`))
+}
+
+/** 删除单张图片 */
 export function deleteGalleryPost(id: string) {
-  return unwrap<{ id: string; deleted: boolean }>(http.delete(`/api/gallery/${id}`))
+  return unwrap<{ id: string; deleted: boolean }>(http.delete(`/api/gallery/${encodeURIComponent(id)}`))
+}
+
+/** 撤回整部作品 */
+export function deleteGalleryAlbum(albumId: string) {
+  return unwrap<{ albumId: string; deleted: boolean; images: number }>(
+    http.delete(`/api/gallery/albums/${encodeURIComponent(albumId)}`),
+  )
 }
 
 export function formatBytes(n: number): string {

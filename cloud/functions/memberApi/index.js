@@ -434,14 +434,35 @@ exports.main = async (event) => {
 
       case 'listGalleryPosts': {
         if (!openid) return fail('无法获取微信身份', 401)
-        await requireViewer(openid)
-        return ok(await galleryDb.listGalleryPosts({ limit: event.limit }))
+        const access = await requireViewer(openid)
+        return ok(
+          await galleryDb.listGalleryPosts({
+            limit: event.limit,
+            sort: event.sort,
+            viewerMemberId: access.member?.id || null,
+          }),
+        )
       }
 
       case 'getGalleryPost': {
         if (!openid) return fail('无法获取微信身份', 401)
-        await requireViewer(openid)
-        return ok(await galleryDb.getGalleryPost(event.id || event.postId))
+        const access = await requireViewer(openid)
+        return ok(
+          await galleryDb.getGalleryPost(event.id || event.postId, {
+            viewerMemberId: access.member?.id || null,
+          }),
+        )
+      }
+
+      case 'toggleGalleryLike': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        const access = await requireBoundMember(openid, '点赞')
+        return ok(
+          await galleryDb.toggleGalleryLike({
+            albumId: event.albumId || event.id,
+            member: access.member,
+          }),
+        )
       }
 
       case 'createGalleryPost': {
@@ -465,9 +486,24 @@ exports.main = async (event) => {
         )
       }
 
+      case 'deleteGalleryAlbum': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        const access = await resolveAccess(openid)
+        if (!access.canViewMembers && !access.isAdmin) {
+          return fail('请先绑定俱乐部角色或完成入会后再查看', 403)
+        }
+        return ok(
+          await galleryDb.deleteGalleryAlbum({
+            albumId: event.albumId || event.id,
+            actorMemberId: access.member?.id || null,
+            isAdmin: access.isAdmin,
+          }),
+        )
+      }
+
       default:
         return fail(
-          `未知 action: ${action || '(空)'}。支持 health/whoami/.../listGalleryPosts/getGalleryPost/createGalleryPost/deleteGalleryPost/expireTeamsDue`,
+          `未知 action: ${action || '(空)'}。支持 health/whoami/.../listGalleryPosts/getGalleryPost/createGalleryPost/deleteGalleryPost/deleteGalleryAlbum/toggleGalleryLike/expireTeamsDue`,
           400,
         )
     }

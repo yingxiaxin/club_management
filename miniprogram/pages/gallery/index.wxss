@@ -23,6 +23,35 @@
   padding: 0 28rpx;
 }
 
+.sort-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10rpx;
+  padding: 4rpx 4rpx 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 4rpx 14rpx;
+  border-radius: var(--radius-sm);
+  border: 1rpx solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  background: var(--color-bg);
+  box-sizing: border-box;
+}
+
+.chip.active {
+  color: var(--color-brand);
+  border-color: var(--color-border-strong);
+  background: var(--color-brand-muted);
+}
+
 .empty-panel {
   padding: 80rpx 24rpx;
   display: flex;
@@ -42,7 +71,7 @@
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  gap: 28rpx 20rpx;
+  gap: 20rpx 16rpx;
   padding: 8rpx 4rpx 12rpx;
 }
 
@@ -51,7 +80,8 @@
   border-radius: var(--radius-md);
   border: 1rpx solid var(--color-border);
   background: var(--color-surface);
-  overflow: visible;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .cell:active {
@@ -59,10 +89,10 @@
 }
 
 .cell-meta {
-  padding: 14rpx 16rpx 18rpx;
+  padding: 10rpx 12rpx 12rpx;
   display: flex;
   flex-direction: column;
-  gap: 6rpx;
+  gap: 4rpx;
 }
 
 .cell-name {
@@ -74,10 +104,26 @@
   white-space: nowrap;
 }
 
+.cell-foot {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8rpx;
+}
+
 .cell-cap {
+  flex: 1;
+  min-width: 0;
   font-size: 22rpx;
   color: var(--color-text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.cell-likes {
+  flex-shrink: 0;
+  font-size: 20rpx;
+  color: var(--color-brand);
 }

@@ -5,6 +5,7 @@ Page({
     loading: true,
     error: '',
     list: [],
+    sort: 'likes',
   },
 
   onShow() {
@@ -15,10 +16,20 @@ Page({
     this.load().finally(() => wx.stopPullDownRefresh())
   },
 
+  onSort(e) {
+    const sort = e.currentTarget.dataset.sort
+    if (!sort || sort === this.data.sort) return
+    this.setData({ sort })
+    this.load()
+  },
+
   async load() {
     this.setData({ loading: true, error: '' })
     try {
-      const list = await callMemberApi('listGalleryPosts', { limit: 50 })
+      const list = await callMemberApi('listGalleryPosts', {
+        limit: 50,
+        sort: this.data.sort || 'likes',
+      })
       this.setData({
         loading: false,
         list: Array.isArray(list) ? list : [],
