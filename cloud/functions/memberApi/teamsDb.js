@@ -41,7 +41,7 @@ function err(message, status = 400) {
   return e
 }
 
-/** Asia/Shanghai YYYY-MM-DD（P2-c 今晚/本周） */
+/** Asia/Shanghai YYYY-MM-DD（P2-c 今日/本周） */
 function shanghaiYmd(date = new Date()) {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Shanghai',

@@ -94,6 +94,7 @@ function enrichLiveRows(rows, briefMap, activityTime) {
     .map((r) => {
       const brief = briefMap.get(String(r.memberId)) || {}
       return {
+        memberId: String(r.memberId || ''),
         characterName: brief.characterName || r.characterName || r.memberId || '',
         pathway: brief.pathway || '',
         status: r.status,
@@ -108,6 +109,7 @@ function enrichSnapshotRows(rows, activityTime) {
   const enriched = (rows || [])
     .filter((r) => STATUS_LABELS[r.status])
     .map((r) => ({
+      memberId: String(r.memberId || ''),
       characterName: r.characterName || r.memberId || '',
       pathway: r.pathway || '',
       status: r.status,
@@ -115,6 +117,13 @@ function enrichSnapshotRows(rows, activityTime) {
       activityTime,
     }))
   return sortExportRows(enriched)
+}
+
+/** 本场 RSVP 人员（含 memberId，供点名） */
+export async function listLiveRsvpPeople(activityId) {
+  const rows = await listByActivity(activityId)
+  const briefMap = await fetchMemberBriefs(rows.map((r) => r.memberId))
+  return enrichLiveRows(rows, briefMap, '')
 }
 
 const WEEKDAY_SHORT = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日']

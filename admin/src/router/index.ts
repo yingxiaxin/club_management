@@ -31,6 +31,11 @@ const router = createRouter({
           component: () => import('@/views/ActivitiesView.vue'),
         },
         {
+          path: 'attendance-board',
+          name: 'attendance-board',
+          component: () => import('@/views/AttendanceBoardView.vue'),
+        },
+        {
           path: 'reminders',
           name: 'reminders',
           component: () => import('@/views/RemindersView.vue'),

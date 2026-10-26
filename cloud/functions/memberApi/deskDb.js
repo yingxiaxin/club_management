@@ -1,6 +1,6 @@
 /**
  * 「我的」页聚合 myDesk（P3-desk-a）
- * 产品：docs/P3出勤与个人中心.md；本刀不含请假/实到
+ * 产品：docs/P3出勤与个人中心.md；本周请假已砍；不含实到
  */
 const { decorate } = require('./scheduleMatch')
 const rsvpsDb = require('./rsvpsDb')
@@ -50,7 +50,6 @@ function emptyDeskBase(access, openid) {
     member: member || null,
     canViewMembers: Boolean(canViewMembers),
     isAdmin: Boolean(isAdmin),
-    weekLeave: null,
     pendingApprovalCount: 0,
     pendingTeams: [],
     rsvpsActive: [],

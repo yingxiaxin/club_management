@@ -20,6 +20,7 @@ function logout() {
         <router-link class="nav-item" to="/members">成员列表</router-link>
         <router-link class="nav-item" to="/invites">邀请码 / 入会</router-link>
         <router-link class="nav-item" to="/activities">活动日程</router-link>
+        <router-link class="nav-item" to="/attendance-board">出勤看板</router-link>
         <router-link class="nav-item" to="/announcements">公告发布</router-link>
         <router-link class="nav-item" to="/gallery">踏云寻芳</router-link>
         <router-link class="nav-item" to="/club">俱乐部资料设置</router-link>

@@ -30,6 +30,8 @@ import * as cloudClub from './cloudClub.js'
 import * as cloudAnnouncements from './cloudAnnouncements.js'
 import * as cloudGallery from './cloudGallery.js'
 import * as cloudUsers from './cloudUsers.js'
+import * as cloudBoard from './cloudBoard.js'
+import * as cloudAttendance from './cloudAttendance.js'
 import { recognizeMemberScreenshots } from './ocr/recognize.js'
 
 // 加载 cloud/dev-server/.env（可选腾讯云 OCR / 云开发密钥），不覆盖已有环境变量
@@ -623,6 +625,53 @@ app.delete('/api/gallery/:id', requireAdmin, async (req, res) => {
   }
 })
 
+/** —— P3-board-a 出勤看板 —— */
+app.get('/api/ops/board/today', requireAdmin, async (_req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const data = await cloudBoard.getTodayBoard()
+    res.json({ ok: true, data })
+  } catch (err) {
+    console.error('[GET /api/ops/board/today]', err.message)
+    res.status(err.status || 500).json({ ok: false, message: err.message || '加载今日看板失败' })
+  }
+})
+
+/** 兼容旧路径 tonight → today */
+app.get('/api/ops/board/tonight', requireAdmin, async (_req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const data = await cloudBoard.getTodayBoard()
+    res.json({ ok: true, data })
+  } catch (err) {
+    console.error('[GET /api/ops/board/tonight]', err.message)
+    res.status(err.status || 500).json({ ok: false, message: err.message || '加载今日看板失败' })
+  }
+})
+
+app.get('/api/ops/board/week', requireAdmin, async (_req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const data = await cloudBoard.getWeekBoard()
+    res.json({ ok: true, data })
+  } catch (err) {
+    console.error('[GET /api/ops/board/week]', err.message)
+    res.status(err.status || 500).json({ ok: false, message: err.message || '加载本周看板失败' })
+  }
+})
+
+app.get('/api/ops/board/member-stats', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const weeks = req.query.weeks
+    const data = await cloudAttendance.getMemberAttendanceStats({ weeks })
+    res.json({ ok: true, data })
+  } catch (err) {
+    console.error('[GET /api/ops/board/member-stats]', err.message)
+    res.status(err.status || 500).json({ ok: false, message: err.message || '加载成员摘要失败' })
+  }
+})
+
 /** —— P1-a 活动实例 —— */
 app.get('/api/activities', requireAdmin, async (req, res) => {
   try {
@@ -647,6 +696,45 @@ app.get('/api/activities/:id', requireAdmin, async (req, res) => {
     res.json({ ok: true, data })
   } catch (err) {
     res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+/** P3-board-a：本场 RSVP 名单（看板详情） */
+app.get('/api/activities/:id/rsvps', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const data = await cloudBoard.getActivityRsvpSummary(req.params.id)
+    res.json({ ok: true, data })
+  } catch (err) {
+    console.error('[GET /api/activities/:id/rsvps]', err.message)
+    res.status(err.status || 500).json({ ok: false, message: err.message || '加载 RSVP 失败' })
+  }
+})
+
+/** P3-board-b：场次实到 */
+app.get('/api/activities/:id/attendance', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const data = await cloudAttendance.getAttendance(req.params.id, req.query.dateKey)
+    res.json({ ok: true, data })
+  } catch (err) {
+    console.error('[GET /api/activities/:id/attendance]', err.message)
+    res.status(err.status || 500).json({ ok: false, message: err.message || '加载实到失败' })
+  }
+})
+
+app.put('/api/activities/:id/attendance', requireAdmin, async (req, res) => {
+  try {
+    if (!requireCloudActivities(res)) return
+    const data = await cloudAttendance.putAttendance(
+      req.params.id,
+      req.body || {},
+      req.user?.username || req.user?.displayName || '',
+    )
+    res.json({ ok: true, data })
+  } catch (err) {
+    console.error('[PUT /api/activities/:id/attendance]', err.message)
+    res.status(err.status || 500).json({ ok: false, message: err.message || '保存实到失败' })
   }
 })
 

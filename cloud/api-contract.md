@@ -43,6 +43,11 @@
 | POST | `/api/activities` | 创建；body 含 `startSchedule` / `endSchedule?` / `reminderCycle`；status: draft\|published；`reminderOffsetsMinutes` 可忽略（服务端存空，提前量跟俱乐部） |
 | PUT | `/api/activities/:id` | 更新（cancelled/ended 不可改） |
 | POST | `/api/activities/:id/transition` | body: `{ action: publish\|cancel\|start\|end }` |
+| GET | `/api/ops/board/today` | P3-board-a/b：今日一屏 `{ meta, activities[] }`（`rsvpCounts` / `teamSummary` / `attendance`）；旧路径 `/tonight` 兼容 |
+| GET | `/api/ops/board/week` | P3-board-a/b：本周概览（含实到摘要） |
+| GET | `/api/ops/board/member-stats` | P3-board-b：query `weeks`（默认 4）；成员意向摘要 |
+| GET | `/api/activities/:id/rsvps` | P3-board-a：本场名单 `{ counts, groups }`（含 `memberId`） |
+| GET/PUT | `/api/activities/:id/attendance` | P3-board-b：query/body `dateKey`；实到读写 `presentMemberIds` |
 
 日程分量 `*Schedule`：`{ year, month, day, weekday(1–7), time:"HH:mm" }`（均可 null）。开始至少一项非空。`reminderCycle`：管理端「开启提醒」关→`none`；开则无 time→`none`，有完整年月日→`once`，有 weekday→`weekly`，有 day→`daily`，仅 time→`daily`。提前量一律 `club_profile.reminderOffsetsMinutes`。
 
