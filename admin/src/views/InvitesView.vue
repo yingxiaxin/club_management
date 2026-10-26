@@ -95,7 +95,7 @@ onMounted(load)
 
 <template>
   <div class="page" v-loading="loading">
-    <section class="block">
+    <section class="block invites-block">
       <header class="head">
         <h2>邀请码</h2>
         <p class="sub">
@@ -123,34 +123,43 @@ onMounted(load)
         </el-form-item>
       </el-form>
 
-      <el-table :data="invites" stripe empty-text="暂无邀请码">
-        <el-table-column prop="code" label="邀请码" min-width="140">
-          <template #default="{ row }">
-            <button class="linkish" type="button" @click="copyCode(row.code)">{{ row.code }}</button>
-          </template>
-        </el-table-column>
-        <el-table-column label="使用" width="100">
-          <template #default="{ row }">{{ row.usedCount }} / {{ row.maxUses }}</template>
-        </el-table-column>
-        <el-table-column label="过期" min-width="160">
-          <template #default="{ row }">{{ formatTime(row.expiresAt) }}</template>
-        </el-table-column>
-        <el-table-column label="状态" width="90">
-          <template #default="{ row }">
-            <span :class="row.enabled ? 'ok' : 'off'">{{ row.enabled ? '启用' : '停用' }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="120">
-          <template #default="{ row }">
-            <el-button text type="primary" @click="toggleEnabled(row)">
-              {{ row.enabled ? '停用' : '启用' }}
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <div class="table-wrap">
+        <el-table
+          :data="invites"
+          stripe
+          empty-text="暂无邀请码"
+          table-layout="fixed"
+          height="100%"
+          style="width: 100%"
+        >
+          <el-table-column prop="code" label="邀请码" min-width="140" show-overflow-tooltip>
+            <template #default="{ row }">
+              <button class="linkish" type="button" @click="copyCode(row.code)">{{ row.code }}</button>
+            </template>
+          </el-table-column>
+          <el-table-column label="使用" width="100">
+            <template #default="{ row }">{{ row.usedCount }} / {{ row.maxUses }}</template>
+          </el-table-column>
+          <el-table-column label="过期" min-width="160" show-overflow-tooltip>
+            <template #default="{ row }">{{ formatTime(row.expiresAt) }}</template>
+          </el-table-column>
+          <el-table-column label="状态" width="90">
+            <template #default="{ row }">
+              <span :class="row.enabled ? 'ok' : 'off'">{{ row.enabled ? '启用' : '停用' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="120" min-width="120" fixed="right">
+            <template #default="{ row }">
+              <el-button text type="primary" @click="toggleEnabled(row)">
+                {{ row.enabled ? '停用' : '启用' }}
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </section>
 
-    <section class="block">
+    <section class="block apps-block">
       <header class="head row">
         <div>
           <h2>关联申请</h2>
@@ -162,31 +171,40 @@ onMounted(load)
         </el-radio-group>
       </header>
 
-      <el-table :data="apps" stripe empty-text="暂无申请">
-        <el-table-column prop="characterName" label="角色名" min-width="120" />
-        <el-table-column prop="pathway" label="途径" min-width="100" />
-        <el-table-column prop="inviteCode" label="邀请码" width="120" />
-        <el-table-column prop="remark" label="留言" min-width="140" show-overflow-tooltip />
-        <el-table-column label="状态" width="90">
-          <template #default="{ row }">
-            <span v-if="row.status === 'pending'" class="warn">待审</span>
-            <span v-else-if="row.status === 'approved'" class="ok">已通过</span>
-            <span v-else class="off">已拒绝</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="申请时间" min-width="160">
-          <template #default="{ row }">{{ formatTime(row.createdAt) }}</template>
-        </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right">
-          <template #default="{ row }">
-            <template v-if="row.status === 'pending'">
-              <el-button text type="primary" @click="onReview(row, 'approved')">通过</el-button>
-              <el-button text type="danger" @click="onReview(row, 'rejected')">拒绝</el-button>
+      <div class="table-wrap">
+        <el-table
+          :data="apps"
+          stripe
+          empty-text="暂无申请"
+          table-layout="fixed"
+          height="100%"
+          style="width: 100%"
+        >
+          <el-table-column prop="characterName" label="角色名" min-width="120" show-overflow-tooltip />
+          <el-table-column prop="pathway" label="途径" min-width="100" show-overflow-tooltip />
+          <el-table-column prop="inviteCode" label="邀请码" width="120" show-overflow-tooltip />
+          <el-table-column prop="remark" label="留言" min-width="140" show-overflow-tooltip />
+          <el-table-column label="状态" width="90">
+            <template #default="{ row }">
+              <span v-if="row.status === 'pending'" class="warn">待审</span>
+              <span v-else-if="row.status === 'approved'" class="ok">已通过</span>
+              <span v-else class="off">已拒绝</span>
             </template>
-            <span v-else class="muted">—</span>
-          </template>
-        </el-table-column>
-      </el-table>
+          </el-table-column>
+          <el-table-column label="申请时间" min-width="160" show-overflow-tooltip>
+            <template #default="{ row }">{{ formatTime(row.createdAt) }}</template>
+          </el-table-column>
+          <el-table-column label="操作" width="180" min-width="180" fixed="right">
+            <template #default="{ row }">
+              <template v-if="row.status === 'pending'">
+                <el-button text type="primary" @click="onReview(row, 'approved')">通过</el-button>
+                <el-button text type="danger" @click="onReview(row, 'rejected')">拒绝</el-button>
+              </template>
+              <span v-else class="muted">—</span>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </section>
   </div>
 </template>
@@ -196,6 +214,9 @@ onMounted(load)
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
+  height: calc(100vh - var(--header-height) - 2 * var(--space-5));
+  min-height: 360px;
+  overflow: hidden;
 }
 
 .block {
@@ -203,6 +224,28 @@ onMounted(load)
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 邀请码区略矮于关联申请（约 4:5） */
+.invites-block {
+  flex: 4 1 0;
+}
+
+.apps-block {
+  flex: 5 1 0;
+}
+
+.table-wrap {
+  flex: 1;
+  min-height: 120px;
+  overflow: hidden;
+}
+
+.head {
+  flex-shrink: 0;
 }
 
 .head h2 {
@@ -225,8 +268,13 @@ onMounted(load)
   font-size: var(--font-size-sm);
 }
 
+.apps-block .sub {
+  margin-bottom: 0;
+}
+
 .create {
   margin-bottom: var(--space-4);
+  flex-shrink: 0;
 }
 
 .linkish {
