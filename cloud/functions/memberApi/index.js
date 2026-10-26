@@ -284,7 +284,10 @@ exports.main = async (event) => {
         if (!openid) return fail('无法获取微信身份', 401)
         const access = await requireBoundMember(openid, '查看组队')
         const activityId = event.activityId || event.id
-        const list = await teamsDb.listTeamsByActivity(activityId, access.member.id)
+        const list = await teamsDb.listTeamsByActivity(activityId, access.member.id, {
+          timeFilter: event.timeFilter,
+          mineFilter: event.mineFilter || event.filter,
+        })
         return ok(list)
       }
 
@@ -413,7 +416,13 @@ exports.main = async (event) => {
       case 'listMyTeams': {
         if (!openid) return fail('无法获取微信身份', 401)
         const access = await requireBoundMember(openid, '查看组队')
-        return ok(await teamsDb.listMyTeams(access.member.id, event.filter))
+        return ok(
+          await teamsDb.listMyTeams(access.member.id, {
+            filter: event.filter,
+            mineFilter: event.mineFilter,
+            timeFilter: event.timeFilter,
+          }),
+        )
       }
 
       /** P2-d：到点结算；仅系统（定时器 / 其它云函数互调）。带 OPENID 的小程序调用拒绝。 */

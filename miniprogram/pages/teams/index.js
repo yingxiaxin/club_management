@@ -1,12 +1,25 @@
 const { callMemberApi } = require('../../utils/api')
-const { teamStatusLabel, formatStartAt } = require('../../utils/teams')
+const {
+  teamStatusLabel,
+  formatStartAt,
+  shanghaiYmd,
+  matchTeamTimeFilter,
+  matchTeamMineFilter,
+} = require('../../utils/teams')
 
 Page({
   data: {
     loading: true,
     error: '',
     activityId: '',
+    /** 全量（本活动） */
+    allTeams: [],
+    /** 筛选后展示 */
     teams: [],
+    timeFilter: '',
+    mineFilter: '',
+    /** 活动本场日期 YYYY-MM-DD；队伍无 startAt 时时间筛用此兜底 */
+    activityDateKey: '',
   },
 
   onLoad(query) {
@@ -22,6 +35,28 @@ Page({
     this.load().finally(() => wx.stopPullDownRefresh())
   },
 
+  applyFilters() {
+    const { allTeams, timeFilter, mineFilter, activityDateKey } = this.data
+    const teams = (allTeams || []).filter(
+      (t) =>
+        matchTeamTimeFilter(t.startAt, timeFilter, activityDateKey) &&
+        matchTeamMineFilter(t, mineFilter),
+    )
+    this.setData({ teams })
+  },
+
+  onTimeFilter(e) {
+    const key = e.currentTarget.dataset.key || ''
+    const next = this.data.timeFilter === key ? '' : key
+    this.setData({ timeFilter: next }, () => this.applyFilters())
+  },
+
+  onMineFilter(e) {
+    const key = e.currentTarget.dataset.key || ''
+    const next = this.data.mineFilter === key ? '' : key
+    this.setData({ mineFilter: next }, () => this.applyFilters())
+  },
+
   async load() {
     if (!this.activityId) {
       this.setData({ loading: false, error: '缺少活动 id' })
@@ -34,7 +69,10 @@ Page({
         callMemberApi('getActivity', { id: this.activityId }),
       ])
       const activityStartText = activity?.startText || '未定时间'
-      const teams = (list || [])
+      const activityDateKey =
+        activity?.occurrenceDateKey ||
+        (activity?.startAt ? shanghaiYmd(new Date(activity.startAt)) : '')
+      const allTeams = (list || [])
         .map((t) => {
           const hasOwnStart = Boolean(t.startAt)
           return {
@@ -57,11 +95,12 @@ Page({
           if (a.sortKey !== b.sortKey) return a.sortKey - b.sortKey
           return String(a.createdAt || '').localeCompare(String(b.createdAt || ''))
         })
-      this.setData({ loading: false, teams })
+      this.setData({ loading: false, allTeams, activityDateKey }, () => this.applyFilters())
     } catch (e) {
       this.setData({
         loading: false,
         error: e.message || '加载失败',
+        allTeams: [],
         teams: [],
       })
       if (e.status === 403) {

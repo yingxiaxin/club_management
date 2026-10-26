@@ -16,9 +16,46 @@
       <text class="create-link" bindtap="goCreate">创建队伍</text>
     </view>
 
+    <view class="filter-panel">
+      <view class="filter-row">
+        <text
+          class="chip {{timeFilter === '' ? 'active' : ''}}"
+          data-key=""
+          bindtap="onTimeFilter"
+        >全部时间</text>
+        <text
+          class="chip {{timeFilter === 'today' ? 'active' : ''}}"
+          data-key="today"
+          bindtap="onTimeFilter"
+        >今天</text>
+        <text
+          class="chip {{timeFilter === 'week' ? 'active' : ''}}"
+          data-key="week"
+          bindtap="onTimeFilter"
+        >本周</text>
+      </view>
+      <view class="filter-row">
+        <text
+          class="chip {{mineFilter === '' ? 'active' : ''}}"
+          data-key=""
+          bindtap="onMineFilter"
+        >全部队伍</text>
+        <text
+          class="chip {{mineFilter === 'created' ? 'active' : ''}}"
+          data-key="created"
+          bindtap="onMineFilter"
+        >我创建的</text>
+        <text
+          class="chip {{mineFilter === 'joined' ? 'active' : ''}}"
+          data-key="joined"
+          bindtap="onMineFilter"
+        >我参加的</text>
+      </view>
+    </view>
+
     <view class="empty-panel" wx:if="{{!teams.length}}">
-      <text class="muted">还没有队伍</text>
-      <text class="create-link" bindtap="goCreate">去创建</text>
+      <text class="muted">{{allTeams.length ? '没有符合筛选的队伍' : '还没有队伍'}}</text>
+      <text class="create-link" wx:if="{{!allTeams.length}}" bindtap="goCreate">去创建</text>
     </view>
 
     <view class="list-stack" wx:else>

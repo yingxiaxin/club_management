@@ -41,6 +41,58 @@ function err(message, status = 400) {
   return e
 }
 
+/** Asia/Shanghai YYYY-MM-DD（P2-c 今晚/本周） */
+function shanghaiYmd(date = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date)
+}
+
+function shanghaiWeekdayMon0(date = new Date()) {
+  const wd = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Shanghai',
+    weekday: 'short',
+  }).format(date)
+  const map = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 }
+  return map[wd] ?? 0
+}
+
+function addCalendarDays(ymd, delta) {
+  const [y, m, d] = String(ymd).split('-').map(Number)
+  const ms = Date.UTC(y, m - 1, d + delta)
+  const x = new Date(ms)
+  const yy = x.getUTCFullYear()
+  const mm = String(x.getUTCMonth() + 1).padStart(2, '0')
+  const dd = String(x.getUTCDate()).padStart(2, '0')
+  return `${yy}-${mm}-${dd}`
+}
+
+/** timeFilter: today|tonight|week；tonight 兼容旧值。无 startAt 时可用活动本场 dateKey 兜底 */
+function matchTeamTimeFilter(startAt, timeFilter, dateKeyFallback) {
+  let key = String(timeFilter || '').trim()
+  if (key === 'tonight') key = 'today'
+  if (!key) return true
+  let ymd = ''
+  if (startAt) {
+    const d = new Date(startAt)
+    if (!Number.isNaN(d.getTime())) ymd = shanghaiYmd(d)
+  }
+  if (!ymd && dateKeyFallback) ymd = String(dateKeyFallback).trim()
+  if (!ymd) return false
+  const today = shanghaiYmd(new Date())
+  if (key === 'today') return ymd === today
+  if (key === 'week') {
+    const mon0 = shanghaiWeekdayMon0(new Date())
+    const monday = addCalendarDays(today, -mon0)
+    const sunday = addCalendarDays(monday, 6)
+    return ymd >= monday && ymd <= sunday
+  }
+  return true
+}
+
 function toClient(doc) {
   if (!doc) return null
   const { _id, _openid, ...rest } = doc
@@ -260,18 +312,47 @@ function summarizeTeam(team, { myMemberId = null, myApp = null } = {}) {
   }
 }
 
-async function listTeamsByActivity(activityId, viewerMemberId) {
+/**
+ * @param {string} activityId
+ * @param {string} viewerMemberId
+ * @param {{ timeFilter?: string, mineFilter?: string }} [opts]
+ *   timeFilter: today|week（tonight 兼容）；mineFilter: created|joined
+ */
+async function listTeamsByActivity(activityId, viewerMemberId, opts = {}) {
   await ensureCollections()
   const aid = String(activityId || '').trim()
   if (!aid) throw err('缺少活动 id', 400)
-  const teams = (await listTeamsByActivityId(aid)).filter(
+  const timeFilter = String(opts.timeFilter || '').trim()
+  const mineFilter = String(opts.mineFilter || opts.filter || '').trim()
+  let teams = (await listTeamsByActivityId(aid)).filter(
     (t) => !HIDDEN_LIST_STATUSES.has(t.status),
   )
+  let activityDateKey = ''
+  if (timeFilter) {
+    try {
+      const actRes = await db().collection(ACTIVITIES).doc(aid).get()
+      const actRaw = Array.isArray(actRes.data) ? actRes.data[0] : actRes.data
+      const act = toClient(actRaw)
+      if (act) {
+        const occ = resolveOccurrence(act)
+        activityDateKey = occ.dateKey || ''
+        if (!activityDateKey && act.startAt) {
+          activityDateKey = shanghaiYmd(new Date(act.startAt))
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+    teams = teams.filter((t) => matchTeamTimeFilter(t.startAt, timeFilter, activityDateKey))
+  }
   teams.sort((a, b) => String(a.createdAt || '').localeCompare(String(b.createdAt || '')))
   const out = []
   for (const t of teams) {
     const myApp = viewerMemberId ? await getApplication(t.id, viewerMemberId) : null
-    out.push(summarizeTeam(t, { myMemberId: viewerMemberId, myApp }))
+    const row = summarizeTeam(t, { myMemberId: viewerMemberId, myApp })
+    if (mineFilter === 'created' && !row.myIsLeader) continue
+    if (mineFilter === 'joined' && !row.myInTeam) continue
+    out.push(row)
   }
   return out
 }
@@ -761,19 +842,32 @@ async function expireTeamsDue(now = new Date()) {
   return { expired: done }
 }
 
-async function listMyTeams(memberId, filter) {
+/**
+ * @param {string} memberId
+ * @param {string|object} [filterOrOpts] filter=created|joined，或 { filter, mineFilter, timeFilter }
+ */
+async function listMyTeams(memberId, filterOrOpts) {
   await ensureCollections()
   const mid = String(memberId)
+  const opts =
+    filterOrOpts && typeof filterOrOpts === 'object'
+      ? filterOrOpts
+      : { filter: filterOrOpts }
+  const mineFilter = String(opts.mineFilter || opts.filter || '').trim()
+  const timeFilter = String(opts.timeFilter || '').trim()
   const all = await fetchAll(TEAMS)
   let rows = all.filter((t) => {
     if (HIDDEN_LIST_STATUSES.has(t.status)) return false
     const ids = (t.memberIds || []).map(String)
     const isLeader = String(t.leaderMemberId) === mid
     const joined = ids.includes(mid)
-    if (filter === 'created') return isLeader
-    if (filter === 'joined') return joined
+    if (mineFilter === 'created') return isLeader
+    if (mineFilter === 'joined') return joined
     return joined
   })
+  if (timeFilter) {
+    rows = rows.filter((t) => matchTeamTimeFilter(t.startAt, timeFilter))
+  }
   rows.sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')))
   return rows.map((t) => summarizeTeam(t, { myMemberId: mid }))
 }

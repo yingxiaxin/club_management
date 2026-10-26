@@ -4,6 +4,46 @@
   align-items: center;
 }
 
+.filter-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+  padding: 12rpx 14rpx;
+  border-radius: var(--radius-md);
+  border: 1rpx solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.filter-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  height: auto;
+  line-height: 1.2;
+  padding: 4rpx 14rpx;
+  border-radius: var(--radius-sm);
+  border: 1rpx solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  background: var(--color-bg);
+  box-sizing: border-box;
+}
+
+.chip.active {
+  color: var(--color-brand);
+  border-color: var(--color-border-strong);
+  background: var(--color-brand-muted);
+}
+
 .head-left {
   display: flex;
   flex-direction: row;
