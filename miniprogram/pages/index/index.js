@@ -29,12 +29,15 @@ Page({
     galleryPreview: [],
     galleryPages: [],
     galleryLoading: false,
-    scheduleLoading: false,
-    todayPreview: [],
     todayCount: 0,
     weekCount: 0,
     identityLine: '',
     identityPathwayTint: '',
+    weekHubLoading: false,
+    weekHubActivities: [],
+    weekHubTeamGaps: [],
+    pendingApprovalCount: 0,
+    weekHubEmpty: false,
   },
 
   onShow() {
@@ -80,23 +83,26 @@ Page({
       if (canViewMembers) {
         if (awaitExtras) {
           await Promise.all([
-            this.loadSchedulePreview(),
+            this.loadWeekHub(),
             this.loadAnnouncements(),
             this.loadGalleryPreview(),
           ])
         } else {
-          this.loadSchedulePreview()
+          this.loadWeekHub()
           this.loadAnnouncements()
           this.loadGalleryPreview()
         }
       } else {
         this.setData({
-          todayPreview: [],
           todayCount: 0,
           weekCount: 0,
           announcements: [],
           galleryPreview: [],
           galleryPages: [],
+          weekHubActivities: [],
+          weekHubTeamGaps: [],
+          pendingApprovalCount: 0,
+          weekHubEmpty: false,
         })
       }
     } catch (e) {
@@ -184,24 +190,74 @@ Page({
     wx.navigateTo({ url: `/pages/announcements/index${q}` })
   },
 
-  async loadSchedulePreview() {
-    this.setData({ scheduleLoading: true })
+  decorateHubActivities(list) {
+    const icons = { hot: '🔥', soon: '⏰', calm: '🍃' }
+    return (Array.isArray(list) ? list : []).map((item) => {
+      const urgency =
+        item.urgency ||
+        String(item.urgencyClass || '').replace(/^urgency-/, '') ||
+        ''
+      const urgencyClass = item.urgencyClass || (urgency ? `urgency-${urgency}` : '')
+      return {
+        ...item,
+        urgency,
+        urgencyClass,
+        urgencyIcon: icons[urgency] || '',
+      }
+    })
+  },
+
+  decorateHubTeamGaps(list) {
+    return (Array.isArray(list) ? list : []).map((item) => {
+      const pathwayCls = pathwayClass(item.leaderPathway)
+      return {
+        ...item,
+        leaderPathwayTint: pathwayCls ? `${pathwayCls} pathway-tint` : '',
+      }
+    })
+  },
+
+  async loadWeekHub() {
+    this.setData({ weekHubLoading: true })
     try {
-      const data = await callMemberApi('listSchedule')
-      const today = Array.isArray(data.today) ? data.today : []
-      const week = Array.isArray(data.week) ? data.week : []
+      const data = await callMemberApi('weekHub')
+      const activities = this.decorateHubActivities(data.activities)
+      const teamGaps = this.decorateHubTeamGaps(data.teamGaps)
+      const pendingApprovalCount = Number(data.pendingApprovalCount) || 0
+      const weekHubEmpty = !activities.length && !teamGaps.length
       this.setData({
-        scheduleLoading: false,
-        todayPreview: today.slice(0, 3),
-        todayCount: today.length,
-        weekCount: week.length,
+        weekHubLoading: false,
+        weekHubActivities: activities,
+        weekHubTeamGaps: teamGaps,
+        pendingApprovalCount,
+        weekHubEmpty,
+        todayCount: Number(data.todayCount) || 0,
+        weekCount: Number(data.weekCount) || 0,
       })
-    } catch {
+    } catch (e) {
+      console.error('[loadWeekHub]', e)
+      // 失败时回退拉日程数量，避免顶行今日/本周变成 0
+      let todayCount = 0
+      let weekCount = 0
+      try {
+        const schedule = await callMemberApi('listSchedule')
+        todayCount = Array.isArray(schedule.today) ? schedule.today.length : 0
+        weekCount = Array.isArray(schedule.week) ? schedule.week.length : 0
+      } catch (e2) {
+        console.error('[loadWeekHub] listSchedule fallback', e2)
+      }
       this.setData({
-        scheduleLoading: false,
-        todayPreview: [],
-        todayCount: 0,
-        weekCount: 0,
+        weekHubLoading: false,
+        weekHubActivities: [],
+        weekHubTeamGaps: [],
+        pendingApprovalCount: 0,
+        weekHubEmpty: true,
+        todayCount,
+        weekCount,
+      })
+      wx.showToast({
+        title: (e && e.message) || '会务加载失败',
+        icon: 'none',
       })
     }
   },
@@ -214,6 +270,14 @@ Page({
     const id = e.currentTarget.dataset.id
     if (!id) return
     wx.navigateTo({ url: `/pages/activity-detail/index?id=${id}` })
+  },
+
+  goTeamDetail(e) {
+    const id = e.currentTarget.dataset.id
+    if (!id) return
+    wx.navigateTo({
+      url: `/pages/team-detail/index?id=${encodeURIComponent(id)}`,
+    })
   },
 
   goJoin() {

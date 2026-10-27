@@ -31,7 +31,7 @@
   </view>
 
   <block wx:else>
-    <!-- 会务条：身份进「我的」；日程走活动 Tab；解绑在「我的」管理区 -->
+    <!-- 会务条：顶栏身份/日程；下方嵌入本周 RSVP 与队伍缺口（无独立「本周会务」栏） -->
     <view class="hub">
       <view class="hub-row">
         <view class="hub-identity" bindtap="goMine">
@@ -41,11 +41,75 @@
             <text class="hub-name {{identityPathwayTint}}">{{identityLine}}</text>
             <text class="hub-mine-arrow">›</text>
           </view>
+          <text wx:if="{{pendingApprovalCount > 0}}" class="hub-pending">待处理 {{pendingApprovalCount}}</text>
         </view>
         <view class="hub-schedule" wx:if="{{canViewMembers}}" bindtap="goActivities">
           <text class="hub-schedule-text">日程 · 今日 {{todayCount}} · 本周 {{weekCount}}</text>
           <text class="hub-schedule-arrow">›</text>
         </view>
+      </view>
+
+      <view class="hub-body" wx:if="{{canViewMembers && (weekHubLoading || !weekHubEmpty)}}">
+        <view class="hub-body-loading" wx:if="{{weekHubLoading}}">
+          <text class="muted tiny">加载会务…</text>
+        </view>
+        <block wx:else>
+          <block wx:if="{{weekHubActivities.length}}">
+            <text class="hub-body-label">本日/本周活动</text>
+            <view
+              class="hub-event-row {{item.urgencyClass}}"
+              wx:for="{{weekHubActivities}}"
+              wx:key="id"
+              data-id="{{item.id}}"
+              bindtap="goActivityDetail"
+            >
+              <view class="hub-event-bar {{item.urgencyClass}}" />
+              <view class="hub-detail-main">
+                <view class="hub-detail-line">
+                  <text wx:if="{{item.isToday}}" class="hub-detail-tag">今日</text>
+                  <text class="hub-detail-title {{item.urgencyClass}}">{{item.title}}</text>
+                  <text wx:if="{{item.typeLabel}}" class="tag {{item.urgencyClass}}">{{item.urgencyIcon}}{{item.typeLabel}}</text>
+                  <text class="hub-detail-rsvp {{item.myRsvp ? '' : 'unset'}}">{{item.myRsvpLabel}}</text>
+                </view>
+                <view class="hub-detail-line sub">
+                  <text class="hub-detail-sub">{{item.startText || '时间待定'}}</text>
+                  <text class="hub-detail-dot" wx:if="{{item.occurrencePhaseLabel}}">·</text>
+                  <text
+                    class="hub-detail-phase phase-{{item.occurrencePhase}}"
+                    wx:if="{{item.occurrencePhaseLabel}}"
+                  >{{item.occurrencePhaseLabel}}</text>
+                </view>
+              </view>
+              <text class="hub-detail-arrow">›</text>
+            </view>
+          </block>
+          <block wx:if="{{weekHubTeamGaps.length}}">
+            <text class="hub-body-label">队伍缺口</text>
+            <view class="hub-gap-list">
+              <view
+                class="hub-gap-card"
+                wx:for="{{weekHubTeamGaps}}"
+                wx:key="teamId"
+                data-id="{{item.teamId}}"
+                bindtap="goTeamDetail"
+              >
+                <view class="hub-detail-main">
+                  <view class="hub-detail-line">
+                    <text class="hub-detail-title">{{item.activityTitle || '活动'}}</text>
+                    <text class="hub-detail-gap">{{item.roleGapLabel || ('差 ' + item.seatsShort + ' 人')}}</text>
+                  </view>
+                  <view class="hub-detail-line sub">
+                    <text class="hub-detail-sub">队长</text>
+                    <text class="hub-detail-leader {{item.leaderPathwayTint}}">{{item.leaderCharacterName || '—'}}</text>
+                    <text class="hub-detail-dot">·</text>
+                    <text class="hub-detail-sub">{{item.memberCount}}/{{item.maxMembers}}</text>
+                  </view>
+                </view>
+                <text class="hub-detail-arrow">›</text>
+              </view>
+            </view>
+          </block>
+        </block>
       </view>
     </view>
 
@@ -178,51 +242,6 @@
             </view>
           </swiper-item>
         </swiper>
-      </view>
-    </view>
-
-    <!-- 今日活动 -->
-    <view class="section" wx:if="{{canViewMembers}}">
-      <view class="section-head">
-        <view class="section-title-row">
-          <text class="section-title">今日活动</text>
-          <text class="section-desc">团队需要你</text>
-        </view>
-        <text class="section-link" bindtap="goActivities">全部日程</text>
-      </view>
-      <view class="panel soft" wx:if="{{scheduleLoading}}">
-        <text class="muted">加载日程…</text>
-      </view>
-      <view class="panel soft empty" wx:elif="{{!todayPreview.length}}">
-        <text class="muted">今日暂无活动</text>
-        <text class="muted tiny" wx:if="{{weekCount}}">本周还有 {{weekCount}} 场，可点「全部日程」查看</text>
-        <text class="muted tiny" wx:else>有新活动时会出现在这里</text>
-      </view>
-      <view class="event-list" wx:else>
-        <view
-          class="event-row"
-          wx:for="{{todayPreview}}"
-          wx:key="id"
-          data-id="{{item.id}}"
-          bindtap="goActivityDetail"
-        >
-          <view class="event-bar {{item.urgencyClass}}" />
-          <view class="event-main">
-            <view class="event-top">
-              <text class="event-name {{item.urgencyClass}}">{{item.title}}</text>
-              <text wx:if="{{item.typeLabel}}" class="tag {{item.urgencyClass}}">
-                <text wx:if="{{item.urgencyIcon}}" class="tag-icon">{{item.urgencyIcon}}</text>{{item.typeLabel}}
-              </text>
-            </view>
-            <view class="event-meta">
-              <text class="event-time">{{item.startText}}</text>
-              <text class="event-phase phase-{{item.occurrencePhase}}">{{item.occurrencePhaseLabel}}</text>
-            </view>
-          </view>
-        </view>
-        <text class="muted tiny more" wx:if="{{todayCount > todayPreview.length}}">
-          今日共 {{todayCount}} 场 · 点「全部日程」查看
-        </text>
       </view>
     </view>
 

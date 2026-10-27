@@ -14,6 +14,7 @@ const subscriptionsDb = require('./subscriptionsDb')
 const announcementsDb = require('./announcementsDb')
 const galleryDb = require('./galleryDb')
 const deskDb = require('./deskDb')
+const weekHubDb = require('./weekHubDb')
 const { decorate } = require('./scheduleMatch')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
@@ -122,6 +123,18 @@ exports.main = async (event) => {
             joinApplication,
           }),
         )
+      }
+
+      /** P4：首页「本周会务」 */
+      case 'weekHub': {
+        if (!openid) return fail('无法获取微信身份', 401)
+        try {
+          const access = await requireViewer(openid)
+          return ok(await weekHubDb.buildWeekHub(access))
+        } catch (e) {
+          console.error('[weekHub]', e && e.message ? e.message : e)
+          return fail((e && e.message) || '会务加载失败', e && e.status ? e.status : 500)
+        }
       }
 
       case 'bindByCharacterName': {
@@ -526,7 +539,7 @@ exports.main = async (event) => {
 
       default:
         return fail(
-          `未知 action: ${action || '(空)'}。支持 health/whoami/myDesk/.../listGalleryPosts/getGalleryPost/createGalleryPost/deleteGalleryPost/deleteGalleryAlbum/toggleGalleryLike/expireTeamsDue`,
+          `未知 action: ${action || '(空)'}。支持 health/whoami/myDesk/weekHub/.../listGalleryPosts/getGalleryPost/createGalleryPost/deleteGalleryPost/deleteGalleryAlbum/toggleGalleryLike/expireTeamsDue`,
           400,
         )
     }

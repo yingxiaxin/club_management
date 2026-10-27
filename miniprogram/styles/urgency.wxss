@@ -5,6 +5,7 @@
 .name.urgency-hot,
 .schedule-name.urgency-hot,
 .event-name.urgency-hot,
+.hub-detail-title.urgency-hot,
 .title.urgency-hot {
   color: var(--color-text-urgency-hot);
 }
@@ -12,6 +13,7 @@
 .name.urgency-soon,
 .schedule-name.urgency-soon,
 .event-name.urgency-soon,
+.hub-detail-title.urgency-soon,
 .title.urgency-soon {
   color: var(--color-text-urgency-soon);
 }
@@ -19,6 +21,7 @@
 .name.urgency-calm,
 .schedule-name.urgency-calm,
 .event-name.urgency-calm,
+.hub-detail-title.urgency-calm,
 .title.urgency-calm {
   color: var(--color-text-urgency-calm);
 }
@@ -46,4 +49,20 @@
 
 .tag-icon {
   margin-right: 4rpx;
+}
+
+/* 会务条活动行：整行背景随紧迫档（tokens muted） */
+.hub-event-row.urgency-hot {
+  background: var(--color-urgency-hot-muted);
+  border-color: var(--color-urgency-hot-border);
+}
+
+.hub-event-row.urgency-soon {
+  background: var(--color-urgency-soon-muted);
+  border-color: var(--color-urgency-soon-border);
+}
+
+.hub-event-row.urgency-calm {
+  background: var(--color-urgency-calm-muted);
+  border-color: var(--color-urgency-calm-border);
 }

@@ -590,6 +590,7 @@ module.exports = {
   resolveRelevantStartMs,
   resolveUrgency,
   decorate,
+  sortActivities,
   splitSchedule,
   formatScheduleText,
   WEEKDAY_LABELS,

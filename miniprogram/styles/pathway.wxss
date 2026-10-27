@@ -61,6 +61,7 @@
 
 /* 纯文字角色名（会务条 / 我的 / 详情 / 踏云 / 队长名等） */
 .hub-name.pathway-tint,
+.hub-detail-leader.pathway-tint,
 .profile-name.pathway-tint,
 .text-pathway.pathway-tint,
 .cell-cap.text-pathway.pathway-tint,
