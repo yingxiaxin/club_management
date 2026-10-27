@@ -103,10 +103,9 @@ const serveAdmin =
   process.env.SERVE_ADMIN === '1' ||
   process.env.SERVE_ADMIN === 'true' ||
   Boolean(adminDistEnv)
-const adminDist = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  adminDistEnv || '../../admin/dist',
-)
+// import.meta.url 在 src/ 下；默认相对 cloud/dev-server → 仓库 admin/dist
+const devServerRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+const adminDist = path.resolve(devServerRoot, adminDistEnv || '../../admin/dist')
 
 const upload = multer({
   storage: multer.memoryStorage(),
