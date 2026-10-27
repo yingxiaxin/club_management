@@ -15,6 +15,9 @@ export default defineConfig({
       '/api': {
         target: 'http://127.0.0.1:3789',
         changeOrigin: true,
+        // OCR 识别可能数十秒；避免代理中途掐断导致 ECONNRESET
+        timeout: 180_000,
+        proxyTimeout: 180_000,
       },
     },
   },

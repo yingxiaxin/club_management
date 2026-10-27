@@ -1,6 +1,7 @@
 import sharp from 'sharp'
 import { createWorker } from 'tesseract.js'
 import { ensureTessdata } from './ensureTessdata.js'
+import { humanizeNetworkError, isTransientNetworkError } from './netError.js'
 import { parseMemberListText } from './parseMemberList.js'
 import { isRapidOcrAvailable, recognizeWithRapid } from './rapidOcr.js'
 import { isTencentOcrConfigured, recognizeWithTencent } from './tencentOcr.js'
@@ -257,17 +258,36 @@ export async function recognizeMemberScreenshots(buffers) {
         rawParts.push(`[tencent:${t.provider}]\n${t.rawText}`)
         list = parseMemberListText(t.rawText)
       } catch (err) {
-        console.warn('[ocr] 腾讯云 OCR 失败，回退本地引擎:', err.message)
+        console.warn(
+          '[ocr] 腾讯云 OCR 失败，回退本地引擎:',
+          humanizeNetworkError(err, '腾讯云 OCR'),
+        )
+        try {
+          const local = await recognizeLocal(buf, meta)
+          rawParts.push(...local.rawParts)
+          list = [...local.merged.values()]
+          provider = local.provider.includes('rapid') ? 'rapidocr-fallback' : 'tesseract-fallback'
+        } catch (localErr) {
+          const tMsg = humanizeNetworkError(err, '腾讯云 OCR')
+          const lMsg = humanizeNetworkError(localErr, '本地 OCR')
+          throw Object.assign(new Error(`${tMsg}；且本地回退也失败：${lMsg}`), {
+            status: 502,
+            cause: localErr,
+          })
+        }
+      }
+    } else {
+      try {
         const local = await recognizeLocal(buf, meta)
         rawParts.push(...local.rawParts)
         list = [...local.merged.values()]
-        provider = local.provider.includes('rapid') ? 'rapidocr-fallback' : 'tesseract-fallback'
+        provider = local.provider
+      } catch (localErr) {
+        throw Object.assign(new Error(humanizeNetworkError(localErr, '本地 OCR')), {
+          status: isTransientNetworkError(localErr) ? 502 : 500,
+          cause: localErr,
+        })
       }
-    } else {
-      const local = await recognizeLocal(buf, meta)
-      rawParts.push(...local.rawParts)
-      list = [...local.merged.values()]
-      provider = local.provider
     }
 
     for (const row of list) mergeCandidate(merged, row)

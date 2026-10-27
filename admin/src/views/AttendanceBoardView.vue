@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   fetchAttendance,
   fetchMemberStats,
@@ -37,12 +37,15 @@ const detailLoading = ref(false)
 const saving = ref(false)
 const attendance = ref<AttendancePayload | null>(null)
 const presentIds = ref<string[]>([])
+/** 打开抽屉时的实到快照，用于判断导出前是否有未保存勾选 */
+const baselinePresentIds = ref<string[]>([])
 const extras = ref<AttendancePerson[]>([])
 const allMembers = ref<Member[]>([])
 const addMemberIds = ref<string[]>([])
 const detailTitle = ref('')
 const detailDateKey = ref<string | null>(null)
 const detailActivityId = ref('')
+const exporting = ref(false)
 
 const dateLine = computed(() => {
   const m = meta.value
@@ -60,6 +63,14 @@ const weekRange = computed(() => {
 })
 
 const presentCount = computed(() => presentIds.value.length)
+
+const presentDirty = computed(() => {
+  if (!attendance.value?.canEdit) return false
+  const a = [...presentIds.value].map(String).sort()
+  const b = [...baselinePresentIds.value].map(String).sort()
+  if (a.length !== b.length) return true
+  return a.some((id, i) => id !== b[i])
+})
 
 const rsvpIdSet = computed(() => {
   const s = new Set<string>()
@@ -190,6 +201,7 @@ async function openDetail(row: BoardActivity) {
   detailActivityId.value = row.id
   attendance.value = null
   presentIds.value = []
+  baselinePresentIds.value = []
   extras.value = []
   addMemberIds.value = []
   drawerOpen.value = true
@@ -199,11 +211,90 @@ async function openDetail(row: BoardActivity) {
     const data = await fetchAttendance(row.id, row.occurrenceDateKey)
     attendance.value = data
     presentIds.value = [...(data.presentMemberIds || [])]
+    baselinePresentIds.value = [...(data.presentMemberIds || [])]
     extras.value = [...(data.extras || [])]
   } catch (e) {
     ElMessage.error(e instanceof Error ? e.message : '加载名单失败')
   } finally {
     detailLoading.value = false
+  }
+}
+
+function csvCell(v: unknown) {
+  return `"${String(v ?? '').replace(/"/g, '""')}"`
+}
+
+function downloadRosterCsv() {
+  const att = attendance.value
+  if (!att) return
+  const dateKey = detailDateKey.value || att.occurrenceDateKey || ''
+  const present = new Set(presentIds.value.map(String))
+  const header = ['角色名', '途径', 'RSVP', '实到', '场次日']
+  const lines = [header.map(csvCell).join(',')]
+  const rows: AttendancePerson[] = [...(att.people || []), ...(extras.value || [])]
+  for (const p of rows) {
+    const mid = String(p.memberId || '')
+    lines.push(
+      [
+        p.characterName || '',
+        p.pathway || '',
+        p.statusLabel || p.status || '',
+        mid && present.has(mid) ? '是' : '否',
+        dateKey,
+      ]
+        .map(csvCell)
+        .join(','),
+    )
+  }
+  const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv; charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  const safe = String(detailTitle.value || att.title || 'activity')
+    .replace(/[\\/:*?"<>|]+/g, '_')
+    .slice(0, 40)
+  a.download = `点名-${safe}-${dateKey || '本场'}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+async function onExportRoster() {
+  if (!attendance.value) return
+  exporting.value = true
+  try {
+    if (presentDirty.value) {
+      try {
+        await ElMessageBox.confirm(
+          '有未保存的实到勾选，导出将按当前勾选（尚未入库）。建议先「保存实到」再导出。',
+          '导出点名表',
+          {
+            type: 'warning',
+            confirmButtonText: '仍按勾选导出',
+            cancelButtonText: '取消',
+          },
+        )
+      } catch {
+        return
+      }
+    } else if (attendance.value.canEdit && !attendance.value.saved) {
+      try {
+        await ElMessageBox.confirm(
+          '本场点名尚未保存入库；导出按当前勾选。需要统计实到率请先保存。',
+          '导出点名表',
+          {
+            type: 'info',
+            confirmButtonText: '继续导出',
+            cancelButtonText: '取消',
+          },
+        )
+      } catch {
+        return
+      }
+    }
+    downloadRosterCsv()
+    ElMessage.success('已下载点名表')
+  } finally {
+    exporting.value = false
   }
 }
 
@@ -216,10 +307,10 @@ async function onSaveAttendance() {
       dateKey: detailDateKey.value || attendance.value.occurrenceDateKey,
     })
     ElMessage.success('实到已保存')
-    drawerOpen.value = false
-    attendance.value = null
-    presentIds.value = []
-    extras.value = []
+    attendance.value = data
+    presentIds.value = [...(data.presentMemberIds || [])]
+    baselinePresentIds.value = [...(data.presentMemberIds || [])]
+    extras.value = [...(data.extras || [])]
     await load()
   } catch (e) {
     ElMessage.error(e instanceof Error ? e.message : '保存失败')
@@ -415,8 +506,16 @@ onMounted(load)
             <template v-else> · 进行中可预勾，结束后保存计入统计</template>
           </p>
 
-          <div v-if="attendance.canEdit" class="drawer-actions">
-            <el-button type="primary" :loading="saving" @click="onSaveAttendance">保存实到</el-button>
+          <div class="drawer-actions">
+            <el-button
+              v-if="attendance.canEdit"
+              type="primary"
+              :loading="saving"
+              @click="onSaveAttendance"
+            >
+              保存实到
+            </el-button>
+            <el-button :loading="exporting" @click="onExportRoster">导出点名表</el-button>
           </div>
 
           <section
@@ -919,6 +1018,9 @@ onMounted(load)
   position: sticky;
   top: 0;
   z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
   margin: 0 0 var(--space-4);
   padding: var(--space-2) 0 var(--space-3);
   border-bottom: 1px solid var(--color-border);

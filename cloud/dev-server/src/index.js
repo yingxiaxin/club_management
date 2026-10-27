@@ -33,6 +33,7 @@ import * as cloudUsers from './cloudUsers.js'
 import * as cloudBoard from './cloudBoard.js'
 import * as cloudAttendance from './cloudAttendance.js'
 import { recognizeMemberScreenshots } from './ocr/recognize.js'
+import { humanizeNetworkError, isTransientNetworkError, withRetries } from './ocr/netError.js'
 
 // 加载 cloud/dev-server/.env（可选腾讯云 OCR / 云开发密钥），不覆盖已有环境变量
 ;(() => {
@@ -892,7 +893,47 @@ app.post('/api/ocr/parse', requireAdmin, upload.array('images', 12), async (req,
     }
     const buffers = files.map((f) => f.buffer)
     const { rawText, candidates, tip, provider } = await recognizeMemberScreenshots(buffers)
-    const annotated = await membersApi.annotate(candidates)
+
+    let annotated
+    let annotateDegraded = false
+    try {
+      annotated = await withRetries(() => membersApi.annotate(candidates), {
+        retries: 3,
+        delayMs: 500,
+        label: 'annotate',
+      })
+    } catch (annErr) {
+      console.warn(
+        '[ocr/parse] 核对已有成员失败，降级为未匹配预览:',
+        humanizeNetworkError(annErr, '云库核对'),
+      )
+      if (!isTransientNetworkError(annErr) && annErr.status && annErr.status < 500) throw annErr
+      // 识别结果仍返回；无法对照云库时一律标待人工确认
+      annotateDegraded = true
+      annotated = (candidates || []).map((c, index) => {
+        const name = String(c.characterName || '').trim()
+        return {
+          localId: `c-${index + 1}`,
+          characterName: name,
+          title: String(c.title || '').trim() || '成员',
+          pathway: String(c.pathway || '').trim() || '未填写',
+          level: Number(c.level) || 0,
+          powerScore: Number(c.powerScore) || 0,
+          fashionScore: Number(c.fashionScore) || 0,
+          confidence: typeof c.confidence === 'number' ? c.confidence : 0.5,
+          lowConfidence: true,
+          issues: [
+            ...(c.issues || []),
+            '未能核对云库已有成员（网络抖动），请确认是新增还是更新后再导入',
+          ],
+          action: 'create',
+          matchedMemberId: null,
+          matchedWasLeft: false,
+          selected: Boolean(name),
+        }
+      })
+    }
+
     if (!annotated.length) {
       return res.status(422).json({
         ok: false,
@@ -906,6 +947,7 @@ app.post('/api/ocr/parse', requireAdmin, upload.array('images', 12), async (req,
       rawText,
       candidates: annotated,
     })
+    const baseTip = tip || '角色名易受头像遮挡，请核对后再导入'
     res.json({
       ok: true,
       data: {
@@ -914,14 +956,16 @@ app.post('/api/ocr/parse', requireAdmin, upload.array('images', 12), async (req,
         candidates: annotated,
         rawText,
         provider: provider || 'tesseract',
-        tip: tip || '角色名易受头像遮挡，请核对后再导入',
+        tip: annotateDegraded
+          ? `${baseTip}（云库核对暂失败，已降级预览，请仔细核对新增/更新）`
+          : baseTip,
       },
     })
   } catch (err) {
     console.error('[ocr/parse]', err)
-    res.status(err.status || 500).json({
+    res.status(err.status || (isTransientNetworkError(err) ? 502 : 500)).json({
       ok: false,
-      message: err.message || '识别失败',
+      message: humanizeNetworkError(err, '截图识别') || '识别失败',
     })
   }
 })
