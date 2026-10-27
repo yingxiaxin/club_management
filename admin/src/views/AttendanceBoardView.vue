@@ -174,6 +174,16 @@ async function loadMembers() {
   }
 }
 
+/** 页头唯一刷新：按当前 Tab 拉对应数据 */
+async function refresh() {
+  if (tab.value === 'members') await loadMembers()
+  else await load()
+}
+
+const refreshLoading = computed(() =>
+  tab.value === 'members' ? memberLoading.value : loading.value,
+)
+
 async function openDetail(row: BoardActivity) {
   detailTitle.value = row.title
   detailDateKey.value = row.occurrenceDateKey
@@ -249,7 +259,7 @@ onMounted(load)
           <span v-if="weekRange" class="meta">本周 {{ weekRange }}</span>
         </p>
       </div>
-      <el-button type="primary" :loading="loading" @click="load">刷新</el-button>
+      <el-button type="primary" :loading="refreshLoading" @click="refresh">刷新</el-button>
     </header>
 
     <el-tabs v-model="tab" class="tabs">
@@ -341,7 +351,6 @@ onMounted(load)
               <el-option :value="8" label="8 周" />
             </el-select>
             <span v-if="memberCutoff" class="muted">自 {{ memberCutoff }} 起有 RSVP 的场次</span>
-            <el-button text type="primary" :loading="memberLoading" @click="loadMembers">刷新</el-button>
           </div>
           <div class="table-wrap">
             <el-table

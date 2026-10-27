@@ -116,7 +116,9 @@ Page({
     const url = e.currentTarget.dataset.url
     const album = this.data.album
     if (!url || !album) return
-    const urls = (album.images || []).map((i) => i.imageFileId).filter(Boolean)
+    const urls = (album.images || [])
+      .map((i) => i.imageUrl || i.imageFileId)
+      .filter(Boolean)
     wx.previewImage({ current: url, urls: urls.length ? urls : [url] })
   },
 

@@ -93,6 +93,79 @@ function toImageBrief(p) {
   }
 }
 
+/**
+ * 云函数侧换临时 HTTPS（管理员权限），避免「仅创建者可读写」下别人看不到 cloud://。
+ * 试用期改不了存储权限时必需；付费后全员可读也可保留作兜底。
+ */
+async function resolveTempUrls(fileIds) {
+  const list = [
+    ...new Set((fileIds || []).filter((id) => String(id || '').startsWith('cloud://'))),
+  ]
+  const map = {}
+  if (!list.length) return map
+  const CHUNK = 50
+  for (let i = 0; i < list.length; i += CHUNK) {
+    const chunk = list.slice(i, i + CHUNK)
+    try {
+      const res = await cloud.getTempFileURL({ fileList: chunk })
+      for (const item of res.fileList || []) {
+        const fid = item.fileID || item.fileId
+        const url = item.tempFileURL || item.download_url
+        if (fid && url) map[String(fid)] = String(url)
+      }
+    } catch (e) {
+      console.warn('[galleryDb] getTempFileURL', e?.message || e)
+    }
+  }
+  return map
+}
+
+function collectAlbumFileIds(albums, { coversOnly = false } = {}) {
+  const ids = []
+  for (const a of albums || []) {
+    if (coversOnly) {
+      if (a.thumbFileId) ids.push(a.thumbFileId)
+      if (a.imageFileId) ids.push(a.imageFileId)
+    } else {
+      for (const img of a.images || []) {
+        if (img.thumbFileId) ids.push(img.thumbFileId)
+        if (img.imageFileId) ids.push(img.imageFileId)
+      }
+      if (a.thumbFileId) ids.push(a.thumbFileId)
+      if (a.imageFileId) ids.push(a.imageFileId)
+    }
+  }
+  return ids
+}
+
+function enrichAlbumWithUrls(album, urlMap) {
+  const images = (album.images || []).map((img) => ({
+    ...img,
+    thumbUrl: urlMap[img.thumbFileId] || urlMap[img.imageFileId] || '',
+    imageUrl: urlMap[img.imageFileId] || '',
+  }))
+  const coverThumb =
+    urlMap[album.thumbFileId] ||
+    urlMap[album.imageFileId] ||
+    images[0]?.thumbUrl ||
+    images[0]?.imageUrl ||
+    ''
+  const coverImage = urlMap[album.imageFileId] || images[0]?.imageUrl || ''
+  return {
+    ...album,
+    images,
+    thumbUrl: coverThumb,
+    imageUrl: coverImage,
+  }
+}
+
+async function enrichAlbumsTempUrls(albums, { coversOnly = false } = {}) {
+  const list = Array.isArray(albums) ? albums : []
+  if (!list.length) return list
+  const urlMap = await resolveTempUrls(collectAlbumFileIds(list, { coversOnly }))
+  return list.map((a) => enrichAlbumWithUrls(a, urlMap))
+}
+
 function buildAlbum(aid, images) {
   const sorted = images.slice().sort(
     (a, b) =>
@@ -306,7 +379,9 @@ async function listGalleryPosts({ limit = 30, sort = 'likes', viewerMemberId } =
   const [all, likes] = await Promise.all([fetchAllVisible(), fetchAllLikes()])
   const albums = attachLikes(groupIntoAlbums(all), likes, viewerMemberId)
   const sorted = sortAlbums(albums, sort).slice(0, lim)
-  return attachAuthorPathway(sorted)
+  const withPath = await attachAuthorPathway(sorted)
+  // 列表只展示封面，少换链
+  return enrichAlbumsTempUrls(withPath, { coversOnly: true })
 }
 
 async function findAlbumByRef(refId) {
@@ -328,7 +403,8 @@ async function getGalleryPost(id, { viewerMemberId } = {}) {
   const [enriched] = await attachAuthorPathway(
     attachLikes([album], likes, viewerMemberId),
   )
-  return enriched
+  const [withUrls] = await enrichAlbumsTempUrls([enriched], { coversOnly: false })
+  return withUrls
 }
 
 /**

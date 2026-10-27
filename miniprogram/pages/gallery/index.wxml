@@ -43,7 +43,7 @@
           <view class="photo-stack-layer back1" />
           <image
             class="photo-stack-front"
-            src="{{item.thumbFileId || item.imageFileId}}"
+            src="{{item.thumbUrl || item.imageUrl || item.thumbFileId || item.imageFileId}}"
             mode="aspectFill"
             lazy-load
           />

@@ -42,9 +42,9 @@
       <view class="img-cell" wx:for="{{album.images}}" wx:key="id">
         <image
           class="flat-img"
-          src="{{item.imageFileId}}"
+          src="{{item.imageUrl || item.imageFileId}}"
           mode="aspectFill"
-          data-url="{{item.imageFileId}}"
+          data-url="{{item.imageUrl || item.imageFileId}}"
           bindtap="onPreview"
           show-menu-by-longpress
         />

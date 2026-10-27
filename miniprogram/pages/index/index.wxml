@@ -162,7 +162,7 @@
                   <view class="photo-stack-layer back1" />
                   <image
                     class="photo-stack-front"
-                    src="{{work.thumbFileId || work.imageFileId}}"
+                    src="{{work.thumbUrl || work.imageUrl || work.thumbFileId || work.imageFileId}}"
                     mode="aspectFill"
                     lazy-load
                   />
