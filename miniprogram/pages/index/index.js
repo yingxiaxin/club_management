@@ -122,12 +122,14 @@ Page({
     this.setData({ announceLoading: true })
     try {
       const list = await callMemberApi('listAnnouncements', { limit: 8 })
+      const announcements = mapWithPublishedText(list)
       this.setData({
         announceLoading: false,
-        announcements: mapWithPublishedText(list),
+        announcements,
         announceSwiperIndex: 0,
       })
-    } catch {
+    } catch (e) {
+      console.error('[loadAnnouncements]', e)
       this.setData({ announceLoading: false, announcements: [] })
     }
   },
