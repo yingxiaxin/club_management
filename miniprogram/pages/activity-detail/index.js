@@ -95,13 +95,17 @@ Page({
 
   async onRemindMe() {
     const activity = this.data.activity
-    if (!activity || this.data.reminding || activity.myReminderSubscribed) return
+    if (!activity || this.data.reminding) return
     if (!activity.reminderCycle || activity.reminderCycle === 'none') {
       wx.showToast({ title: '本活动未配置提醒', icon: 'none' })
       return
     }
+    // 已订阅仍可在可提醒期内续订（微信一次性授权；周期活动下场需再授权）
     if (!activity.canSubscribeReminder) {
-      wx.showToast({ title: '当前无法订阅提醒', icon: 'none' })
+      wx.showToast({
+        title: activity.myReminderSubscribed ? '本场提醒已登记' : '当前无法订阅提醒',
+        icon: 'none',
+      })
       return
     }
 
@@ -129,13 +133,18 @@ Page({
         }
       }
 
+      const renewing = Boolean(activity.myReminderSubscribed)
       const next = await callMemberApi('subscribeActivityReminder', {
         id: this.activityId,
         accepted: true,
       })
       this.setData({ activity: this.withReminderText(next), reminding: false })
       wx.showToast({
-        title: tmplId ? '已开启提醒' : '已登记提醒（待配置模板）',
+        title: !tmplId
+          ? '已登记提醒（待配置模板）'
+          : renewing
+            ? '已续订本场提醒'
+            : '已开启提醒',
         icon: 'success',
       })
     } catch (err) {

@@ -14,12 +14,13 @@
         <text class="title {{activity.urgencyClass}}">{{activity.title}}</text>
         <view
           wx:if="{{activity.reminderCycle && activity.reminderCycle !== 'none'}}"
-          class="remind-chip {{activity.myReminderSubscribed ? 'is-on' : ''}} {{!activity.canSubscribeReminder && !activity.myReminderSubscribed ? 'is-off' : ''}}"
+          class="remind-chip {{activity.myReminderSubscribed ? 'is-on' : ''}} {{!activity.canSubscribeReminder ? 'is-off' : ''}}"
           bindtap="onRemindMe"
         >
           <text wx:if="{{reminding}}">…</text>
-          <text wx:elif="{{activity.myReminderSubscribed}}">已提醒</text>
+          <text wx:elif="{{!activity.canSubscribeReminder && activity.myReminderSubscribed}}">已提醒</text>
           <text wx:elif="{{!activity.canSubscribeReminder}}">不可提醒</text>
+          <text wx:elif="{{activity.myReminderSubscribed}}">续订提醒</text>
           <text wx:else>提醒我</text>
         </view>
       </view>
@@ -29,8 +30,11 @@
         </text>
         <text class="tag muted-tag">{{activity.statusLabel}}</text>
       </view>
-      <text class="remind-hint" wx:if="{{activity.reminderCycle && activity.reminderCycle !== 'none' && activity.reminderOffsetsText && !activity.myReminderSubscribed}}">
+      <text class="remind-hint" wx:if="{{activity.reminderCycle && activity.reminderCycle !== 'none' && activity.reminderOffsetsText && activity.canSubscribeReminder && !activity.myReminderSubscribed}}">
         开始前 {{activity.reminderOffsetsText}} 分钟推送
+      </text>
+      <text class="remind-hint" wx:elif="{{activity.canSubscribeReminder && activity.myReminderSubscribed}}">
+        微信一次性授权：本场发过后，下场请再点「续订提醒」
       </text>
       <text class="remind-hint" wx:elif="{{!activity.reminderCycle || activity.reminderCycle === 'none'}}">
         本活动未配置提醒

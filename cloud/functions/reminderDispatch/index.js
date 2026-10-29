@@ -295,9 +295,13 @@ exports.main = async () => {
       if (fireAt > nowMs || nowMs - fireAt > windowMs) continue
       summary.due += subs.length
 
+      // 场次日纳入去重，周期活动下一场可再发（旧 job 不含日期不影响本场新 key）
+      const occParts = shanghaiParts(new Date(startMs))
+      const occDateKey = `${occParts.year}-${pad2(occParts.month)}-${pad2(occParts.day)}`
+
       for (const sub of subs) {
         const fireKey = new Date(fireAt).toISOString()
-        const jobId = `${activity.id}__${sub.openid}__${offset}`
+        const jobId = `${activity.id}__${sub.openid}__${offset}__${occDateKey}`
         if (await alreadySent(jobId)) {
           summary.skipped += 1
           continue
