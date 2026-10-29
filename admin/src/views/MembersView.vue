@@ -475,7 +475,7 @@ onUnmounted(() => window.removeEventListener('paste', onOcrPaste))
         }"
         @sort-change="onSortChange"
       >
-        <el-table-column prop="characterName" label="角色名" min-width="1" />
+        <el-table-column prop="characterName" label="角色名" min-width="1" show-overflow-tooltip />
         <el-table-column prop="level" label="等级" min-width="1" sortable="custom">
           <template #default="{ row }">
             {{ row.level || '—' }}
@@ -483,7 +483,7 @@ onUnmounted(() => window.removeEventListener('paste', onOcrPaste))
         </el-table-column>
         <el-table-column prop="powerScore" label="非凡评分" min-width="1" sortable="custom" />
         <el-table-column prop="fashionScore" label="风尚度" min-width="1" sortable="custom" />
-        <el-table-column prop="pathway" label="序列/途径" min-width="1" sortable="custom">
+        <el-table-column prop="pathway" label="序列/途径" min-width="1" sortable="custom" show-overflow-tooltip>
           <template #default="{ row }">
             <span
               class="pathway-tag"
@@ -492,7 +492,7 @@ onUnmounted(() => window.removeEventListener('paste', onOcrPaste))
             >{{ row.pathway || '—' }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="title" label="职位" min-width="1" />
+        <el-table-column prop="title" label="职位" min-width="1" show-overflow-tooltip />
         <el-table-column label="身份" width="104" align="center">
           <template #default="{ row }">
             <span

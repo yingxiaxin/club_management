@@ -130,20 +130,26 @@ onMounted(load)
       <el-button type="primary" @click="openCreate">发布公告</el-button>
     </header>
 
-    <el-table :data="rows" stripe empty-text="暂无公告">
-      <el-table-column label="标题" min-width="180">
+    <el-table
+      :data="rows"
+      stripe
+      table-layout="fixed"
+      style="width: 100%"
+      empty-text="暂无公告"
+    >
+      <el-table-column label="标题" min-width="160" show-overflow-tooltip>
         <template #default="{ row }">
           <span class="title">{{ row.title }}</span>
           <span v-if="row.pinned" class="pin">置顶</span>
         </template>
       </el-table-column>
-      <el-table-column label="正文" min-width="240" show-overflow-tooltip>
+      <el-table-column label="正文" min-width="200" show-overflow-tooltip>
         <template #default="{ row }">{{ row.content }}</template>
       </el-table-column>
-      <el-table-column label="发布时间" width="170">
+      <el-table-column label="发布时间" width="170" show-overflow-tooltip>
         <template #default="{ row }">{{ formatTime(row.publishedAt) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="300" fixed="right">
+      <el-table-column label="操作" width="240" fixed="right">
         <template #default="{ row }">
           <el-button text type="primary" @click="openEdit(row)">编辑</el-button>
           <el-button text type="primary" @click="togglePin(row)">

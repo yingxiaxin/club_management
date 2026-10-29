@@ -392,6 +392,7 @@ onMounted(load)
           <el-table
             :data="week"
             stripe
+            table-layout="fixed"
             height="100%"
             style="width: 100%"
             empty-text="本周暂无活动"
@@ -402,8 +403,8 @@ onMounted(load)
                 {{ row.occurrenceDateKey || '—' }}
               </template>
             </el-table-column>
-            <el-table-column prop="title" label="活动" min-width="160" />
-            <el-table-column label="本场时间" min-width="140">
+            <el-table-column prop="title" label="活动" min-width="160" show-overflow-tooltip />
+            <el-table-column label="本场时间" min-width="140" show-overflow-tooltip>
               <template #default="{ row }">{{ row.startText || '—' }}</template>
             </el-table-column>
             <el-table-column label="阶段" width="100">
