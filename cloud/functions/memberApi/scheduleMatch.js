@@ -189,7 +189,60 @@ function normalizeEndSchedule(activity) {
   return scheduleFromIso(activity?.endAt)
 }
 
-/** 本场结束时刻：endAt / 完整结束日+时 / 仅时刻落在开始日；否则开始日 23:59:59 */
+/** 上海日历日加减（按正午锚，避免 DST 边界） */
+function addCalendarDays(parts, deltaDays) {
+  if (!parts || parts.year == null || parts.month == null || parts.day == null) return null
+  const noonUtc = Date.UTC(parts.year, parts.month - 1, parts.day, 4, 0, 0)
+  return shanghaiParts(new Date(noonUtc + Number(deltaDays || 0) * 86400000))
+}
+
+/**
+ * 相对本场开始日解析结束日历日：
+ * - 完整年月日 → 该日
+ * - 仅周几 → 从开始日起顺延到该周几（可跨周末；同周几则同日）
+ * - 仅时刻 → 落在开始日
+ */
+function resolveEndPartsFromStart(startParts, endSch) {
+  if (!startParts || !endSch) return null
+  if (endSch.year != null && endSch.month != null && endSch.day != null) {
+    const ms = shanghaiDateTimeMs(
+      endSch.year,
+      endSch.month,
+      endSch.day,
+      endSch.time || '00:00',
+    )
+    const parts = ms != null ? shanghaiParts(new Date(ms)) : null
+    return parts
+      ? { ...parts, time: endSch.time || null }
+      : {
+          year: endSch.year,
+          month: endSch.month,
+          day: endSch.day,
+          weekday: endSch.weekday ?? null,
+          time: endSch.time || null,
+        }
+  }
+  if (endSch.weekday != null) {
+    let delta = Number(endSch.weekday) - Number(startParts.weekday)
+    if (Number.isNaN(delta)) return null
+    if (delta < 0) delta += 7
+    const parts = addCalendarDays(startParts, delta)
+    if (!parts) return null
+    return { ...parts, time: endSch.time || null }
+  }
+  if (endSch.time) {
+    return {
+      year: startParts.year,
+      month: startParts.month,
+      day: startParts.day,
+      weekday: startParts.weekday,
+      time: endSch.time,
+    }
+  }
+  return null
+}
+
+/** 本场结束时刻：endAt / 完整结束日+时 / 结束周几相对开始日 / 仅时刻落在开始日；否则开始日 23:59:59 */
 function resolveOccurrenceEndMs(activity, startMs, startParts) {
   if (activity?.endAt) {
     const t = new Date(activity.endAt).getTime()
@@ -206,20 +259,44 @@ function resolveOccurrenceEndMs(activity, startMs, startParts) {
     const ms = shanghaiDateTimeMs(endSch.year, endSch.month, endSch.day, endSch.time)
     if (ms != null) return ms
   }
-  if (endSch?.time && startParts) {
-    const ms = shanghaiDateTimeMs(
-      startParts.year,
-      startParts.month,
-      startParts.day,
-      endSch.time,
-    )
-    if (ms != null) return ms
+  if (endSch && startParts && (endSch.weekday != null || endSch.time)) {
+    const endParts = resolveEndPartsFromStart(startParts, endSch)
+    if (endParts) {
+      const time = endParts.time || '23:59'
+      let ms = shanghaiDateTimeMs(endParts.year, endParts.month, endParts.day, time)
+      // 同周几且结束时刻不晚于开始 → 顺延一周（避免零长度场次）
+      if (
+        ms != null &&
+        startMs != null &&
+        ms <= startMs &&
+        endSch.weekday != null
+      ) {
+        const later = addCalendarDays(endParts, 7)
+        if (later) {
+          ms = shanghaiDateTimeMs(later.year, later.month, later.day, time)
+        }
+      }
+      if (ms != null) return ms
+    }
   }
   if (startParts) {
     return endOfShanghaiDayMs(startParts.year, startParts.month, startParts.day)
   }
   if (startMs != null) return startMs
   return null
+}
+
+/** 某日历日是否与本场 [startMs, endMs) 有交集（跨日周常容器用） */
+function dayIntersectsOccurrence(dayParts, occ) {
+  if (!dayParts || !occ) return false
+  if (occ.startMs == null) {
+    return Boolean(occ.dateParts && sameCalendarDay(occ.dateParts, dayParts))
+  }
+  const dayStart = shanghaiDateTimeMs(dayParts.year, dayParts.month, dayParts.day, '00:00')
+  const dayEnd = endOfShanghaiDayMs(dayParts.year, dayParts.month, dayParts.day)
+  if (dayStart == null || dayEnd == null) return false
+  const occEnd = occ.endMs != null ? occ.endMs : occ.startMs + 1
+  return dayStart < occEnd && dayEnd >= occ.startMs
 }
 
 function startMsOnDay(schedule, dayParts) {
@@ -361,11 +438,23 @@ function resolveRelevantStartMs(activity, now = new Date()) {
 const URGENCY_ICONS = { hot: '🔥', soon: '⏰', calm: '🍃' }
 
 /**
- * 紧迫档：未结束场次按距开始；已结束不再标紧迫
+ * 紧迫档：未结束场次按距开始；已结束 / 无开始时刻 / 跨日进行中容器不标紧迫
  */
 function resolveUrgency(activity, now = new Date()) {
+  const schedule = resolveStartSchedule(activity)
+  if (!schedule?.time) {
+    return { urgency: null, urgencyIcon: '', minutesUntil: null }
+  }
   const occ = resolveOccurrence(activity, now)
   if (occ.startMs == null || occ.ended) {
+    return { urgency: null, urgencyIcon: '', minutesUntil: null }
+  }
+  // 整周组队容器等：已开始且跨日，按「距开始」标紧迫无意义
+  if (
+    occ.started &&
+    occ.endMs != null &&
+    occ.endMs - occ.startMs > 24 * 60 * 60 * 1000
+  ) {
     return { urgency: null, urgencyIcon: '', minutesUntil: null }
   }
   const minutesUntil = Math.round((occ.startMs - now.getTime()) / 60000)
@@ -450,12 +539,11 @@ function decorate(activity, now = new Date()) {
 
   const startText = occ.label || formatScheduleText(startSchedule)
   let endText = ''
-  if (endSchedule) {
-    if (endSchedule.time && occ.dateParts && endSchedule.year == null) {
-      endText = formatOccurrenceLabel(occ.dateParts, endSchedule.time)
-    } else {
-      endText = formatScheduleText(endSchedule)
-    }
+  if (occ.endMs != null) {
+    const endParts = shanghaiParts(new Date(occ.endMs))
+    endText = formatOccurrenceLabel(endParts, endSchedule?.time || endParts.time || null)
+  } else if (endSchedule) {
+    endText = formatScheduleText(endSchedule)
   }
 
   let occurrencePhase = 'upcoming'
@@ -467,6 +555,13 @@ function decorate(activity, now = new Date()) {
     occurrencePhase = 'live'
     occurrencePhaseLabel = '进行中'
   }
+
+  // 跨日周常容器（如周一～周日）：默认只进「本周」，不进「今日」/首页会务
+  const isMultiDayHub = Boolean(
+    occ.startMs != null &&
+      occ.endMs != null &&
+      occ.endMs - occ.startMs > 24 * 60 * 60 * 1000,
+  )
 
   return {
     id: activity.id,
@@ -485,10 +580,13 @@ function decorate(activity, now = new Date()) {
     endText,
     occurrenceDateKey: occ.dateKey,
     occurrenceDateParts: occ.dateParts,
+    occurrenceStartMs: occ.startMs,
+    occurrenceEndMs: occ.endMs,
     occurrenceEnded: Boolean(occ.ended),
     occurrenceStarted: Boolean(occ.started),
     occurrencePhase,
     occurrencePhaseLabel,
+    isMultiDayHub,
     isPeriodic: Boolean(occ.isPeriodic),
     nextOccurrenceText: occ.ended && occ.nextLabel ? occ.nextLabel : '',
     nextOccurrenceDateKey: occ.ended ? occ.nextDateKey : null,
@@ -523,7 +621,8 @@ function sortActivities(list) {
 }
 
 /**
- * 从可见活动列表拆出今日 / 本周（按本场 occurrence 日期）
+ * 从可见活动列表拆出今日 / 本周。
+ * 跨日周常容器：窗口覆盖日进「本周」；默认不进「今日」（成员有今日队伍时再抬升）。
  */
 function splitSchedule(visibleList, now = new Date()) {
   const { today: todayParts, days } = weekDayParts(now)
@@ -532,11 +631,16 @@ function splitSchedule(visibleList, now = new Date()) {
 
   for (const raw of visibleList) {
     const item = decorate(raw, now)
-    const occParts = item.occurrenceDateParts
-    if (occParts) {
-      if (sameCalendarDay(occParts, todayParts)) today.push(item)
+    const occ = {
+      startMs: item.occurrenceStartMs,
+      endMs: item.occurrenceEndMs,
+      dateParts: item.occurrenceDateParts,
+    }
+    if (occ.startMs != null || occ.dateParts) {
+      const coversToday = dayIntersectsOccurrence(todayParts, occ)
+      if (coversToday && !item.isMultiDayHub) today.push(item)
       for (const day of days) {
-        if (sameCalendarDay(occParts, day)) {
+        if (dayIntersectsOccurrence(day, occ)) {
           weekMap.set(item.id, item)
           break
         }
@@ -578,6 +682,32 @@ function splitSchedule(visibleList, now = new Date()) {
   }
 }
 
+/**
+ * 成员视角：跨日周常若本人有「开打日落在今日」的队伍，则抬入今日列表。
+ * @param {object} schedule splitSchedule 结果
+ * @param {Iterable<string>} elevateActivityIds
+ */
+function elevateMultiDayHubsToToday(schedule, elevateActivityIds) {
+  const elevate = new Set(
+    [...(elevateActivityIds || [])].map(String).filter(Boolean),
+  )
+  if (!schedule || !elevate.size) return schedule
+
+  const today = Array.isArray(schedule.today) ? schedule.today.slice() : []
+  const inToday = new Set(today.map((x) => String(x.id)))
+  for (const item of schedule.week || []) {
+    if (!item || !item.isMultiDayHub) continue
+    const id = String(item.id)
+    if (!elevate.has(id) || inToday.has(id)) continue
+    today.push({ ...item, elevatedToToday: true })
+    inToday.add(id)
+  }
+  return {
+    ...schedule,
+    today: sortActivities(today),
+  }
+}
+
 module.exports = {
   shanghaiParts,
   weekDayParts,
@@ -587,11 +717,14 @@ module.exports = {
   isPeriodicTemplate,
   resolveOccurrence,
   resolveOccurrenceEndMs,
+  resolveEndPartsFromStart,
+  dayIntersectsOccurrence,
   resolveRelevantStartMs,
   resolveUrgency,
   decorate,
   sortActivities,
   splitSchedule,
+  elevateMultiDayHubsToToday,
   formatScheduleText,
   WEEKDAY_LABELS,
   TYPE_LABELS,

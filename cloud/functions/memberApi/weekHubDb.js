@@ -112,7 +112,9 @@ async function buildWeekHub(access) {
   // 即使暂时解析不到 memberId，仍返回本周日程数量，避免首页顶行全 0
   let schedule
   try {
-    schedule = await activitiesDb.listSchedule()
+    schedule = await activitiesDb.listSchedule(new Date(), {
+      memberId: memberId || null,
+    })
   } catch (e) {
     console.error('[weekHub] listSchedule', e && e.message ? e.message : e)
     throw e
@@ -163,23 +165,31 @@ async function buildWeekHub(access) {
     }
   }
 
-  // listSchedule 的 today/week 已按 sortActivities 排好；此处只做「今日优先 + 去重」
+  // 今日优先 + 去重；跨日周常默认不进会务条（仅当已抬入今日：本人有今日开打队伍）
   const merged = []
   const seen = new Set()
-  function pushActs(list) {
+  const todayIds = new Set(
+    (schedule.today || []).map(function (a) {
+      return a && a.id != null ? String(a.id) : ''
+    }),
+  )
+  function pushActs(list, opts) {
+    const onlyIfInToday = opts && opts.onlyIfInToday
     for (const act of list || []) {
       if (!act || !act.id) continue
       const id = String(act.id)
       if (seen.has(id)) continue
+      if (onlyIfInToday && act.isMultiDayHub && !todayIds.has(id)) continue
       seen.add(id)
       merged.push(act)
     }
   }
   pushActs(schedule.today)
-  pushActs(schedule.week)
+  pushActs(schedule.week, { onlyIfInToday: true })
   const activities = merged.slice(0, MAX_ACTIVITIES).map(function (act) {
     const myRsvp = rsvpByActivity.get(String(act.id)) || null
     const dateKey = act.occurrenceDateKey || ''
+    const inTodayList = todayIds.has(String(act.id))
     // 兜底：未结束场次必须有紧迫档；图标由小程序按 class 映射，避免云函数源码含 emoji
     let urgencyClass = act.urgencyClass || ''
     let urgency = act.urgency || ''
@@ -202,7 +212,7 @@ async function buildWeekHub(access) {
       occurrenceDateKey: dateKey,
       occurrencePhase: act.occurrencePhase || '',
       occurrencePhaseLabel: act.occurrencePhaseLabel || '',
-      isToday: dateKey === todayKey,
+      isToday: inTodayList || dateKey === todayKey,
       typeLabel: act.typeLabel || '',
       urgency: urgency,
       urgencyClass: urgencyClass,

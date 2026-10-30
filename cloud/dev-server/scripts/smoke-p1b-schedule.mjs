@@ -14,13 +14,20 @@ const scheduleMatch = require(
   ),
 )
 
-const { matchesCalendarDay, splitSchedule, shanghaiParts, resolveUrgency } = scheduleMatch
+const {
+  splitSchedule,
+  elevateMultiDayHubsToToday,
+  shanghaiParts,
+  resolveUrgency,
+  resolveOccurrence,
+  resolveOccurrenceEndMs,
+} = scheduleMatch
 
 function assert(cond, msg) {
   if (!cond) throw new Error(msg)
 }
 
-// 固定锚点：2026-10-22 周四（上海）
+// 固定锚点：2026-10-22 周四（上海）；本周 Mon 10/19～Sun 10/25
 const anchor = new Date('2026-10-22T12:00:00+08:00')
 const today = shanghaiParts(anchor)
 assert(today.year === 2026 && today.month === 10 && today.day === 22, '锚点日期')
@@ -34,10 +41,10 @@ const cases = [
     expectWeek: true,
   },
   {
-    name: '仅周几 → 周一不在今日，在本周',
+    name: '仅周几周一 → 本场已过滚到下周一，不在本周列表',
     activity: { id: '2', title: '周一活动', status: 'published', startSchedule: { weekday: 1, time: '21:00' } },
     expectToday: false,
-    expectWeek: true,
+    expectWeek: false,
   },
   {
     name: '仅时间 → 每日，今日+本周',
@@ -75,18 +82,48 @@ const cases = [
     expectToday: true,
     expectWeek: true,
   },
+  {
+    name: '整周容器 → 默认只在本周、不在今日',
+    activity: {
+      id: '7',
+      title: '本周自由组队',
+      status: 'published',
+      startSchedule: { weekday: 1, time: '00:00' },
+      endSchedule: { weekday: 7, time: '23:59' },
+    },
+    expectToday: false,
+    expectWeek: true,
+    expectPhase: 'live',
+  },
+  {
+    name: '周一～周五容器 → 默认只在本周',
+    activity: {
+      id: '8',
+      title: '工作日容器',
+      status: 'published',
+      startSchedule: { weekday: 1, time: '00:00' },
+      endSchedule: { weekday: 5, time: '23:55' },
+    },
+    expectToday: false,
+    expectWeek: true,
+    expectPhase: 'live',
+  },
 ]
 
 let failed = 0
 for (const c of cases) {
-  const hitToday = matchesCalendarDay(c.activity, today)
   const { today: tList, week: wList } = splitSchedule([c.activity], anchor)
+  const hitToday = tList.some((x) => x.id === c.activity.id)
   const hitWeek = wList.some((x) => x.id === c.activity.id)
+  const row = tList.find((x) => x.id === c.activity.id) || wList.find((x) => x.id === c.activity.id)
   const okToday = hitToday === c.expectToday
   const okWeek = hitWeek === c.expectWeek
-  if (!okToday || !okWeek) {
+  const okPhase = !c.expectPhase || (row && row.occurrencePhase === c.expectPhase)
+  if (!okToday || !okWeek || !okPhase) {
     failed += 1
-    console.error(`FAIL ${c.name}: today=${hitToday}(expect ${c.expectToday}) week=${hitWeek}(expect ${c.expectWeek})`)
+    console.error(
+      `FAIL ${c.name}: today=${hitToday}(expect ${c.expectToday}) week=${hitWeek}(expect ${c.expectWeek}) phase=${row?.occurrencePhase}(expect ${c.expectPhase || '-'})`,
+    )
   } else {
     console.log(`OK   ${c.name}`)
   }
@@ -94,6 +131,48 @@ for (const c of cases) {
 }
 
 assert(failed === 0, `有 ${failed} 个用例失败`)
+
+// 结束周几：周一开 → 周五 23:55 落在同周周五，而非周一
+{
+  const mon = { year: 2026, month: 10, day: 19, weekday: 1 }
+  const startMs = Date.parse('2026-10-19T00:00:00+08:00')
+  const endMs = resolveOccurrenceEndMs(
+    {
+      startSchedule: { weekday: 1, time: '00:00' },
+      endSchedule: { weekday: 5, time: '23:55' },
+    },
+    startMs,
+    mon,
+  )
+  assert(endMs === Date.parse('2026-10-23T23:55:00+08:00'), `结束应为本周五，得 ${new Date(endMs).toISOString()}`)
+  const occ = resolveOccurrence(
+    {
+      startSchedule: { weekday: 1, time: '00:00' },
+      endSchedule: { weekday: 7, time: '23:59' },
+    },
+    anchor,
+  )
+  assert(occ.dateKey === '2026-10-19', `整周容器本场开始应为周一，得 ${occ.dateKey}`)
+  assert(occ.started && !occ.ended, '周四应在整周窗口进行中')
+  console.log('OK   end weekday + week-hub occurrence')
+}
+
+// 有今日队伍时抬入今日
+{
+  const hub = {
+    id: 'hub1',
+    title: '半周常',
+    status: 'published',
+    startSchedule: { weekday: 1, time: '00:00' },
+    endSchedule: { weekday: 7, time: '23:59' },
+  }
+  const base = splitSchedule([hub], anchor)
+  assert(base.today.length === 0 && base.week.length === 1, '抬升前仅本周')
+  const up = elevateMultiDayHubsToToday(base, ['hub1'])
+  assert(up.today.some((x) => x.id === 'hub1'), '抬升后进今日')
+  assert(up.today[0].elevatedToToday === true, '应标记 elevatedToToday')
+  console.log('OK   elevate multi-day hub to today')
+}
 
 // 紧迫度：锚点 12:00，活动 12:05 → ≤10min hot；12:40 → soon；14:00 → calm；已过 11:50 → hot
 const uHot = resolveUrgency(

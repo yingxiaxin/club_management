@@ -5,8 +5,10 @@ const cloud = require('wx-server-sdk')
 const {
   decorate,
   splitSchedule,
+  elevateMultiDayHubsToToday,
   resolveOccurrence,
   isPeriodicTemplate,
+  shanghaiParts,
 } = require('./scheduleMatch')
 
 const ENDABLE_STATUSES = new Set(['published', 'ongoing'])
@@ -163,7 +165,20 @@ async function expireOneTimeActivitiesDue(now = new Date()) {
   return { ended }
 }
 
-async function listSchedule(now = new Date()) {
+function pad2(n) {
+  return String(n).padStart(2, '0')
+}
+
+function dateKeyFromNow(now = new Date()) {
+  const p = shanghaiParts(now)
+  return `${p.year}-${pad2(p.month)}-${pad2(p.day)}`
+}
+
+/**
+ * @param {Date} [now]
+ * @param {{ memberId?: string|null }} [opts]
+ */
+async function listSchedule(now = new Date(), opts = {}) {
   const visible = await listVisibleActivities()
   const rolled = []
   for (const a of visible) {
@@ -173,7 +188,21 @@ async function listSchedule(now = new Date()) {
     if (!ENDABLE_STATUSES.has(row.status)) continue
     rolled.push(row)
   }
-  const schedule = splitSchedule(rolled, now)
+  let schedule = splitSchedule(rolled, now)
+
+  const memberId = opts && opts.memberId ? String(opts.memberId).trim() : ''
+  if (memberId) {
+    try {
+      const elevateIds = await teamsDb.activityIdsWithMyTeamOnDate(
+        memberId,
+        dateKeyFromNow(now),
+      )
+      schedule = elevateMultiDayHubsToToday(schedule, elevateIds)
+    } catch (e) {
+      console.warn('[activitiesDb] elevate hubs', e && e.message ? e.message : e)
+    }
+  }
+
   const [today, week] = await Promise.all([
     attachRsvpCounts(schedule.today),
     attachRsvpCounts(schedule.week),

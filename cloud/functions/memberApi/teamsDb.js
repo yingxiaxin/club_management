@@ -910,6 +910,25 @@ async function listMyTeams(memberId, filterOrOpts) {
   return attachLeaderPathway(rows.map((t) => summarizeTeam(t, { myMemberId: mid })))
 }
 
+/**
+ * 本人参加的队伍中，开打日落在 dateKey（上海 YYYY-MM-DD）的活动 id 集合。
+ * 用于跨日周常容器抬入「今日」/首页会务。
+ */
+async function activityIdsWithMyTeamOnDate(memberId, dateKey) {
+  const key = String(dateKey || '').trim()
+  if (!memberId || !/^\d{4}-\d{2}-\d{2}$/.test(key)) return []
+  const teams = await listMyTeams(memberId, {})
+  const ids = new Set()
+  for (const t of teams || []) {
+    if (!t || !t.startAt || !t.activityId) continue
+    const d = new Date(t.startAt)
+    if (Number.isNaN(d.getTime())) continue
+    if (shanghaiYmd(d) !== key) continue
+    ids.add(String(t.activityId))
+  }
+  return [...ids]
+}
+
 /** 我任队长且可管理的队伍上，待审批申请汇总 */
 async function listPendingApprovalsForLeader(memberId) {
   await ensureCollections()
@@ -977,6 +996,7 @@ module.exports = {
   markTeamStarted,
   expireTeamsDue,
   listMyTeams,
+  activityIdsWithMyTeamOnDate,
   listPendingApprovalsForLeader,
   adminListTeams,
 }

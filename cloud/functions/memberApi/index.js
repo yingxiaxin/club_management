@@ -211,8 +211,9 @@ exports.main = async (event) => {
 
       case 'listSchedule': {
         if (!openid) return fail('无法获取微信身份', 401)
-        await requireViewer(openid)
-        return ok(await activitiesDb.listSchedule())
+        const access = await requireViewer(openid)
+        const memberId = access.member?.id || access.user.memberId || null
+        return ok(await activitiesDb.listSchedule(new Date(), { memberId }))
       }
 
       case 'getActivity': {
