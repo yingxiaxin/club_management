@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>诡秘之主 · 俱乐部管理 — 技术科普学习手册</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Noto+Sans+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      themeVariables: {
+        primaryColor: '#3a3428',
+        primaryTextColor: '#f3ebe0',
+        primaryBorderColor: '#bda377',
+        lineColor: '#bda377',
+        secondaryColor: '#2a2620',
+        tertiaryColor: '#1c1a16',
+        background: '#141210',
+        mainBkg: '#2a2620',
+        nodeBorder: '#bda377',
+        clusterBkg: '#1c1a16',
+        titleColor: '#bda377',
+        edgeLabelBackground: '#1c1a16',
+      },
+      flowchart: { curve: 'basis', padding: 12 },
+      securityLevel: 'loose',
+    });
+  </script>
+  <style>
+    :root {
+      --bg: #12100e;
+      --bg-elev: #1a1714;
+      --bg-card: #221e19;
+      --bg-soft: #2a251f;
+      --line: rgba(189, 163, 119, 0.22);
+      --line-strong: rgba(189, 163, 119, 0.45);
+      --text: #f0e8dc;
+      --muted: #a89a88;
+      --accent: #bda377;
+      --accent-hot: #d9c18f;
+      --accent-dim: #a1895f;
+      --danger: #c97a6a;
+      --ok: #7aab8e;
+      --pathway-audience: #94c7b1;
+      --pathway-warrior: #d3742e;
+      --pathway-bard: #debd39;
+      --pathway-apprentice: #2c81b0;
+      --pathway-diviner: #54599f;
+      --pathway-hermit: #975dc1;
+      --font-display: "Cormorant Garamond", "Noto Serif SC", serif;
+      --font-body: "Noto Sans SC", sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+      --nav-w: 17.5rem;
+      --radius: 14px;
+      --shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--font-body);
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(189, 163, 119, 0.14), transparent 55%),
+        radial-gradient(900px 500px at 100% 20%, rgba(84, 89, 159, 0.12), transparent 50%),
+        linear-gradient(180deg, #171410 0%, var(--bg) 40%, #0e0c0a 100%);
+      min-height: 100vh;
+      line-height: 1.7;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.045;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      z-index: 0;
+    }
+
+    a { color: var(--accent-hot); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    a:hover { color: #efe0c4; }
+
+    .shell {
+      display: grid;
+      grid-template-columns: var(--nav-w) minmax(0, 1fr);
+      gap: 0;
+      position: relative;
+      z-index: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* —— Nav —— */
+    .nav {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      padding: 1.5rem 1rem 2rem 1.25rem;
+      border-right: 1px solid var(--line);
+      background: rgba(18, 16, 14, 0.72);
+      backdrop-filter: blur(12px);
+    }
+    .nav-brand {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0.04em;
+      line-height: 1.25;
+      margin: 0 0 0.35rem;
+    }
+    .nav-sub {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin: 0 0 1.25rem;
+    }
+    .nav ol {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      counter-reset: chap;
+    }
+    .nav li { margin: 0.15rem 0; }
+    .nav a {
+      display: block;
+      padding: 0.45rem 0.65rem;
+      border-radius: 8px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.88rem;
+      border: 1px solid transparent;
+      transition: 0.18s ease;
+    }
+    .nav a::before {
+      counter-increment: chap;
+      content: counter(chap, decimal-leading-zero) " · ";
+      color: var(--accent-dim);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+    }
+    .nav a:hover,
+    .nav a.active {
+      color: var(--text);
+      background: rgba(189, 163, 119, 0.1);
+      border-color: var(--line);
+    }
+    .nav-foot {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--line);
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    /* —— Main —— */
+    .main { padding: 0 1.75rem 4rem; min-width: 0; }
+
+    .hero {
+      position: relative;
+      margin: 1.25rem 0 2rem;
+      padding: 2.75rem 2rem 2.25rem;
+      border-radius: calc(var(--radius) + 4px);
+      overflow: hidden;
+      border: 1px solid var(--line-strong);
+      background:
+        linear-gradient(135deg, rgba(189, 163, 119, 0.16), transparent 42%),
+        linear-gradient(180deg, #2a231c, #171410);
+      box-shadow: var(--shadow);
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -8%;
+      top: -30%;
+      width: 55%;
+      height: 160%;
+      background: radial-gradient(circle at center, rgba(189, 163, 119, 0.18), transparent 65%);
+      pointer-events: none;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.85rem;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 1.5rem;
+      height: 1px;
+      background: var(--accent);
+    }
+    .hero h1 {
+      position: relative;
+      z-index: 1;
+      font-family: var(--font-display);
+      font-size: clamp(2.1rem, 4vw, 3.2rem);
+      font-weight: 600;
+      margin: 0 0 0.75rem;
+      line-height: 1.15;
+      color: #f8f1e6;
+    }
+    .hero-lead {
+      position: relative;
+      z-index: 1;
+      max-width: 42rem;
+      color: var(--muted);
+      font-size: 1.02rem;
+      margin: 0 0 1.4rem;
+    }
+    .hero-meta {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.28rem 0.7rem;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.25);
+      font-size: 0.78rem;
+      color: var(--text);
+    }
+    .chip strong { color: var(--accent-hot); font-weight: 600; }
+
+    section.chapter {
+      margin: 2.75rem 0;
+      scroll-margin-top: 1.25rem;
+      animation: rise 0.55s ease both;
+    }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: none; }
+    }
+    .chapter-head {
+      display: flex;
+      align-items: baseline;
+      gap: 0.85rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .chapter-num {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .chapter-head h2 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(1.55rem, 2.4vw, 2rem);
+      font-weight: 600;
+    }
+
+    h3 {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 600;
+      margin: 1.75rem 0 0.75rem;
+      color: #f4ecdf;
+    }
+    h4 {
+      margin: 1.25rem 0 0.5rem;
+      font-size: 1rem;
+      color: var(--accent-hot);
+      font-weight: 600;
+    }
+    p { margin: 0.65rem 0; color: #e6ddd0; }
+    ul, ol { margin: 0.5rem 0 0.85rem; padding-left: 1.25rem; color: #e6ddd0; }
+    li { margin: 0.28rem 0; }
+    strong { color: #fff6e8; font-weight: 600; }
+    code, .mono {
+      font-family: var(--font-mono);
+      font-size: 0.86em;
+      color: var(--accent-hot);
+      background: rgba(189, 163, 119, 0.1);
+      padding: 0.08em 0.35em;
+      border-radius: 5px;
+    }
+    pre {
+      overflow: auto;
+      padding: 1rem 1.1rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: #0d0c0a;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      line-height: 1.55;
+      color: #e8dcc8;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.9rem;
+    }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.85rem;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent), var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 1.05rem 1.15rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    }
+    .card h3, .card h4 { margin-top: 0; }
+    .card.accent-edge {
+      border-left: 3px solid var(--accent);
+    }
+    .stat {
+      text-align: left;
+    }
+    .stat .k {
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+    .stat .v {
+      font-family: var(--font-display);
+      font-size: 1.55rem;
+      color: var(--accent-hot);
+      margin-top: 0.2rem;
+    }
+
+    .callout {
+      margin: 1.1rem 0;
+      padding: 1rem 1.15rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--line-strong);
+      background:
+        linear-gradient(90deg, rgba(189, 163, 119, 0.14), rgba(189, 163, 119, 0.03));
+    }
+    .callout .label {
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.35rem;
+    }
+    .callout.danger {
+      border-color: rgba(201, 122, 106, 0.45);
+      background: linear-gradient(90deg, rgba(201, 122, 106, 0.14), transparent);
+    }
+    .callout.danger .label { color: var(--danger); }
+
+    .figure {
+      margin: 1.25rem 0 1.5rem;
+      border-radius: calc(var(--radius) + 2px);
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: #0c0b09;
+      box-shadow: var(--shadow);
+    }
+    .figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: min(58vh, 520px);
+      object-fit: contain;
+      background: #0c0b09;
+    }
+    .figure figcaption {
+      padding: 0.7rem 1rem;
+      font-size: 0.82rem;
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+      background: var(--bg-elev);
+    }
+
+    .mermaid-wrap {
+      margin: 1.1rem 0 1.4rem;
+      padding: 1rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: #141210;
+      overflow-x: auto;
+    }
+    .mermaid { display: flex; justify-content: center; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.85rem 0 1.2rem;
+      font-size: 0.9rem;
+      overflow: hidden;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+    }
+    th, td {
+      padding: 0.65rem 0.8rem;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: rgba(189, 163, 119, 0.12);
+      color: var(--accent-hot);
+      font-weight: 600;
+      font-size: 0.82rem;
+    }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .role-grid .card { min-height: 100%; }
+    .role-tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      background: rgba(189, 163, 119, 0.15);
+      color: var(--accent);
+      margin-bottom: 0.45rem;
+    }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 0.45rem;
+      margin: 1rem 0 1.25rem;
+    }
+    .timeline .step {
+      padding: 0.7rem 0.55rem;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--bg-card);
+      text-align: center;
+      position: relative;
+    }
+    .timeline .step::after {
+      content: "→";
+      position: absolute;
+      right: -0.55rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--accent-dim);
+      font-size: 0.75rem;
+      z-index: 1;
+    }
+    .timeline .step:last-child::after { content: none; }
+    .timeline .step b {
+      display: block;
+      color: var(--accent);
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      margin-bottom: 0.2rem;
+    }
+    .timeline .step span {
+      font-size: 0.72rem;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .pathway-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin: 0.75rem 0 1rem;
+    }
+    .pw {
+      padding: 0.28rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      border: 1px solid transparent;
+      color: #120f0c;
+      font-weight: 600;
+    }
+    .pw.audience { background: var(--pathway-audience); }
+    .pw.warrior { background: var(--pathway-warrior); color: #fff; }
+    .pw.bard { background: var(--pathway-bard); color: #2a2208; }
+    .pw.apprentice { background: var(--pathway-apprentice); color: #fff; }
+    .pw.diviner { background: var(--pathway-diviner); color: #fff; }
+    .pw.hermit { background: var(--pathway-hermit); color: #fff; }
+
+    .glossary details {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--bg-card);
+      margin: 0.45rem 0;
+      overflow: hidden;
+    }
+    .glossary summary {
+      cursor: pointer;
+      padding: 0.75rem 1rem;
+      font-weight: 600;
+      color: var(--accent-hot);
+      list-style: none;
+    }
+    .glossary summary::-webkit-details-marker { display: none; }
+    .glossary summary::before {
+      content: "+";
+      display: inline-block;
+      width: 1.1rem;
+      color: var(--accent);
+      font-family: var(--font-mono);
+    }
+    .glossary details[open] summary::before { content: "–"; }
+    .glossary .g-body {
+      padding: 0 1rem 0.95rem;
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+    }
+    .glossary .g-body p { margin: 0.65rem 0 0; color: var(--muted); }
+
+    .feature-card .tag {
+      font-size: 0.72rem;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      margin-bottom: 0.35rem;
+    }
+
+    .memo {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      line-height: 1.45;
+      color: var(--accent-hot);
+      margin: 0;
+    }
+
+    .checklist li { list-style: none; margin-left: -0.5rem; }
+    .checklist li::before {
+      content: "☐ ";
+      color: var(--accent);
+      font-family: var(--font-mono);
+    }
+
+    .day-card {
+      border-top: 3px solid var(--accent);
+    }
+    .day-card .day {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      color: var(--accent);
+    }
+
+    footer.page-foot {
+      margin-top: 3rem;
+      padding: 1.25rem 0 0;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .mobile-toc {
+      display: none;
+      margin: 1rem 0;
+    }
+    .mobile-toc select {
+      width: 100%;
+      padding: 0.7rem 0.85rem;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--bg-card);
+      color: var(--text);
+      font: inherit;
+    }
+
+    @media (max-width: 980px) {
+      .shell { grid-template-columns: 1fr; }
+      .nav { display: none; }
+      .mobile-toc { display: block; }
+      .main { padding: 0 1rem 3rem; }
+      .grid-2, .grid-3, .grid-4, .timeline { grid-template-columns: 1fr; }
+      .timeline .step::after { content: none; }
+      .hero { padding: 2rem 1.25rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      section.chapter { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="nav" aria-label="章节导航">
+      <p class="nav-brand">诡秘之主<br />技术科普手册</p>
+      <p class="nav-sub">单俱乐部运营工具 · 图文学习版</p>
+      <ol>
+        <li><a href="#c1">需求概述</a></li>
+        <li><a href="#c2">顶层设计</a></li>
+        <li><a href="#c3">功能与分层</a></li>
+        <li><a href="#c4">技术选型</a></li>
+        <li><a href="#c5">名词扫盲</a></li>
+        <li><a href="#c6">分功能技术点</a></li>
+        <li><a href="#c7">运维发布</a></li>
+        <li><a href="#c8">文档驱动协作</a></li>
+        <li><a href="#c9">学习路径</a></li>
+        <li><a href="#app">附录速查</a></li>
+      </ol>
+      <div class="nav-foot">
+        权威产品仍以<br /><code>功能说明书.md</code> 为准。<br />
+        同内容 Markdown：<br /><code>技术科普学习手册.md</code>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="mobile-toc">
+        <label for="jump" class="sr-only" style="position:absolute;left:-9999px">跳转章节</label>
+        <select id="jump" onchange="if(this.value) location.hash=this.value">
+          <option value="">跳转章节…</option>
+          <option value="#c1">1 需求概述</option>
+          <option value="#c2">2 顶层设计</option>
+          <option value="#c3">3 功能与分层</option>
+          <option value="#c4">4 技术选型</option>
+          <option value="#c5">5 名词扫盲</option>
+          <option value="#c6">6 分功能技术点</option>
+          <option value="#c7">7 运维发布</option>
+          <option value="#c8">8 文档驱动</option>
+          <option value="#c9">9 学习路径</option>
+          <option value="#app">附录</option>
+        </select>
+      </div>
+
+      <header class="hero">
+        <div class="eyebrow">Learning Handbook</div>
+        <h1>俱乐部管理 · 技术科普</h1>
+        <p class="hero-lead">
+          需求由你口述，技术选型与实现由 Agent 完成。这份手册用图和白话，把「为什么这样造、每块叫什么、怎么连起来」讲清楚，方便你系统复习。
+        </p>
+        <div class="hero-meta">
+          <span class="chip"><strong>三端</strong> 小程序 · 管理端 · 云</span>
+          <span class="chip"><strong>口诀</strong> 成员走云函数 · 管理走 Express</span>
+          <span class="chip"><strong>状态</strong> 正式上线（2026-10-30）</span>
+        </div>
+      </header>
+
+      <!-- 1 -->
+      <section class="chapter" id="c1">
+        <div class="chapter-head">
+          <span class="chapter-num">01</span>
+          <h2>项目总体需求概述</h2>
+        </div>
+
+        <div class="callout">
+          <div class="label">一句话</div>
+          <p class="memo">成员战力可查、活动不易忘、组队可招、晒图有氛围、出勤可盘 —— 单俱乐部运营工具。</p>
+        </div>
+
+        <div class="grid-2" style="margin-top:1rem">
+          <article class="card accent-edge">
+            <h4>痛点 A · 战力不清</h4>
+            <p>PC 手录 / 截图 OCR 维护非凡评分、风尚度、途径；小程序只读查看。</p>
+          </article>
+          <article class="card accent-edge">
+            <h4>痛点 B · 活动易忘</h4>
+            <p>今日/本周日程、RSVP、微信订阅提醒；再与组队招募打通。</p>
+          </article>
+        </div>
+
+        <h3>1.3 用户是谁</h3>
+        <div class="grid-4 role-grid">
+          <article class="card">
+            <div class="role-tag">super_admin</div>
+            <h4>超管</h4>
+            <p>PC 全能力 + 任命管理员 + 危险重置 + 应急口令。</p>
+          </article>
+          <article class="card">
+            <div class="role-tag">admin</div>
+            <h4>管理员</h4>
+            <p>成员/活动/公告/OCR/出勤/踏云管理；不可任命超管。</p>
+          </article>
+          <article class="card">
+            <div class="role-tag">member</div>
+            <h4>成员</h4>
+            <p>小程序：名单、日程、RSVP、组队、晒图、「我的」。</p>
+          </article>
+          <article class="card">
+            <div class="role-tag">guest</div>
+            <h4>访客</h4>
+            <p>仅邀请码 + 角色名申请绑定；通过前看不到名单细节。</p>
+          </article>
+        </div>
+
+        <div class="grid-3" style="margin-top:1rem">
+          <div class="card stat"><div class="k">体量</div><div class="v">100～200 人</div></div>
+          <div class="card stat"><div class="k">数据源头</div><div class="v">管理端录入</div></div>
+          <div class="card stat"><div class="k">邀请码</div><div class="v">只绑定不建人</div></div>
+        </div>
+
+        <div class="callout danger" style="margin-top:1.1rem">
+          <div class="label">明确不做</div>
+          <p>陪玩分账、积分商城、语音、游戏官方 API 自动同步、多俱乐部 SaaS、DKP。</p>
+        </div>
+      </section>
+
+      <!-- 2 -->
+      <section class="chapter" id="c2">
+        <div class="chapter-head">
+          <span class="chapter-num">02</span>
+          <h2>顶层设计思路</h2>
+        </div>
+
+        <h3>2.1 三端分离</h3>
+        <figure class="figure">
+          <img src="./assets/architecture-overview.jpg" alt="三端架构：小程序、云开发、管理端" />
+          <figcaption>图 1 · 三端架构总览：成员端小程序、微信云开发、PC 管理端（经云主机 Express）共用同一云库。</figcaption>
+        </figure>
+
+        <table>
+          <thead><tr><th>目录</th><th>端</th><th>职责</th></tr></thead>
+          <tbody>
+            <tr><td><code>miniprogram/</code></td><td>微信小程序</td><td>成员日常：列表、日程、RSVP、组队、晒图、会务</td></tr>
+            <tr><td><code>admin/</code></td><td>PC Web</td><td>运营：CRUD、OCR、看板、导出、扫码登录</td></tr>
+            <tr><td><code>cloud/</code></td><td>后端</td><td>云函数、Express、定时任务、库规则</td></tr>
+          </tbody>
+        </table>
+
+        <h3>2.2 双通道后端（最关键）</h3>
+        <figure class="figure">
+          <img src="./assets/dual-channel.jpg" alt="双通道：云函数与 Express" />
+          <figcaption>图 2 · 记忆口诀可视化：成员走云函数；管理员走 Express；数据进同一云库。</figcaption>
+        </figure>
+
+        <div class="mermaid-wrap">
+          <pre class="mermaid">
+flowchart LR
+  subgraph MP[成员端]
+    A[小程序] -->|callFunction| B[云函数 memberApi]
+  end
+  subgraph AD[管理端]
+    C[Vue admin] -->|HTTP /api| D[Express]
+    D -->|node-sdk| E[(云数据库/云存储)]
+  end
+  B --> E
+          </pre>
+        </div>
+
+        <div class="callout">
+          <div class="label">为什么两条路？</div>
+          <p>小程序原生对接云函数最省事（免自备域名即可调后端）；管理端要跑 OCR、大图上传、公网静态页，更适合可控的 Node/Express 进程。两边写的是<strong>同一套云库</strong>。</p>
+        </div>
+
+        <h3>2.3 安全思路</h3>
+        <div class="grid-2">
+          <div class="card"><h4>服务端认 role</h4><p>前端按钮只是体验；增删改在云函数 / Express 校验。</p></div>
+          <div class="card"><h4>密钥不进仓库</h4><p><code>.env</code>、Secret、应急口令全部 gitignore。</p></div>
+          <div class="card"><h4>绑定先于可见</h4><p>访客未关联角色名，看不到名单与活动细节。</p></div>
+          <div class="card"><h4>双登录</h4><p>日常微信扫码；另留超管应急账号防换绑。</p></div>
+        </div>
+
+        <h3>2.4 产品分期</h3>
+        <div class="timeline">
+          <div class="step"><b>P0</b><span>成员可录可看</span></div>
+          <div class="step"><b>P1</b><span>日程 RSVP 提醒</span></div>
+          <div class="step"><b>可用</b><span>真机主路径</span></div>
+          <div class="step"><b>P2</b><span>组队 LFG</span></div>
+          <div class="step"><b>上线</b><span>正式公开</span></div>
+          <div class="step"><b>P3</b><span>出勤 · 我的</span></div>
+          <div class="step"><b>P4</b><span>本周会务</span></div>
+        </div>
+        <p>P0 内部顺序：<strong>cloud/API → admin 手录（含 tokens）→ OCR → 小程序</strong>，尽早在浏览器看到效果。</p>
+
+        <h3>2.5 主题铁律</h3>
+        <p>业务页禁止写死色值；换肤只改 tokens。品牌强调色 <code>#bda377</code>。途径色：</p>
+        <div class="pathway-row">
+          <span class="pw audience">观众</span>
+          <span class="pw warrior">战士</span>
+          <span class="pw bard">歌颂</span>
+          <span class="pw apprentice">学徒</span>
+          <span class="pw diviner">占卜</span>
+          <span class="pw hermit">窥秘</span>
+        </div>
+      </section>
+
+      <!-- 3 -->
+      <section class="chapter" id="c3">
+        <div class="chapter-head">
+          <span class="chapter-num">03</span>
+          <h2>功能划分与分层</h2>
+        </div>
+
+        <h3>3.1 产品模块</h3>
+        <div class="mermaid-wrap">
+          <pre class="mermaid">
+mindmap
+  root((俱乐部管理))
+    身份准入
+      登录绑定
+      邀请码
+      扫码管理端
+    成员战力
+      手录
+      OCR
+      导出
+    活动防遗忘
+      日程
+      RSVP
+      提醒
+    组队LFG
+      建队审批
+      到点started
+    踏云寻芳
+      晒图点赞
+    运营增强
+      公告
+      出勤看板
+      本周会务
+          </pre>
+        </div>
+
+        <h3>3.2 软件分层</h3>
+        <figure class="figure">
+          <img src="./assets/layer-stack.jpg" alt="从按钮到数据库的分层" />
+          <figcaption>图 3 · 分层心智：表现层 → 接入层 → 业务层 → 数据层 → 基础设施。</figcaption>
+        </figure>
+
+        <table>
+          <thead><tr><th>层</th><th>本项目落点</th><th>记住一句</th></tr></thead>
+          <tbody>
+            <tr><td>表现层</td><td>小程序 pages + Vue views</td><td>只负责展示与收集输入</td></tr>
+            <tr><td>接入层</td><td><code>callFunction</code> / axios</td><td>统一封装请求与错误</td></tr>
+            <tr><td>业务层</td><td>memberApi actions / Express 路由</td><td>权限、状态机、规则</td></tr>
+            <tr><td>数据层</td><td>云库集合</td><td>以数据模型草案为准</td></tr>
+            <tr><td>基础设施</td><td>云存储、定时器、OCR、订阅消息</td><td>横切能力</td></tr>
+          </tbody>
+        </table>
+
+        <h3>3.3 仓库目录</h3>
+        <pre>俱乐部管理/
+├── docs/                 # 产品与方案「权威真相」
+├── miniprogram/          # 成员端 → memberApi
+├── admin/                # 管理端 → Express /api
+└── cloud/
+    ├── functions/        # memberApi · adminApi · reminderDispatch · teamLifecycle
+    └── dev-server/       # Express + 可选 SERVE_ADMIN 托管 dist</pre>
+
+        <p>小程序底部三 Tab：<strong>首页 / 活动 / 成员</strong>。「我的」是内页，不是第四 Tab。</p>
+      </section>
+
+      <!-- 4 -->
+      <section class="chapter" id="c4">
+        <div class="chapter-head">
+          <span class="chapter-num">04</span>
+          <h2>技术选型与理由</h2>
+        </div>
+
+        <table>
+          <thead><tr><th>领域</th><th>选型</th><th>理由（白话）</th></tr></thead>
+          <tbody>
+            <tr><td>成员端</td><td>微信小程序原生</td><td>用户在微信；订阅消息/登录原生；不必做独立 App</td></tr>
+            <tr><td>管理端</td><td>Vue 3 + Vite + Element Plus</td><td>后台表格表单成熟；开发快；易做暗色主题</td></tr>
+            <tr><td>后端</td><td>CloudBase 云函数 + Express</td><td>小程序免运维；管理端 OCR/公网需要自有 Node</td></tr>
+            <tr><td>数据库</td><td>云开发文档库</td><td>与云函数同环境；字段迭代灵活</td></tr>
+            <tr><td>文件</td><td>云存储</td><td>晒图、图标、OCR 原图；fileID + 临时 URL</td></tr>
+            <tr><td>OCR</td><td>腾讯云 → RapidOCR → Tesseract</td><td>免费本地优先，总能兜底</td></tr>
+            <tr><td>图像</td><td>sharp</td><td>压缩缩放踏云图与 OCR 预处理</td></tr>
+          </tbody>
+        </table>
+
+        <div class="grid-3">
+          <article class="card"><h4>为何不选 uni-app？</h4><p>单端微信，原生成本最低，少一层兼容坑。</p></article>
+          <article class="card"><h4>为何管理端不放小程序？</h4><p>大屏表格、粘贴截图、导出，桌面浏览器更合适。</p></article>
+          <article class="card"><h4>为何用订阅消息？</h4><p>零短信成本、微信内触达；代价是用户须主动授权。</p></article>
+        </div>
+      </section>
+
+      <!-- 5 -->
+      <section class="chapter" id="c5">
+        <div class="chapter-head">
+          <span class="chapter-num">05</span>
+          <h2>名词扫盲</h2>
+        </div>
+        <p>点开卡片读白话解释。读完应能向别人复述项目骨架。</p>
+
+        <h3>微信与小程序</h3>
+        <div class="glossary">
+          <details><summary>AppID</summary><div class="g-body"><p>小程序身份证。本项目形如 <code>wx0a3fc7a2aee9f66f</code>。</p></div></details>
+          <details><summary>openid</summary><div class="g-body"><p>某用户在<strong>这个小程序</strong>下的唯一编号。绑定成员、发订阅消息都靠它。</p></div></details>
+          <details><summary>体验版 / 正式版</summary><div class="g-body"><p>体验给内部试，正式对外。订阅消息「下发环境」必须和用户打开的版本一致（trial vs formal）。</p></div></details>
+          <details><summary>提审 / 发布</summary><div class="g-body"><p>上传代码包 → 微信审核 → 发布后用户才看到新包。<strong>云函数单独部署，不走小程序审核。</strong></p></div></details>
+          <details><summary>WXML / WXSS</summary><div class="g-body"><p>小程序的「HTML / CSS」；逻辑用 JS。</p></div></details>
+        </div>
+
+        <h3>云开发全家桶</h3>
+        <div class="glossary">
+          <details open><summary>微信云开发 / CloudBase</summary><div class="g-body"><p>腾讯给小程序的一站式后端：云函数 + 云数据库 + 云存储等，免自建机房。</p></div></details>
+          <details><summary>云函数</summary><div class="g-body"><p>把 Node 代码上传到云端；小程序 <code>callFunction</code> 触发。类似「按需执行的后端接口」。</p></div></details>
+          <details><summary>云数据库</summary><div class="g-body"><p>文档型数据库（JSON 集合），概念接近 MongoDB，不是传统 MySQL 表。</p></div></details>
+          <details><summary>集合 collection</summary><div class="g-body"><p>一类文档的容器，如 <code>members</code>、<code>activities</code>。</p></div></details>
+          <details><summary>云存储</summary><div class="g-body"><p>存图片等文件；返回 <code>cloud://</code> fileID；可用临时 HTTPS 链接展示。</p></div></details>
+          <details><summary>定时触发器</summary><div class="g-body"><p>按 cron 自动调云函数，例如发提醒的 <code>reminderDispatch</code>、组队到点的 <code>teamLifecycle</code>。</p></div></details>
+          <details><summary>云开发 ≠ 云主机</summary><div class="g-body"><p>云开发是微信侧托管；你另有 Windows 云主机跑 Express + 管理端静态页。两者用<strong>同一套云库密钥</strong>连数据。</p></div></details>
+        </div>
+
+        <h3>Web / Node / 业务</h3>
+        <div class="glossary">
+          <details><summary>SPA · Vue · Vite · Element Plus</summary><div class="g-body"><p>管理端是单页应用：Vue 管界面，Vite 负责开发与打包，Element Plus 提供表格表单组件。</p></div></details>
+          <details><summary>Express · axios · multer</summary><div class="g-body"><p>Express 定义 HTTP API；axios 在浏览器请求；multer 解析上传的 OCR 截图。</p></div></details>
+          <details><summary>Design Tokens</summary><div class="g-body"><p>把颜色、圆角、间距提成变量；换肤改一处，业务页不写死色值。</p></div></details>
+          <details><summary>RSVP vs 实到</summary><div class="g-body"><p>RSVP = 出席意向（参加/待定/请假）。实到 = 管理员点名「人来了没」。两套数据，勿混。</p></div></details>
+          <details><summary>订阅消息 · OCR · LFG</summary><div class="g-body"><p>订阅消息：用户授权后的微信模板推送。OCR：从图里认字再解析成成员行。LFG：Looking For Group，组队招募。</p></div></details>
+        </div>
+      </section>
+
+      <!-- 6 -->
+      <section class="chapter" id="c6">
+        <div class="chapter-head">
+          <span class="chapter-num">06</span>
+          <h2>分功能关键技术点</h2>
+        </div>
+
+        <div class="grid-2">
+          <article class="card feature-card">
+            <div class="tag">6.1 成员</div>
+            <h4>角色名 = 业务主键</h4>
+            <p>集合 <code>members</code>；无游戏数字 ID。管理端 Vue 表格 + axios；成员端 <code>membersDb.js</code>。</p>
+          </article>
+          <article class="card feature-card">
+            <div class="tag">6.2 OCR</div>
+            <h4>识别 → 人工确认 → 提交</h4>
+            <p>引擎：腾讯云 → RapidOCR（Python）→ tesseract.js。包：multer、sharp。禁止静默覆盖。</p>
+          </article>
+          <article class="card feature-card">
+            <div class="tag">6.3 邀请码</div>
+            <h4>只绑定，不新建人</h4>
+            <p>码 + 角色名须已在名单。集合：invite_codes、join_applications、users。</p>
+          </article>
+          <article class="card feature-card">
+            <div class="tag">6.5 日程 / RSVP</div>
+            <h4>领域状态机含金量最高</h4>
+            <p>周期 vs 一次性；跨日周常口径在 <code>scheduleMatch.js</code>。RSVP：going / maybe / decline。</p>
+          </article>
+          <article class="card feature-card">
+            <div class="tag">6.6 提醒</div>
+            <h4>定时云函数下发</h4>
+            <p><code>reminderDispatch</code> + 触发器。正式环境须 <code>formal</code>。用户先点「提醒我」授权。</p>
+          </article>
+          <article class="card feature-card">
+            <div class="tag">6.7 组队</div>
+            <h4>LFG + teamLifecycle</h4>
+            <p>建队申请审批；到点改 started。默认上限 6；途径折算 T/N/D 缺口。</p>
+          </article>
+          <article class="card feature-card">
+            <div class="tag">6.8 踏云</div>
+            <h4>云存储 + 压缩</h4>
+            <p>主图≈1920 / 缩略≈480；软配额约 2GiB；试用期用临时 URL 互看图。</p>
+          </article>
+          <article class="card feature-card">
+            <div class="tag">6.10～6.11</div>
+            <h4>出勤 · 会务</h4>
+            <p>看板/实到走 Express；会务 <code>weekHub</code> 在 memberApi。订阅触达 A-c 更后。</p>
+          </article>
+        </div>
+
+        <h3>6.4 扫码登录时序</h3>
+        <div class="mermaid-wrap">
+          <pre class="mermaid">
+sequenceDiagram
+  participant PC as 管理端浏览器
+  participant API as Express
+  participant DB as login_tickets
+  participant MP as 小程序确认页
+  PC->>API: 创建登录票
+  API->>DB: pending
+  API-->>PC: 小程序码
+  MP->>API: 管理员确认
+  API->>DB: confirmed + openid
+  PC->>API: 轮询兑换
+  API-->>PC: 会话 token
+          </pre>
+        </div>
+      </section>
+
+      <!-- 7 -->
+      <section class="chapter" id="c7">
+        <div class="chapter-head">
+          <span class="chapter-num">07</span>
+          <h2>运维 · 部署 · 发布</h2>
+        </div>
+
+        <figure class="figure">
+          <img src="./assets/deploy-pipeline.jpg" alt="三类改动的发布路径" />
+          <figcaption>图 4 · 改小程序要审核；改云函数部署即生效；改管理端需 build 后拷到云主机并重启。</figcaption>
+        </figure>
+
+        <h3>7.1 三套环境感</h3>
+        <table>
+          <thead><tr><th>场景</th><th>小程序</th><th>管理端</th><th>数据</th></tr></thead>
+          <tbody>
+            <tr><td>本机开发</td><td>开发版</td><td>Vite 5173 + API 3789</td><td>同一云库</td></tr>
+            <tr><td>体验验收</td><td>体验版</td><td>本机或云主机</td><td>同一云库</td></tr>
+            <tr><td>生产</td><td>正式版</td><td>云主机 SERVE_ADMIN</td><td>同一云库</td></tr>
+          </tbody>
+        </table>
+
+        <h3>7.2 改了什么 → 部署什么</h3>
+        <table>
+          <thead><tr><th>改动</th><th>动作</th></tr></thead>
+          <tbody>
+            <tr><td><code>miniprogram/</code></td><td>上传 → 提审 → 发布</td></tr>
+            <tr><td><code>cloud/functions/*</code></td><td>上传并部署（正式用户立刻生效）</td></tr>
+            <tr><td>定时函数</td><td>部署 + 确认触发器开启</td></tr>
+            <tr><td><code>admin/</code></td><td><code>npm run build</code> → 拷 dist → 重启 Node</td></tr>
+            <tr><td><code>dev-server</code></td><td>更新代码并<strong>重启</strong>（无热重载）</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout danger">
+          <div class="label">常见误区</div>
+          <p>以为改了云函数也要等小程序审核 —— <strong>不用</strong>。云函数部署后正式版立刻吃到新逻辑。</p>
+        </div>
+
+        <h3>7.3 管理端公网（方案甲）</h3>
+        <pre>浏览器 ──HTTPS──► Nginx/IIS(443) ──► Node 127.0.0.1:3789
+                                      ├─ /api/*     业务 API
+                                      └─ 其它       admin/dist 静态页</pre>
+        <p>用 pm2/NSSM 保活；正式建议域名 + HTTPS。细节见 <code>管理端公网托管.md</code>。</p>
+
+        <h3>7.4 小程序发布心智</h3>
+        <div class="mermaid-wrap">
+          <pre class="mermaid">
+flowchart TD
+  A[改 miniprogram] --> B[开发者工具预览]
+  B --> C[上传代码包]
+  C --> D{给谁用}
+  D -->|内部| E[体验版]
+  D -->|全员| F[提审]
+  F --> G[审核通过]
+  G --> H[发布正式版]
+  I[改云函数] --> J[上传并部署]
+  J --> K[正式版立即生效]
+          </pre>
+        </div>
+
+        <h3>7.6 安全清单</h3>
+        <ul class="checklist">
+          <li><code>.env</code> 永不入库</li>
+          <li>应急口令定期更换并足够长</li>
+          <li>安全组最小开放（80/443；慎裸奔 3789）</li>
+          <li>超管白名单谨慎</li>
+          <li>上线前清联调脏数据</li>
+        </ul>
+      </section>
+
+      <!-- 8 -->
+      <section class="chapter" id="c8">
+        <div class="chapter-head">
+          <span class="chapter-num">08</span>
+          <h2>工程协作与文档驱动</h2>
+        </div>
+        <p>和 AI 一起做产品时，文档就是「跨会话记忆」。</p>
+        <table>
+          <thead><tr><th>机制</th><th>作用</th></tr></thead>
+          <tbody>
+            <tr><td><code>AGENTS.md</code> + rules</td><td>跨机器铁律入口</td></tr>
+            <tr><td><code>功能说明书.md</code></td><td>产品真相；冲突以它为准</td></tr>
+            <tr><td><code>进度与交接.md</code></td><td>当前做到哪、下一步</td></tr>
+            <tr><td><code>数据模型草案.md</code></td><td>集合字段契约</td></tr>
+            <tr><td>文档与代码同步</td><td>防止只改代码导致下个会话失忆</td></tr>
+          </tbody>
+        </table>
+        <div class="callout">
+          <div class="label">可带走的工程观</div>
+          <p>需求先落文档 → 按阶段切片验收 → 密钥与 dist 分离 → 用进度文件代替聊天记忆。</p>
+        </div>
+      </section>
+
+      <!-- 9 -->
+      <section class="chapter" id="c9">
+        <div class="chapter-head">
+          <span class="chapter-num">09</span>
+          <h2>建议学习路径</h2>
+        </div>
+        <div class="grid-3">
+          <article class="card day-card">
+            <div class="day">第 1 天</div>
+            <h4>建立地图</h4>
+            <p>读本手册 1～5 章；打开三个目录对照；本地起 admin，看 Network 里的 <code>/api</code>。</p>
+          </article>
+          <article class="card day-card">
+            <div class="day">第 2～3 天</div>
+            <h4>跟一条链路</h4>
+            <p>任选：邀请码绑定 / RSVP+提醒 / OCR 导入。自己画「谁调谁」。</p>
+          </article>
+          <article class="card day-card">
+            <div class="day">第 4 天</div>
+            <h4>读状态机</h4>
+            <p>功能说明书活动章节 + <code>scheduleMatch.js</code> —— 业务含金量最高。</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- appendix -->
+      <section class="chapter" id="app">
+        <div class="chapter-head">
+          <span class="chapter-num">◎</span>
+          <h2>附录 · 一张纸背下来</h2>
+        </div>
+        <div class="callout">
+          <pre style="margin:0;border:none;background:transparent;padding:0;color:var(--accent-hot)">成员用小程序 → 云函数 memberApi → 云库
+管理用 Vue   → Express(/api)   → 同一云库（+ OCR/sharp）
+提醒/到点    → 定时云函数
+主题         → tokens，不写死色
+权限         → 服务端认 role；邀请码只绑定不建人
+发布         → 小程序要审核；云函数部署即生效；admin 要 build+拷主机</pre>
+        </div>
+
+        <h3>核心依赖速查</h3>
+        <div class="grid-2">
+          <div class="card"><h4>admin</h4><p><code>vue</code> · <code>vue-router</code> · <code>element-plus</code> · <code>axios</code> · <code>vite</code></p></div>
+          <div class="card"><h4>dev-server</h4><p><code>express</code> · <code>multer</code> · <code>sharp</code> · <code>tesseract.js</code> · <code>@cloudbase/node-sdk</code></p></div>
+          <div class="card"><h4>云函数</h4><p><code>wx-server-sdk</code>（memberApi / reminderDispatch / teamLifecycle…）</p></div>
+          <div class="card"><h4>小程序</h4><p>原生 WXML/WXSS/JS + <code>wx.cloud.*</code>，无业务 npm 巨石</p></div>
+        </div>
+
+        <footer class="page-foot">
+          基于仓库文档与目录扫描整理。若与线上行为冲突，以 <code>功能说明书.md</code> / <code>进度与交接.md</code> 及已部署代码为准。<br />
+          图片资源：<code>docs/assets/</code> · Markdown 源：<code>docs/技术科普学习手册.md</code>
+        </footer>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const links = [...document.querySelectorAll('.nav a')];
+    const sections = links.map((a) => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        const id = '#' + e.target.id;
+        links.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === id));
+      });
+    }, { rootMargin: '-20% 0px -65% 0px', threshold: 0 });
+    sections.forEach((s) => io.observe(s));
+  </script>
+</body>
+</html>
