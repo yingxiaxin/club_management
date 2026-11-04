@@ -32,6 +32,19 @@ http.interceptors.response.use(
     if (serverMsg) {
       return Promise.reject(new Error(serverMsg))
     }
+    // axios 超时 / 主动 abort 时，Chrome Network 常显示 canceled
+    const code = String(err.code || '')
+    const raw = String(err.message || '')
+    if (
+      code === 'ECONNABORTED' ||
+      code === 'ERR_CANCELED' ||
+      /timeout/i.test(raw) ||
+      /^canceled$/i.test(raw)
+    ) {
+      return Promise.reject(
+        new Error('请求超时或连接被中断（OCR/导入可能较慢）。请少图重试；公网请确认反代超时 ≥180s'),
+      )
+    }
     return Promise.reject(err)
   },
 )

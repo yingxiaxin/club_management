@@ -10,13 +10,15 @@ async function unwrap<T>(p: Promise<{ data: ApiOk<T> | ApiErr }>): Promise<T> {
   return data.data
 }
 
+/** OCR 识别 / 批量导入可能数十秒；勿用手写 multipart Content-Type（会丢 boundary） */
+const OCR_TIMEOUT_MS = 180_000
+
 export function parseOcrImages(files: File[]) {
   const form = new FormData()
   for (const f of files) form.append('images', f)
   return unwrap(
     http.post('/api/ocr/parse', form, {
-      timeout: 180000,
-      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: OCR_TIMEOUT_MS,
     }) as Promise<{ data: ApiOk<OcrParseResult> | ApiErr }>,
   )
 }
@@ -34,7 +36,7 @@ export function commitOcrImport(
   }>,
 ) {
   return unwrap(
-    http.post('/api/ocr/commit', { jobId, rows }) as Promise<{
+    http.post('/api/ocr/commit', { jobId, rows }, { timeout: OCR_TIMEOUT_MS }) as Promise<{
       data: ApiOk<OcrCommitResult> | ApiErr
     }>,
   )

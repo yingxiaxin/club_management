@@ -1,11 +1,19 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import https from 'node:https'
+import http from 'node:http'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const LOCAL_TESSDATA = path.resolve(__dirname, '../../tessdata')
-const REMOTE = 'https://github.com/tesseract-ocr/tessdata/raw/main/chi_sim.traineddata'
+
+/** 国内直连 GitHub 常超时；按序尝试镜像，最后回退官方 */
+const REMOTE_CANDIDATES = [
+  'https://ghfast.top/https://github.com/tesseract-ocr/tessdata/raw/main/chi_sim.traineddata',
+  'https://raw.gitmirror.com/tesseract-ocr/tessdata/main/chi_sim.traineddata',
+  'https://cdn.jsdelivr.net/gh/tesseract-ocr/tessdata@main/chi_sim.traineddata',
+  'https://github.com/tesseract-ocr/tessdata/raw/main/chi_sim.traineddata',
+]
 
 function asciiCacheDir() {
   const base =
@@ -16,34 +24,79 @@ function asciiCacheDir() {
   return path.join(base, 'club-management-tessdata')
 }
 
-function download(url, dest) {
+function downloadOnce(url, dest, redirectsLeft = 5) {
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(dest)
-    https
-      .get(url, (res) => {
-        if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-          file.close()
-          fs.unlinkSync(dest)
-          return download(res.headers.location, dest).then(resolve, reject)
-        }
-        if (res.statusCode !== 200) {
-          file.close()
-          fs.unlinkSync(dest)
-          return reject(new Error(`下载 tessdata 失败: HTTP ${res.statusCode}`))
-        }
-        res.pipe(file)
-        file.on('finish', () => file.close(() => resolve()))
-      })
-      .on('error', (err) => {
+    const lib = url.startsWith('http://') ? http : https
+    const req = lib.get(url, { timeout: 60_000 }, (res) => {
+      if (
+        res.statusCode &&
+        res.statusCode >= 300 &&
+        res.statusCode < 400 &&
+        res.headers.location &&
+        redirectsLeft > 0
+      ) {
         file.close()
         try {
           fs.unlinkSync(dest)
         } catch {
           /* ignore */
         }
-        reject(err)
-      })
+        const next = res.headers.location.startsWith('http')
+          ? res.headers.location
+          : new URL(res.headers.location, url).href
+        return downloadOnce(next, dest, redirectsLeft - 1).then(resolve, reject)
+      }
+      if (res.statusCode !== 200) {
+        file.close()
+        try {
+          fs.unlinkSync(dest)
+        } catch {
+          /* ignore */
+        }
+        return reject(new Error(`下载 tessdata 失败: HTTP ${res.statusCode} (${url})`))
+      }
+      res.pipe(file)
+      file.on('finish', () => file.close(() => resolve()))
+    })
+    req.on('timeout', () => {
+      req.destroy(new Error(`下载 tessdata 超时 (${url})`))
+    })
+    req.on('error', (err) => {
+      file.close()
+      try {
+        fs.unlinkSync(dest)
+      } catch {
+        /* ignore */
+      }
+      reject(err)
+    })
   })
+}
+
+async function downloadWithMirrors(dest) {
+  const errors = []
+  for (const url of REMOTE_CANDIDATES) {
+    const tmp = `${dest}.tmp`
+    try {
+      console.log('[ocr] 尝试下载 chi_sim.traineddata:', url)
+      await downloadOnce(url, tmp)
+      const size = fs.statSync(tmp).size
+      if (size < 1_000_000) {
+        throw new Error(`文件过小 (${size} bytes)`)
+      }
+      fs.renameSync(tmp, dest)
+      return
+    } catch (err) {
+      errors.push(`${url} → ${err.message || err}`)
+      try {
+        fs.unlinkSync(tmp)
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+  throw new Error(`所有镜像均失败:\n${errors.join('\n')}`)
 }
 
 /**
@@ -62,10 +115,8 @@ export async function ensureTessdata() {
   const dir = asciiCacheDir()
   fs.mkdirSync(dir, { recursive: true })
   const dest = path.join(dir, 'chi_sim.traineddata')
-  const tmp = `${dest}.tmp`
   console.log('[ocr] 首次使用，下载 chi_sim.traineddata …')
-  await download(REMOTE, tmp)
-  fs.renameSync(tmp, dest)
+  await downloadWithMirrors(dest)
   console.log('[ocr] tessdata 已就绪:', dest)
   return dir
 }
