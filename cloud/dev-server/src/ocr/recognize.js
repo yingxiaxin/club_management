@@ -207,14 +207,21 @@ async function recognizeLocal(buf, meta) {
       const merged = new Map()
       for (const row of rapid.candidates) mergeCandidate(merged, row)
 
-      // 行数偏少时用 Tesseract 补洞
+      // 行数偏少时尝试 Tesseract 补洞；字库缺失/下载失败时仍返回 RapidOCR 结果
       if (merged.size < 3) {
-        const tess = await recognizeLocalTesseract(buf, meta)
-        for (const row of tess.merged.values()) mergeCandidate(merged, row)
-        return {
-          rawParts: [`[rapidocr]\n${rapid.rawText}`, ...tess.rawParts],
-          merged,
-          provider: 'rapidocr+tesseract',
+        try {
+          const tess = await recognizeLocalTesseract(buf, meta)
+          for (const row of tess.merged.values()) mergeCandidate(merged, row)
+          return {
+            rawParts: [`[rapidocr]\n${rapid.rawText}`, ...tess.rawParts],
+            merged,
+            provider: 'rapidocr+tesseract',
+          }
+        } catch (tessErr) {
+          console.warn(
+            '[ocr] Tesseract 补洞失败，仅用 RapidOCR:',
+            tessErr?.message || tessErr,
+          )
         }
       }
       return {

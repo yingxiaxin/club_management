@@ -65,3 +65,9 @@ coverage/
 tmp/
 temp/
 *.tmp
+
+# 本机打的云主机更新包 / Tessdata（体积大，不入库；路径见 docs/进度与交接.md）
+/云主机更新*/
+/云主机更新*.zip
+/云主机-tessdata*/
+/云主机-tessdata*.zip
