@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { loginWithPassword, pollQrLogin, startQrLogin, type QrStart } from '@/api/auth'
 import { setAuth } from '@/auth/session'
+import { copyText } from '@/utils/clipboard'
 
 const router = useRouter()
 const route = useRoute()
@@ -78,12 +79,9 @@ async function refreshQr() {
 async function copyTicket() {
   const id = qr.value?.ticketId
   if (!id) return
-  try {
-    await navigator.clipboard.writeText(id)
-    ElMessage.success('登录编号已复制')
-  } catch {
-    ElMessage.info(id)
-  }
+  const ok = await copyText(id)
+  if (ok) ElMessage.success('登录编号已复制')
+  else ElMessage.info(id)
 }
 
 async function onEmergencySubmit() {

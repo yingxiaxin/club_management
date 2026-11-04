@@ -10,6 +10,7 @@ import {
   type InviteCode,
   type JoinApplication,
 } from '@/api/invites'
+import { copyText } from '@/utils/clipboard'
 
 const loading = ref(false)
 const invites = ref<InviteCode[]>([])
@@ -65,12 +66,9 @@ async function toggleEnabled(row: InviteCode) {
 }
 
 async function copyCode(code: string) {
-  try {
-    await navigator.clipboard.writeText(code)
-    ElMessage.success('已复制邀请码')
-  } catch {
-    ElMessage.warning('复制失败，请手动选择')
-  }
+  const ok = await copyText(code)
+  if (ok) ElMessage.success('已复制邀请码')
+  else ElMessage.warning('复制失败，请手动选择')
 }
 
 async function onReview(row: JoinApplication, decision: 'approved' | 'rejected') {
