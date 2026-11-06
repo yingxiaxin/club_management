@@ -28,6 +28,7 @@ import * as cloudRsvps from './cloudRsvps.js'
 import * as cloudTeams from './cloudTeams.js'
 import * as cloudClub from './cloudClub.js'
 import * as cloudAnnouncements from './cloudAnnouncements.js'
+import { renderManualHtml } from './manualPage.js'
 import * as cloudGallery from './cloudGallery.js'
 import * as cloudUsers from './cloudUsers.js'
 import * as cloudBoard from './cloudBoard.js'
@@ -998,6 +999,18 @@ app.post('/api/ocr/commit', requireAdmin, async (req, res) => {
     res.json({ ok: true, data })
   } catch (err) {
     res.status(err.status || 500).json({ ok: false, message: err.message })
+  }
+})
+
+/** 使用手册（须登录）。正文在 docs/使用手册.html，配图内嵌返回。 */
+app.get('/api/manual', requireAdmin, (_req, res) => {
+  try {
+    const html = renderManualHtml()
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.setHeader('Cache-Control', 'private, no-cache')
+    res.send(html)
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, message: err.message || '使用手册读取失败' })
   }
 })
 

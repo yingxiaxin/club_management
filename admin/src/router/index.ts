@@ -55,6 +55,11 @@ const router = createRouter({
           name: 'gallery',
           component: () => import('@/views/GalleryView.vue'),
         },
+        {
+          path: 'manual',
+          name: 'manual',
+          component: () => import('@/views/ManualView.vue'),
+        },
       ],
     },
   ],

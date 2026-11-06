@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>诡秘之主 · 俱乐部管理 — 功能说明与使用手册</title>
+<style>
+:root{
+  --bg:#0e0f14; --surface:#1a1c22; --elevated:#22252e; --border:#3a3428;
+  --brand:#bda377; --brand-hover:#d9c18f; --brand-muted:rgba(189,163,119,.16);
+  --text:#f3ecdf; --text-2:#d0c4a8; --muted:#9a8c78;
+  --ok:#7aab76; --warn:#d4894a; --danger:#c96a5e; --info:#7c9cc4;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+/* 细暗色滚动条（目录栏更细） */
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-thumb{background:#33363e;border-radius:6px;border:3px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:#454954}
+::-webkit-scrollbar-track{background:transparent}
+nav.toc::-webkit-scrollbar{width:7px}
+nav.toc::-webkit-scrollbar-thumb{border:none;background:#2c2f36}
+html{scrollbar-color:#33363e transparent;scrollbar-width:thin}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.75 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+a{color:var(--brand-hover);text-decoration:none}
+a:hover{color:var(--brand)}
+.layout{display:block}
+nav.toc{position:fixed;left:0;top:0;bottom:0;width:240px;overflow-y:auto;overflow-x:hidden;padding:28px 12px 40px 20px;border-right:1px solid var(--border);font-size:13.5px;background:var(--bg);z-index:10}
+nav.toc .brand{color:var(--brand);font-weight:700;font-size:16px;letter-spacing:.05em;margin-bottom:4px}
+nav.toc .ver{color:var(--muted);font-size:12px;margin-bottom:18px}
+nav.toc a{display:block;padding:4px 10px;border-radius:6px;color:var(--text-2);line-height:1.55}
+nav.toc a:hover{background:var(--brand-muted);color:var(--brand-hover)}
+nav.toc a.active{background:var(--brand-muted);color:var(--brand-hover);font-weight:600}
+nav.toc a.sub{padding-left:22px;font-size:12.5px;color:var(--muted)}
+nav.toc a.sub.active{color:var(--brand-hover)}
+main{margin-left:240px;padding:32px 44px 90px}
+/* 内容块统一居中：!important 压过 .callout 等类自带的 margin，防止个别条目贴左 */
+body main > *{max-width:920px;margin-left:auto !important;margin-right:auto !important}
+h1{font-size:26px;margin:0 0 6px;color:var(--brand-hover)}
+h2{font-size:21px;margin:52px 0 6px;padding-top:14px;border-top:1px solid var(--border);color:var(--brand-hover)}
+h3{font-size:16.5px;margin:28px 0 8px;color:var(--text)}
+h4{font-size:14.5px;margin:20px 0 6px;color:var(--text-2)}
+p{margin:8px 0}
+.sub{color:var(--muted);font-size:13px}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:13.5px}
+th,td{border:1px solid var(--border);padding:7px 11px;text-align:left;vertical-align:top}
+th{background:var(--elevated);color:var(--brand);font-weight:600;white-space:nowrap}
+tr:nth-child(even) td{background:rgba(255,255,255,.015)}
+figure{margin:18px 0;text-align:center}
+figure img{max-width:100%;height:auto;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+figure img.mini{max-height:560px;width:auto}
+figcaption{color:var(--muted);font-size:12.5px;margin-top:8px}
+ol.steps{padding-left:0;list-style:none;counter-reset:st}
+ol.steps li{position:relative;padding-left:38px;margin:9px 0;counter-increment:st}
+ol.steps li::before{content:counter(st);position:absolute;left:0;top:3px;width:22px;height:22px;border-radius:50%;background:var(--danger);color:#fff;font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.callout{border-left:3px solid var(--info);background:rgba(124,156,196,.08);border-radius:0 8px 8px 0;padding:10px 16px;margin:14px 0;font-size:13.5px}
+.callout.warn{border-color:var(--warn);background:rgba(212,137,74,.09)}
+.callout.ok{border-color:var(--ok);background:rgba(122,171,118,.09)}
+.callout.danger{border-color:var(--danger);background:rgba(201,106,94,.10)}
+.callout b{color:var(--text)}
+kbd{background:var(--elevated);border:1px solid var(--border);border-bottom-width:2px;border-radius:5px;padding:1px 7px;font-size:12.5px;color:var(--brand-hover)}
+.tag{display:inline-block;border:1px solid var(--border);border-radius:5px;padding:0 8px;font-size:12px;color:var(--text-2);margin-right:4px}
+.chip{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px;border:1px solid rgba(255,255,255,.2)}
+.toc-jump{font-size:12px;color:var(--muted);margin-top:2px}
+/* 嵌在管理端时，内容区要比整窗窄约 220px。目录留到很窄再收起，避免一侧栏一出来目录就没了。 */
+@media (max-width:900px){
+  nav.toc{width:200px;padding:20px 8px 32px 12px}
+  main{margin-left:200px;padding:24px 20px 72px}
+}
+@media (max-width:640px){nav.toc{display:none}main{margin-left:0;padding:20px 16px 60px}main > *{max-width:none}}
+
+/* ==================== 打印 / PDF 版式 ==================== */
+/* 封面与 PDF 目录页：屏幕上不显示，仅打印/导出 PDF 时出现 */
+.cover,.tocpage{display:none}
+.cover{height:236mm;display:none;flex-direction:column;justify-content:center;align-items:flex-start;padding-left:6mm}
+.cover .c-kicker{color:var(--muted);font-size:13px;letter-spacing:.35em;margin-bottom:10mm}
+.cover .c-title{font-size:40px;line-height:1.3;font-weight:700;color:var(--brand-hover);margin:0}
+.cover .c-sub{font-size:19px;color:var(--text-2);margin-top:6mm;letter-spacing:.12em}
+.cover .c-rule{width:78mm;height:2px;background:var(--brand);margin:10mm 0;opacity:.7}
+.cover .c-meta{font-size:12.5px;color:var(--muted);line-height:2}
+.cover .c-hint{margin-top:16mm;font-size:11.5px;color:var(--muted);border-left:2px solid var(--border);padding-left:4mm;line-height:1.9}
+.tocpage{padding-top:8mm}
+.tocpage .tp-title{font-size:22px;color:var(--brand-hover);letter-spacing:.3em;margin:0 0 8mm;padding-bottom:4mm;border-bottom:1px solid var(--border)}
+.tocpage ul{list-style:none;margin:0;padding:0}
+.tocpage li{margin:0 0 3.2mm}
+.tocpage li a{display:flex;align-items:baseline;color:var(--text);font-size:13.5px;padding:0}
+.tocpage .tt{flex:none;max-width:150mm;overflow:hidden;white-space:nowrap}
+.tocpage .dots{flex:1;border-bottom:1px dotted var(--border);margin:0 3mm;transform:translateY(-3px)}
+.tocpage .tp-no{flex:none;color:var(--brand);font-variant-numeric:tabular-nums;min-width:8mm;text-align:right}
+.tocpage .tp-note{margin-top:10mm;color:var(--muted);font-size:11.5px;line-height:1.9;border-top:1px solid var(--border);padding-top:4mm}
+
+@media print{
+  /* 纸张与整页底色（含页边距区域），页眉页脚用 @page 页边距盒子实现 */
+  @page{
+    size:A4;
+    margin:15mm 11mm 16mm;
+    background:#0e0f14;
+    @top-left{
+      content:"诡秘之主 · 俱乐部管理"; font:7.6pt "Microsoft YaHei",sans-serif;
+      color:#9a8c78; vertical-align:bottom; padding-bottom:2.5mm;
+    }
+    @top-right{
+      content:"功能说明与使用手册 v1.0"; font:7.6pt "Microsoft YaHei",sans-serif;
+      color:#9a8c78; vertical-align:bottom; padding-bottom:2.5mm;
+    }
+    @bottom-left{
+      content:"内部运营文档 · 2026-11-06"; font:7.6pt "Microsoft YaHei",sans-serif;
+      color:#9a8c78; vertical-align:top; padding-top:3mm;
+    }
+    @bottom-right{
+      content:"第 " counter(page) " 页 / 共 " counter(pages) " 页";
+      font:7.6pt "Microsoft YaHei",sans-serif; color:#bda377;
+      vertical-align:top; padding-top:3mm;
+    }
+  }
+  /* 封面页：无页眉页脚，底色略提亮 */
+  @page:first{
+    background:#14161d;
+    @top-left{content:none} @top-right{content:none}
+    @bottom-left{content:none} @bottom-right{content:none}
+  }
+
+  html,body{background:#0e0f14 !important;color:#f3ecdf}
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}
+  .layout{display:block;max-width:none;margin:0}
+  nav.toc{display:none !important}
+  main{margin-left:0;padding:0;max-width:none;width:100%}
+  main > *{max-width:none}
+  body{font-size:13.6px;line-height:1.82}
+
+  /* 封面 + 目录页 */
+  .cover,.tocpage{display:block}
+  .cover{display:flex;break-after:page;page-break-after:always}
+  .tocpage{break-after:page;page-break-after:always}
+
+  /* 章节分页 */
+  h1{font-size:24px}
+  h2{font-size:18.5px;margin:0 0 5mm;padding-top:3mm;break-before:page;page-break-before:always;break-after:avoid;page-break-after:avoid}
+  #overview{break-before:auto;page-break-before:auto}
+  h3{font-size:14.5px;break-after:avoid;page-break-after:avoid;margin:7mm 0 2mm}
+  h4{break-after:avoid;page-break-after:avoid}
+
+  /* 避免内容被切碎 */
+  figure{break-inside:avoid;page-break-inside:avoid;margin:5mm 0}
+  figure img{max-width:100%;max-height:165mm;object-fit:contain;border-color:#4a4436}
+  figure img.mini{max-height:150mm}
+  figcaption{font-size:11px;margin-top:2mm}
+  .callout{break-inside:avoid;page-break-inside:avoid}
+  table{font-size:12px;break-inside:auto}
+  tr,td,th{break-inside:avoid;page-break-inside:avoid}
+  ol.steps li{break-inside:avoid}
+  ul,ol{break-inside:auto}
+  p{orphans:2;widows:2}
+  .toc-jump{font-size:11.5px}
+}
+
+/* 浅色打印版（省墨）：导出白底 PDF 时给 body 加 .light-print */
+@media print{
+  body.light-print{background:#fff !important;color:#1f1c17}
+  body.light-print h1,body.light-print h2{color:#8a6a37}
+  body.light-print h2{border-color:#ddd6c8}
+  body.light-print .sub,body.light-print figcaption,body.light-print .toc-jump{color:#6b6157}
+  body.light-print th{background:#f4f0e7;color:#6b5636;border-color:#d8d1c3}
+  body.light-print td{border-color:#e0dacd}
+  body.light-print tr:nth-child(even) td{background:#faf8f4}
+  body.light-print .callout{background:#f7f4ee;border-color:#c9c1b1}
+  body.light-print .callout.warn{background:#fdf5ec;border-color:#d08a4a}
+  body.light-print .callout.ok{background:#f2f7f1;border-color:#7aa876}
+  body.light-print .callout.danger{background:#fdf1ef;border-color:#c96a5e}
+  body.light-print .tag{border-color:#d8d1c3;color:#4a4136}
+  body.light-print kbd{background:#f4f0e7;border-color:#d8d1c3;color:#6b5636}
+  body.light-print figure img{border-color:#d8d1c3}
+  body.light-print .cover .c-title{color:#8a6a37}
+  body.light-print .cover .c-sub{color:#4a4136}
+  body.light-print .cover .c-kicker,body.light-print .cover .c-meta,body.light-print .cover .c-hint{color:#7a7065}
+  body.light-print .cover .c-hint{border-color:#d8d1c3}
+  body.light-print .tocpage .tp-title{color:#8a6a37;border-color:#d8d1c3}
+  body.light-print .tocpage li a{color:#1f1c17}
+  body.light-print .tocpage .tp-no{color:#8a6a37}
+  body.light-print .tocpage .dots{border-color:#d8d1c3}
+  body.light-print .tocpage .tp-note{border-color:#d8d1c3;color:#7a7065}
+  body.light-print .chip{border-color:#bbb}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 封面（仅 PDF / 打印可见） ============ -->
+<section class="cover">
+  <div class="c-kicker">诡秘之主 · 单俱乐部运营工具</div>
+  <div class="c-title">俱乐部管理<br>功能说明与使用手册</div>
+  <div class="c-sub">管理端 8 个菜单 · 小程序 16 个页面 · 全流程图文操作</div>
+  <div class="c-rule"></div>
+  <div class="c-meta">
+    版本 v1.0 ｜ 2026-11-06<br>
+    适用：俱乐部管理员 / 超管 / 想搞懂全部功能的成员<br>
+    依据：线上正式版（AppID wx0a3fc7a2aee9f66f）
+  </div>
+  <div class="c-hint">
+    翻阅方式：PDF 阅读器左侧「书签 / 大纲」面板 → 点章节直达；<br>
+    次页为目录，标注每章起始页码。
+  </div>
+</section>
+
+<!-- ============ 目录页（仅 PDF / 打印可见；页码由生成脚本回填） ============ -->
+<section class="tocpage">
+  <div class="tp-title">目 录</div>
+  <ul>
+    <li><a href="#overview"><span class="tt">〇 总览：这套系统能干什么</span><span class="dots"></span><span class="tp-no" data-page="overview">3</span></a></li>
+    <li><a href="#login"><span class="tt">一 登录管理后台</span><span class="dots"></span><span class="tp-no" data-page="login">4</span></a></li>
+    <li><a href="#members"><span class="tt">二 成员列表（含截图导入 OCR）</span><span class="dots"></span><span class="tp-no" data-page="members">6</span></a></li>
+    <li><a href="#invites"><span class="tt">三 邀请码 / 入会</span><span class="dots"></span><span class="tp-no" data-page="invites">9</span></a></li>
+    <li><a href="#activities"><span class="tt">四 活动日程</span><span class="dots"></span><span class="tp-no" data-page="activities">11</span></a></li>
+    <li><a href="#teams"><span class="tt">五 组队</span><span class="dots"></span><span class="tp-no" data-page="teams">16</span></a></li>
+    <li><a href="#board"><span class="tt">六 出勤看板</span><span class="dots"></span><span class="tp-no" data-page="board">18</span></a></li>
+    <li><a href="#announcements"><span class="tt">七 公告发布</span><span class="dots"></span><span class="tp-no" data-page="announcements">19</span></a></li>
+    <li><a href="#gallery"><span class="tt">八 踏云寻芳</span><span class="dots"></span><span class="tp-no" data-page="gallery">20</span></a></li>
+    <li><a href="#club"><span class="tt">九 俱乐部资料设置</span><span class="dots"></span><span class="tp-no" data-page="club">23</span></a></li>
+    <li><a href="#reminders"><span class="tt">十 提醒设置</span><span class="dots"></span><span class="tp-no" data-page="reminders">24</span></a></li>
+    <li><a href="#home"><span class="tt">十一 小程序首页与「我的」</span><span class="dots"></span><span class="tp-no" data-page="home">25</span></a></li>
+    <li><a href="#faq"><span class="tt">十二 常见问题 FAQ</span><span class="dots"></span><span class="tp-no" data-page="faq">27</span></a></li>
+    <li><a href="#appendix"><span class="tt">附录 A 状态机速查</span><span class="dots"></span><span class="tp-no" data-page="appendix">28</span></a></li>
+    <li><a href="#appendix-b"><span class="tt">附录 B 途径色对照</span><span class="dots"></span><span class="tp-no" data-page="appendix-b">29</span></a></li>
+    <li><a href="#appendix-c"><span class="tt">附录 C 名词表</span><span class="dots"></span><span class="tp-no" data-page="appendix-c">30</span></a></li>
+  </ul>
+  <div class="tp-note">
+    本手册按「总—分」组织：先讲这套系统能干什么，再按管理端菜单逐项拆解「这功能干什么 → 怎么操作 → 小程序端长什么样」。<br>
+    截图中的<span style="color:#ff5252;font-weight:700">红框 + 序号圆标</span>与正文步骤编号一一对应。
+  </div>
+</section>
+
+<div class="layout">
+<nav class="toc">
+  <div class="brand">俱乐部管理</div>
+  <div class="ver">使用手册 · v1.0（2026-11-06）</div>
+  <a href="#overview">〇 总览：这套系统能干什么</a>
+  <a href="#roles" class="sub">角色与权限</a>
+  <a href="#login">一 登录管理后台</a>
+  <a href="#login-ticket" class="sub">方式一：票号登录</a>
+  <a href="#login-emergency" class="sub">方式二：应急账号登录</a>
+  <a href="#members">二 成员列表</a>
+  <a href="#members-add" class="sub">2.1 新增 / 编辑成员</a>
+  <a href="#members-ocr" class="sub">2.2 截图导入（OCR）</a>
+  <a href="#members-filter" class="sub">2.3 筛选、排序、导出</a>
+  <a href="#members-remove" class="sub">2.4 移出成员</a>
+  <a href="#members-admin" class="sub">2.5 任命 / 取消管理员</a>
+  <a href="#members-mini" class="sub">2.6 小程序 · 成员 Tab</a>
+  <a href="#invites">三 邀请码 / 入会</a>
+  <a href="#invites-issue" class="sub">3.1 管理端：发码与审核</a>
+  <a href="#invites-join" class="sub">3.2 小程序：成员自己关联</a>
+  <a href="#activities">四 活动日程</a>
+  <a href="#activities-new" class="sub">4.1 新建一场活动</a>
+  <a href="#activities-lifecycle" class="sub">4.2 活动的生命周期</a>
+  <a href="#activities-export" class="sub">4.3 导出 RSVP</a>
+  <a href="#activities-mini" class="sub">4.4 小程序：报名与 RSVP</a>
+  <a href="#teams">五 组队</a>
+  <a href="#teams-rules" class="sub">5.1 规则速览</a>
+  <a href="#teams-mini" class="sub">5.2 小程序：建队与入队</a>
+  <a href="#board">六 出勤看板</a>
+  <a href="#announcements">七 公告发布</a>
+  <a href="#gallery">八 踏云寻芳</a>
+  <a href="#gallery-admin" class="sub">8.1 管理端：看总量、管内容</a>
+  <a href="#gallery-mini" class="sub">8.2 小程序：发图与互动</a>
+  <a href="#club">九 俱乐部资料设置</a>
+  <a href="#reminders">十 提醒设置</a>
+  <a href="#home">十一 小程序首页与「我的」</a>
+  <a href="#faq">十二 常见问题 FAQ</a>
+  <a href="#appendix">附录 A 状态机速查</a>
+  <a href="#appendix-b" class="sub">附录 B 途径色对照</a>
+  <a href="#appendix-c" class="sub">附录 C 名词表</a>
+</nav>
+
+<main>
+<p class="toc-jump">适用对象：俱乐部管理员 / 超管 / 想搞懂全部功能的成员 ｜ 截图中的 <b style="color:#ff5252">红框序号</b> 与正文步骤编号一一对应</p>
+
+<h1>诡秘之主 · 俱乐部管理</h1>
+<p class="sub">功能说明与使用手册 ｜ 内部运营文档 ｜ 整理日期 2026-11-06 ｜ 基于线上正式版整理</p>
+
+<!-- ================= 总览 ================= -->
+<h2 id="overview">〇 总览：这套系统能干什么</h2>
+<p>这是一套给「诡秘之主」MMO 单俱乐部用的运营工具，分两个端：</p>
+<ul>
+  <li><b>PC 管理后台</b>（浏览器打开）——管理员用：管成员、发活动、审入会、看出勤、发公告、管晒图。</li>
+  <li><b>微信小程序</b>（搜「诡秘之主 · 俱乐部」）——全体成员用：看名单、报名活动、组队、晒图、收提醒。</li>
+</ul>
+<table>
+  <tr><th>能力</th><th>干什么用</th><th>谁操作</th></tr>
+  <tr><td>成员名册</td><td>集中维护角色名、非凡评分、风尚度、途径、职位；支持游戏截图 OCR 批量导入</td><td>管理员维护，全员可查</td></tr>
+  <tr><td>邀请码入会</td><td>把成员微信与名单中的角色安全关联，外人进不来</td><td>管理员发码、审核</td></tr>
+  <tr><td>活动日程</td><td>一次性 / 每日 / 每周活动；成员表态参加、待定、请假；可配微信提醒</td><td>管理员发布，成员表态</td></tr>
+  <tr><td>组队 LFG</td><td>活动下开队伍招募，队长审批、满员、到点自动开始</td><td>成员建队 / 队长管理</td></tr>
+  <tr><td>出勤看板</td><td>今日 / 本周 RSVP 汇总、实到点名、成员出勤摘要</td><td>管理员</td></tr>
+  <tr><td>公告 / 资料踏云寻芳</td><td>公告轮播通知；俱乐部门面；成员晒风景自拍</td><td>管理员发布，成员晒图</td></tr>
+</table>
+
+<h3 id="roles">角色与权限</h3>
+<table>
+  <tr><th>角色</th><th>能做什么</th></tr>
+  <tr><td><b>超管</b></td><td>管理员全部能力 ＋ 任命 / 取消管理员 ＋ 应急账号。全俱乐部通常 1～2 人。</td></tr>
+  <tr><td><b>管理员</b></td><td>成员增删改、截图导入、邀请码审核、活动与公告、提醒配置、出勤点名、踏云寻芳管理。不能任命管理员。</td></tr>
+  <tr><td><b>成员</b></td><td>看名单与公告、活动报名、组队、晒图、收提醒、看自己的报名记录。</td></tr>
+  <tr><td><b>访客</b></td><td>刚进小程序还没关联角色的人：只能填邀请码申请入会，看不到名单和活动。</td></tr>
+</table>
+<div class="callout">
+  <b>入口在哪：</b>管理端为云主机托管的网址（浏览器打开后见第一章登录页）；小程序在微信里搜索小程序名称，或扫小程序码进入。
+</div>
+
+<!-- ================= 登录 ================= -->
+<h2 id="login">一 登录管理后台</h2>
+<p><b>这个页面用来干什么：</b>管理员进入 PC 后台的唯一入口。正常走微信扫码确认；当二维码出不来时，用「票号」或应急账号。</p>
+<div class="callout warn">
+  <b>重要变化（2026-11-04 起）：</b>未进行微信认证的主体，微信平台不再下发小程序码，<b>扫码登录的二维码会显示「暂时无法显示登录码」</b>。这不是故障——请改用下面两种方式登录：① 票号登录；② 应急账号登录。
+</div>
+<figure>
+  <img src="使用手册-配图/管理端扫码登录页-标注.png" alt="管理端登录页" style="max-height:640px">
+  <figcaption>登录页：① 登录编号（票号）与复制按钮 ② 三步操作说明 ③ 刷新二维码 ④ 应急账号登录区</figcaption>
+</figure>
+<h3 id="login-ticket">方式一：票号登录（推荐）</h3>
+<ol class="steps">
+  <li>打开管理后台登录页，页面会显示一行「<b>登录编号</b>」（如 <kbd>tmw4aopbz5kbyhn</kbd>），点「<b>复制登录编号</b>」。</li>
+  <li>打开小程序，进入 <b>「我的」→ 扫码</b>（管理员身份才显示该入口），进入「管理端登录确认」页。</li>
+  <li>把登录编号<b>粘贴</b>进去，确认。</li>
+  <li>回到 PC 页面，稍等一两秒会<b>自动进入后台</b>。</li>
+</ol>
+<h3 id="login-emergency">方式二：应急账号登录</h3>
+<ol class="steps">
+  <li>在登录页点开「<b>应急账号登录</b>」折叠区。</li>
+  <li>输入账号 <kbd>admin</kbd>、密码 <kbd>admin</kbd>（当前设置），点「登录」。</li>
+</ol>
+<div class="callout danger">
+  <b>安全提示：</b>应急账号等同于超管。不要把密码发给普通成员；如怀疑泄露，联系超管在服务器 <code>.env</code> 中修改 <code>EMERGENCY_*</code> 配置后重启服务。
+</div>
+
+<!-- ================= 成员列表 ================= -->
+<h2 id="members">二 成员列表</h2>
+<p><b>这个页面用来干什么：</b>俱乐部名册的总账本——谁在会里、评分多少、什么途径、什么职位，全在这维护。它也是截图 OCR 导入、任命管理员的操作台。</p>
+<figure>
+  <img src="使用手册-配图/管理端成员列表页-标注.png" alt="管理端成员列表">
+  <figcaption>成员列表：① 新增成员 ② 从截图导入 ③ 导出 CSV ④ 筛选 / 排序行 ⑤ 序列·途径色签列 ⑥ 操作列</figcaption>
+</figure>
+<h3 id="members-add">2.1 手动新增 / 编辑一名成员</h3>
+<ol class="steps">
+  <li>点右上「<b>新增成员</b>」（改人则点该行「<b>编辑</b>」）。</li>
+  <li>填<b>角色名</b>（必填、全俱乐部唯一）、等级、<b>非凡评分</b>、风尚度、序列 / 途径（下拉六选一，可留空）、职位（会长 / 副会长 / 外交官 / 俱乐部之星 / 正式会员 / 骨干 / 成员 / 候补）、备注。</li>
+  <li>点「保存」。备注是<b>全员可见</b>的，写「常用小号」「主坦」这类信息很合适。</li>
+</ol>
+<h3 id="members-ocr">2.2 从截图导入（OCR，批量录入的主力）</h3>
+<p>游戏内「俱乐部成员列表」一屏截一张，长列表翻页多截几张，一次性丢给系统识别。</p>
+<figure>
+  <img src="使用手册-配图/管理端从截图导入弹窗-标注.png" alt="从截图导入弹窗">
+  <figcaption>从截图导入：① 操作提示 ② 拖拽 / 选择 / <kbd>Ctrl</kbd>+<kbd>V</kbd> 粘贴上传区 ③ 开始识别 ④ 取消 / 确认导入</figcaption>
+</figure>
+<ol class="steps">
+  <li>点「<b>从截图导入</b>」，把截图<b>直接 <kbd>Ctrl</kbd>+<kbd>V</kbd> 粘贴</b>进弹窗（也支持点选、拖拽），单次最多 <b>12 张</b>，粘贴后自动开始识别。</li>
+  <li>识别完成后出现<b>预览表</b>：每一行是一个识别出的成员，标了「新增」还是「更新」。逐行核对——<b>角色名最容易被头像挡住缺字</b>，直接在表格里改。</li>
+  <li>不要的行<b>取消勾选</b>，然后点「<b>确认导入</b>」。系统按角色名匹配：名单里没有 → 新增；已有 → 更新评分等字段。</li>
+</ol>
+<div class="callout ok">
+  <b>移出的人回来了怎么办：</b>不用手工恢复。截图导入或手录时输入一个「已退出」成员的角色名，系统会<b>自动把他恢复为在职</b>并更新字段。
+</div>
+<div class="callout">
+  识别引擎优先用本机 / 云主机的 RapidOCR，兜底 Tesseract。识别不准多数是截图模糊或游戏 UI 改版——重截清晰图、或预览表里手改即可。
+</div>
+<h3 id="members-filter">2.3 筛选、排序、导出</h3>
+<ul>
+  <li>筛选行（④）支持：关键字搜索（角色名 / 途径 / 备注）、途径<b>多选</b>、职位、后台身份（超管 / 管理员 / 已关联 / 未关联）。</li>
+  <li>排序：默认按非凡评分降序，可切换风尚度、等级、途径、角色名、入会时间。</li>
+  <li>「<b>导出 CSV</b>」：把当前名单全量导出，用 Excel 打开做备份或线下统计。</li>
+</ul>
+<h3 id="members-remove">2.4 移出成员</h3>
+<ol class="steps">
+  <li>点该行「<b>移出</b>」→ 确认。成员标记为「已退出」，<b>同时解除其微信关联</b>（该成员小程序自动降为访客，看不到名单和活动）。</li>
+  <li>反悔：按 2.1 重新录入同名角色，或 OCR 导入同名，即恢复在职。</li>
+</ul>
+<h3 id="members-admin">2.5 任命 / 取消管理员（仅超管可见）</h3>
+<ol class="steps">
+  <li>目标成员必须已通过邀请码<b>绑定微信</b>（身份列不是「未关联」）。</li>
+  <li>点该行「<b>任命</b>」→ 确认。此后他能用微信扫码 / 票号登录管理后台。</li>
+  <li>「<b>取消管理</b>」降回成员：后台进不来了，小程序成员能力不受影响。</li>
+</ol>
+<h3 id="members-mini">2.6 小程序端：成员 Tab 长什么样</h3>
+<p>成员登录小程序，底部 Tab「成员」即是名册。排序（评分 / 风尚 / 入会）与途径、职位筛选一应俱全；点卡片进成员详情看全部字段。角色名按<b>途径色</b>着色，一眼分辨职业。</p>
+<figure>
+  <img class="mini" src="使用手册-配图/小程序端成员列表页-标注.png" alt="小程序成员列表">
+  <figcaption>小程序成员列表：① 搜索 ② 排序 ③ 途径筛选 ④ 职位筛选 ⑤ 成员卡片 ⑥ 底部 Tab</figcaption>
+</figure>
+
+<!-- ================= 邀请码 ================= -->
+<h2 id="invites">三 邀请码 / 入会</h2>
+<p><b>这个页面用来干什么：</b>把「名单上的角色」和「成员的微信」绑在一起。邀请码<b>不会新建角色</b>——名单外的角色名直接被拒，避免路人混进俱乐部。</p>
+<figure>
+  <img src="使用手册-配图/管理端邀请入会页-标注.png" alt="管理端邀请码页">
+  <figcaption>邀请码 / 入会：① 生成表单（自定义码 / 次数上限 / 过期时间） ② 邀请码列表（点码即复制） ③ 待审 / 全部筛选 ④ 关联申请列表（通过 / 拒绝）</figcaption>
+</figure>
+<h3 id="invites-issue">3.1 管理端：发码与审核</h3>
+<ol class="steps">
+  <li>「生成表单」里可选填<b>自定义码</b>（留空自动生成）、<b>次数上限</b>、<b>过期时间</b>，点「生成邀请码」。</li>
+  <li>把码发给真实成员（游戏私聊、群都行）。点列表里的码文字即可<b>复制</b>；用完或过期可点「停用」。</li>
+  <li>成员提交申请后，下方「关联申请」表出现记录（角色名、途径、留言）。核对角色名确实是本人 → 点「<b>通过</b>」；可疑的点「拒绝」。</li>
+  <li>通过后：该微信立即能看名单、报活动。筛选按钮（③）可在「待审 / 全部」间切换。</li>
+</ol>
+<h3 id="invites-join">3.2 小程序端：成员怎么自己关联</h3>
+<figure>
+  <img class="mini" src="使用手册-配图/小程序端邀请码关联页-标注.png" alt="小程序邀请码关联页">
+  <figcaption>邀请码关联页：① 三步说明 ② 邀请码输入 ③ 角色名输入 ④ 留言（可选） ⑤ 提交按钮</figcaption>
+</figure>
+<ol class="steps">
+  <li>成员进小程序，首页点「<b>邀请码关联角色</b>」。</li>
+  <li>输入管理员发的<b>邀请码</b>＋与名单<b>完全一致的角色名</b>（标点、空格也要一致），可留一句留言（如游戏区服）方便核对。</li>
+  <li>提交后显示「关联申请审核中」，等管理员通过即可。角色名不在名单或已被别人绑定，会直接提示无法提交。</li>
+</ol>
+
+<!-- ================= 活动日程 ================= -->
+<h2 id="activities">四 活动日程</h2>
+<p><b>这个页面用来干什么：</b>发布和管理俱乐部活动——日常、周本、PVP 都行；支持一次性活动，也支持「每周几」这种循环活动。成员在小程序报名（RSVP），到点前还能收微信提醒。</p>
+<figure>
+  <img src="使用手册-配图/管理端活动列表页-标注.png" alt="管理端活动列表">
+  <figcaption>活动日程：① 新建活动 ② 状态筛选 ③ 时间分量说明（整周组队容器提示） ④ 提醒周期列 ⑤ 操作列（编辑 / 发布 / 导出 RSVP / 取消）</figcaption>
+</figure>
+<h3 id="activities-new">4.1 新建一场活动</h3>
+<figure>
+  <img src="使用手册-配图/管理端活动新建弹窗-标注.png" alt="新建活动弹窗">
+  <figcaption>新建活动：① 标题与类型 ② 开始分量 ③ 结束分量 ④ 开启提醒 / 开启组队 ⑤ 说明 ⑥ 立即发布 ⑦ 保存</figcaption>
+</figure>
+<ol class="steps">
+  <li>点「<b>新建活动</b>」，填标题、选类型（日常 / 周本 / PVP / 自定义）。</li>
+  <li>填<b>开始</b>时间。这里是「分量」式填写，<b>填什么决定活动周期</b>（见下表）。可点「填入今天」快速填日期。</li>
+  <li><b>结束</b>留空则默认开始后 30 分钟；想搞「整周自由组队」容器，就只填开始「周一 00:00」、结束「周日 23:59」。</li>
+  <li>打开「<b>开启提醒</b>」（提前量统一用「提醒设置」里的配置）和「<b>开启组队</b>」（默认开，成员才能在活动下建队）。</li>
+  <li>勾「<b>立即发布</b>」直接上架（不勾则存草稿，稍后在列表里手动「发布」），点「保存」。</li>
+</ol>
+<table>
+  <tr><th>开始分量怎么填</th><th>活动的周期</th><th>举例</th></tr>
+  <tr><td>年月日 ＋ 时间</td><td>一次性，就这一场</td><td>11月20日 20:00 → 周六团</td></tr>
+  <tr><td>周几 ＋ 时间</td><td>每周循环</td><td>周三 20:30 → 每周三团</td></tr>
+  <tr><td>日 ＋ 时间（无月）</td><td>每天循环</td><td>每日 21:00 值夜</td></tr>
+  <tr><td>仅周几（无时间）</td><td>每周一次，整天容器</td><td>配合结束「周日」做整周组队容器</td></tr>
+</table>
+<div class="callout warn">
+  <b>整周组队容器的特殊性：</b>「周一 00:00～周日 23:59」的周常活动<b>不进「今日活动」</b>，也不进首页会务条——它只是个一周的容器。真正开打时间写在<b>队伍</b>上；哪支队伍的开打时间是今天，该活动才被抬进今日列表。
+</div>
+<h3 id="activities-lifecycle">4.2 活动的生命周期</h3>
+<p>状态流转：<span class="tag">草稿</span>→<span class="tag">已发布</span>→<span class="tag">进行中</span>→<span class="tag">已结束</span>，发布后也可<span class="tag">已取消</span>。</p>
+<ul>
+  <li><b>一次性活动</b>：到结束时刻自动变「已结束」，并自动关掉下属还在招募的队伍。</li>
+  <li><b>周期活动</b>：一直保持「已发布」。每一「场」结束后自动清空本场 RSVP 和队伍，滚动到下一场；成员在详情页能看到「下一场：x月x日 周几 时间」。</li>
+</ul>
+<h3 id="activities-export">4.3 导出 RSVP</h3>
+<ol class="steps">
+  <li>活动行点「<b>导出 RSVP</b>」。</li>
+  <li>周期活动可选导出「本场」或某个历史<b>场次日</b>（换场前系统自动留存快照，不怕丢）。</li>
+  <li>下载 CSV：角色名、途径、状态（参加 / 待定 / 请假）、活动时间。</li>
+</ol>
+
+<h3 id="activities-mini">4.4 小程序端：成员怎么报名</h3>
+<figure>
+  <img class="mini" src="使用手册-配图/小程序活动列表页-标注.png" alt="小程序活动列表">
+  <figcaption>活动列表：① 今日活动分组 ② 本周活动分组 ③ 类型标签 ④ 进行中状态标</figcaption>
+</figure>
+<figure>
+  <img class="mini" src="使用手册-配图/小程序活动详情页-标注.png" alt="小程序活动详情">
+  <figcaption>活动详情：① 提醒我 ② 类型 / 状态标签 ③ 时间与说明 ④ 出席意向三按钮 ⑤ 各状态名单分组 ⑥ 组队入口</figcaption>
+</figure>
+<ol class="steps">
+  <li>底部 Tab「<b>活动</b>」分「今日活动」「本周活动」两段，卡片直接显示类型、时间、是否进行中。</li>
+  <li>点进详情，在「出席意向」选 <b>参加 / 待定 / 请假</b>；<b>活动开始后仍可改</b>，本场结束后锁定。各状态人数与名单（按途径色）可展开查看。</li>
+  <li>想收提醒：点右上「<b>提醒我</b>」完成微信订阅授权。开始前 10 分钟（或管理员配置的提前量）会收到微信服务通知。</li>
+</ol>
+<div class="callout warn">
+  <b>微信一次性授权的坑：</b>点一次「提醒我」只够推<b>本场</b>一条。每周活动下一场要再点「<b>续订提醒</b>」重新授权——这是微信平台限制，不是 Bug。详情页也会提示这句话。
+</div>
+
+<!-- ================= 组队 ================= -->
+<h2 id="teams">五 组队</h2>
+<p><b>这个功能用来干什么：</b>活动下开「车队」招人——谁当队长、差几个人、几点开打，一目了然。管理端不直接操作队伍（队伍总览已暂缓），组队全流程发生在小程序。</p>
+<h3 id="teams-rules">5.1 规则速览</h3>
+<table>
+  <tr><th>规则</th><th>说明</th></tr>
+  <tr><td>挂靠活动</td><td>队伍必须建在某个「开启组队」的活动下</td></tr>
+  <tr><td>人数</td><td>上限 ≥2，创建默认 6</td></tr>
+  <tr><td>门槛</td><td>队长可设「要求评分」，评分不足者无法申请</td></tr>
+  <tr><td>审批</td><td>申请要<b>队长审批</b>；满员自动停止招新，有人退出自动重新开放</td></tr>
+  <tr><td>到点</td><td>到达队伍「开打时间」自动变为「已开始」</td></tr>
+  <tr><td>唯一性</td><td>同一活动一人只能进一支队伍</td></tr>
+</table>
+<h3 id="teams-mini">5.2 小程序端：建队与入队</h3>
+<figure>
+  <img class="mini" src="使用手册-配图/小程序活动队伍招募页-标注.png" alt="小程序队伍列表">
+  <figcaption>本活动队伍列表：① 创建队伍 ② 时间 / 身份筛选 ③ 队伍列表（图为空态）</figcaption>
+</figure>
+<figure>
+  <img class="mini" src="使用手册-配图/小程序队伍创建页-标注.png" alt="小程序创建队伍">
+  <figcaption>创建队伍：① 人数上限 ② 要求评分（可空 = 不限） ③ 自定义开打时间开关（默认跟随活动时间） ④ 创建按钮</figcaption>
+</figure>
+<ol class="steps">
+  <li><b>建队</b>：活动详情 → 组队区 →「创建」。设人数、可选评分门槛和备注（集合点、语音频道），开打时间默认跟活动走、可自定义。</li>
+  <li><b>入队</b>：在队伍列表挑队 → 进详情 → 填附言「提交申请」→ 等队长通过。</li>
+  <li><b>队长日常</b>：队伍详情里「待审批」区点「通过 / 拒绝」；对队员可「转让」队长、「踢出」；还能「关闭招募」（加满了暂停）、「撤销队伍」（解散）。有人申请时，「我的」页和首页会务条会出现「待处理」红点。</li>
+  <li><b>筛选</b>：队伍列表可按「今天 / 本周」「我创建的 / 我参加的」过滤。</li>
+</ol>
+
+<!-- ================= 出勤看板 ================= -->
+<h2 id="board">六 出勤看板</h2>
+<p><b>这个页面用来干什么：</b>运营视角回答三个问题——<b>今天有什么活动、谁来没来、最近谁活跃谁消失</b>。RSVP 是意向，这里是「实到」的账本。</p>
+<figure>
+  <img src="使用手册-配图/管理端出勤看板页-标注.png" alt="管理端出勤看板">
+  <figcaption>出勤看板（右为点名抽屉）：① 三个标签页 ② 本周概览表 ③ 保存实到 ④ 导出点名表 ⑤ RSVP 分组勾选区 ⑥ 未报名补录</figcaption>
+</figure>
+<ol class="steps">
+  <li><b>今日一屏</b>：今天每一场活动一张卡片——RSVP 三态人数、招募中队伍数、缺几人。点卡片打开<b>点名抽屉</b>。</li>
+  <li><b>本周概览</b>：本周所有场次的参加 / 待定 / 请假 / 实到人数一张表；点行同样进抽屉。</li>
+  <li><b>点名</b>：抽屉里按「参加 / 待定 / 请假」分组列出成员，<b>默认预勾「参加」</b>，核实后点「保存实到」。活动进行中就能预勾，结束后保存才计入统计。没报名但来了的，用「未报名补录」搜索加上。</li>
+  <li><b>导出点名表</b>：按抽屉当前勾选导出 CSV（角色名、途径、RSVP、实到、场次日）。</li>
+  <li><b>成员摘要</b>：第三个标签页，选近 2 / 4 / 8 周，看每人的参加、待定、请假、实到、意向场次、<b>意向率</b>；点行看近场明细。谁要「软移出」，看这页数据最直观。</li>
+</ol>
+<div class="callout">
+  统计口径：意向率 = 该成员有 RSVP 的已结束场次中「参加」占比；实到率按点名数据算。实到与 RSVP 相互独立，改实到不会动成员的报名记录。
+</div>
+
+<!-- ================= 公告 ================= -->
+<h2 id="announcements">七 公告发布</h2>
+<p><b>这个页面用来干什么：</b>发俱乐部通知。置顶的公告会转着圈顶在最前面——开服公告、招募管理员这类重要事，记得置顶。</p>
+<figure>
+  <img src="使用手册-配图/管理端公告维护页-标注.png" alt="管理端公告页">
+  <figcaption>公告发布：① 发布公告按钮 ② 置顶标记 ③ 操作列（编辑 / 置顶 / 删除）</figcaption>
+</figure>
+<ol class="steps">
+  <li>点「<b>发布公告</b>」，填标题、正文（最长 4000 字），需要置顶就打开「置顶」开关，发布。</li>
+  <li>列表里随时「编辑」「<b>置顶 / 取消置顶</b>」「删除」。</li>
+  <li><b>小程序端体现</b>：公告在<b>首页轮播</b>展示（自动轮播、置顶优先），点「查看更多」进全部列表；点某条轮播会展开那条。</li>
+</ol>
+
+<!-- ================= 踏云寻芳 ================= -->
+<h2 id="gallery">八 踏云寻芳</h2>
+<p><b>这个功能用来干什么：</b>成员的晒图墙——游戏风景、角色自拍配上题目发出来，互相点赞。管理端管总量和违规内容。</p>
+<figure>
+  <img src="使用手册-配图/管理端踏云寻芳管理页-标注.png" alt="管理端踏云寻芳">
+  <figcaption>踏云寻芳管理：① 用量统计卡片 ② 容量上限调整 ③ 预览图（点开详情弹窗） ④ 操作列（详情 / 撤回）</figcaption>
+</figure>
+<h3 id="gallery-admin">8.1 管理端：看总量、管内容</h3>
+<ol class="steps">
+  <li>顶部统计卡：作品数、图片数、已占用、容量上限、用量百分比。</li>
+  <li>云存储是要花钱的，默认软配额 <b>2 GiB</b>。快满了在「调整容量上限」改数字，点「保存上限」。</li>
+  <li>点缩略图或「详情」看作品全部图片；违规或应作者要求，点「<b>撤回</b>」整部下架（也可在详情里删单张）。</li>
+</ol>
+<h3 id="gallery-mini">8.2 小程序端：发图与互动</h3>
+<figure>
+  <img class="mini" src="使用手册-配图/小程序端踏云寻芳列表页-标注.png" alt="小程序踏云寻芳列表">
+  <figcaption>踏云寻芳列表：① 发布 ② 排序切换（点赞最多 / 最新发布） ③ 双列作品卡片</figcaption>
+</figure>
+<figure>
+  <img class="mini" src="使用手册-配图/小程序踏云寻芳创建页-标注.png" alt="小程序发布作品">
+  <figcaption>发布作品：① 添加图片（最多 9 张） ② 作品题目（可选，最多 200 字） ③ 发布按钮</figcaption>
+</figure>
+<ol class="steps">
+  <li><b>发布</b>：列表页右上「发布」→ 选图（最多 9 张，自动压缩）→ 填题目 → 发布。一部作品多张图，后续还能续传。</li>
+  <li><b>互动</b>：详情页点赞；只能删 / 撤回<b>自己</b>的作品。仅已入会成员可发可看，访客进不来。</li>
+  <li><b>详情页</b>：点列表卡片进入，可左右翻看同作品各图、点赞、（作者）续传或删图。</li>
+</ol>
+<div class="callout">
+  首页「踏云寻芳」区块会自动轮播最新作品，是作品的免费橱窗位。
+</div>
+
+<!-- ================= 俱乐部资料 ================= -->
+<h2 id="club">九 俱乐部资料设置</h2>
+<p><b>这个页面用来干什么：</b>小程序首页「门厅」的门面——名称、图标、一句话简介都在这改。</p>
+<figure>
+  <img src="使用手册-配图/管理端俱乐部资料维护页-标注.png" alt="管理端俱乐部资料">
+  <figcaption>俱乐部资料设置：① 名称 ② 图标（本地上传 / 粘贴链接） ③ 简介 ④ 保存</figcaption>
+</figure>
+<ol class="steps">
+  <li>改<b>名称</b>（小程序首页金色大字）。</li>
+  <li>改<b>图标</b>：点「本地上传」选一张方图（自动传到云存储）；或直接粘贴图片链接。</li>
+  <li>改<b>简介</b>（显示在名称下方），点「保存」后小程序首页立即生效。</li>
+</ol>
+
+<!-- ================= 提醒设置 ================= -->
+<h2 id="reminders">十 提醒设置</h2>
+<p><b>这个页面用来干什么：</b>全俱乐部微信提醒的总开关——提前多久提醒、用什么模板、发哪个版本的小程序。</p>
+<figure>
+  <img src="使用手册-配图/管理端提醒设置页-标注.png" alt="管理端提醒设置">
+  <figcaption>提醒设置：① 俱乐部名称 ② 默认提前量 ③ 订阅消息模板 ID ④ 下发环境 ⑤ 保存 / 重新加载</figcaption>
+</figure>
+<table>
+  <tr><th>配置项</th><th>怎么填</th></tr>
+  <tr><td>默认提前量</td><td>可多选：5 / 10 / 15 / 30 分钟、1 / 2 小时。产品默认 10 分钟。<b>单个活动不单独设提前量</b>，一律用这里。</td></tr>
+  <tr><td>订阅消息模板 ID</td><td>微信公众平台 → 订阅消息 → 「活动集合通知」模板的 ID。当前模板字段 thing1 / time3 / thing5。<b>不填的话成员点「提醒我」只记账，不会真的下发。</b></td></tr>
+  <tr><td>下发环境</td><td>选「正式版」（正式上线后的正确值；开发 / 体验期才用前两项）。</td></tr>
+</table>
+<div class="callout">
+  提醒链路全景：管理员活动开「开启提醒」→ 成员详情页点「提醒我」授权 → 云函数定时任务在开始前按提前量下发 → 成员收到微信服务通知。任何一环缺失都不会响：活动没开提醒、成员没授权、模板没配置，都收不到。
+</div>
+
+<!-- ================= 首页与我的 ================= -->
+<h2 id="home">十一 小程序首页与「我的」</h2>
+<p><b>这两个页面用来干什么：</b>首页是成员每天打开的「会务大厅」；「我的」是个人事务中心。管理员日常触达成员，主要靠首页这两块。</p>
+<figure>
+  <img class="mini" src="使用手册-配图/小程序首页-标注.png" alt="小程序首页">
+  <figcaption>小程序首页：① 品牌区 ② 会务条（身份 / 日程入口） ③ 本日·本周活动 ④ 公告轮播 ⑤ 踏云寻芳 ⑥ 底部 Tab</figcaption>
+</figure>
+<figure>
+  <img class="mini" src="使用手册-配图/小程序个人信息页-标注.png" alt="小程序我的">
+  <figcaption>「我的」页：① 身份卡片 ② 扫码 / 解绑（管理员） ③ 我的报名 ④ 我的队伍 ⑤ 提醒订阅</figcaption>
+</figure>
+<ul>
+  <li><b>会务条</b>（②）：左边显示身份（点进「我的」），有队长待审批时显示红点「待处理 n」；右边「日程 · 今日 n · 本周 n」点进活动 Tab。</li>
+  <li><b>本日 / 本周活动</b>（③）：最多 5 条，今日优先，带紧迫色；点进活动详情。跨日周常容器不在这出现（除非今天真有队伍开打）。</li>
+  <li><b>访客视图</b>：未关联角色的人，首页没有以上内容，只有「加入俱乐部」三步引导。</li>
+  <li><b>「我的」页</b>：身份卡（管理员多出「扫码」＝ 票号登录确认入口、「解绑」）；「待我处理」是队长审人入口；下面依次是我的报名（进行中 + 近 14 天已结束）、我的队伍、已订阅的提醒。所有页面支持下拉刷新。</li>
+</ul>
+
+<!-- ================= FAQ ================= -->
+<h2 id="faq">十二 常见问题 FAQ</h2>
+<table>
+  <tr><th>问题</th><th>答案</th></tr>
+  <tr><td>登录页二维码出不来？</td><td>2026-11-04 起未认证主体微信不再下发小程序码。改用<b>票号登录</b>（第一章方式一）或应急账号 <kbd>admin</kbd>/<kbd>admin</kbd>。</td></tr>
+  <tr><td>OCR 识别出的角色名缺字？</td><td>头像遮挡所致，属正常现象。在预览表里直接改正再导入；或重截更清晰的图。</td></tr>
+  <tr><td>成员说看不到成员列表 / 活动？</td><td>他的微信还没关联角色。走第三章邀请码流程；关联通过后立即可见。</td></tr>
+  <tr><td>成员没收到活动提醒？</td><td>依次查：活动是否开了「开启提醒」→ 成员是否点过「提醒我」→ 提醒设置里模板 ID 是否已填。周期活动每场都要重新授权「续订提醒」（微信限制）。</td></tr>
+  <tr><td>手滑移出了人？</td><td>不用慌：手录或 OCR 导入同名角色即自动恢复在职并保留数据。</td></tr>
+  <tr><td>周期活动的报名怎么「没了」？</td><td>每一场结束后自动清空 RSVP 和队伍、滚到下一场，这是设计行为。需要留档就在换场前「导出 RSVP」（系统也会留存场次日快照）。</td></tr>
+  <tr><td>整周容器怎么不显示在今日活动？</td><td>跨日周常容器只在「本周活动」出现；其下队伍的开打日期是今天时才会抬入今日列表。开打时间填在队伍上。</td></tr>
+  <tr><td>踏云寻芳图片误删能找回吗？</td><td>不能。撤回 / 删除是尽力删除云存储，无回收站。删前跟作者确认。</td></tr>
+  <tr><td>邀请码能发多少人？</td><td>生成时自定「次数上限」，用完自动失效；也可手动停用。同一角色名只能绑一个微信。</td></tr>
+  <tr><td>游戏 UI 改版后 OCR 失效？</td><td>OCR 针对当前游戏成员列表版面做的解析，官方改版可能要调解析逻辑——先用手录顶着，反馈给开发者。</td></tr>
+</table>
+
+<!-- ================= 附录 ================= -->
+<h2 id="appendix">附录 A 状态机速查</h2>
+<h4>入会申请</h4>
+<p><span class="tag">待审核</span>→ 通过（绑定微信，成为成员）／ 拒绝</p>
+<h4>活动</h4>
+<p><span class="tag">草稿</span>→<span class="tag">已发布</span>→<span class="tag">进行中</span>→<span class="tag">已结束</span>；已发布后可 →<span class="tag">已取消</span>。一次性到点自动结束并关闭招募中队伍；周期活动保持已发布、按场滚动。</p>
+<h4>队伍</h4>
+<p><span class="tag">招募中</span>⇄<span class="tag">已满员</span>⇄<span class="tag">已关招募</span>；到开打时间 →<span class="tag">已开始</span>；队长可 →<span class="tag">已撤销</span>（不再显示）。</p>
+<h4>入队申请</h4>
+<p><span class="tag">待审批</span>→ 通过 ／ 拒绝；成员可撤回；队长可踢出。</p>
+
+<h2 id="appendix-b">附录 B 途径色对照</h2>
+<table>
+  <tr><th>途径</th><th>色标</th><th>途径</th><th>色标</th></tr>
+  <tr><td><span class="chip" style="background:#94c7b1"></span>观众</td><td>#94c7b1</td><td><span class="chip" style="background:#2c81b0"></span>学徒</td><td>#2c81b0</td></tr>
+  <tr><td><span class="chip" style="background:#d3742e"></span>战士</td><td>#d3742e</td><td><span class="chip" style="background:#54599f"></span>占卜</td><td>#54599f</td></tr>
+  <tr><td><span class="chip" style="background:#debd39"></span>歌颂</td><td>#debd39</td><td><span class="chip" style="background:#975dc1"></span>窥秘</td><td>#975dc1</td></tr>
+</table>
+<p class="sub">名单、报名、队伍、晒图里的角色名颜色即按此着色；未填途径用默认色。</p>
+
+<h2 id="appendix-c">附录 C 名词表</h2>
+<table>
+  <tr><th>名词</th><th>含义</th></tr>
+  <tr><td>非凡评分 / 风尚度</td><td>游戏内官方战力与时装评分，成员档案核心数值</td></tr>
+  <tr><td>RSVP</td><td>出席意向：参加 / 待定 / 请假三态，成员自主表态</td></tr>
+  <tr><td>实到</td><td>管理员点名的「真实到场」，与 RSVP 分开记账</td></tr>
+  <tr><td>本场 / 场次日</td><td>周期活动的一次具体发生，如「周三团 · 11月5日」</td></tr>
+  <tr><td>整周组队容器</td><td>周一 00:00～周日 23:59 的周常活动，本身不打，供全周建队</td></tr>
+  <tr><td>票号（登录编号）</td><td>管理端登录页生成的一次性短码，在小程序「我的 → 扫码」粘贴确认登录</td></tr>
+  <tr><td>会务条</td><td>小程序首页顶部的身份 + 日程摘要条</td></tr>
+  <tr><td>踏云寻芳</td><td>成员晒图功能名，取自游戏玩法意象</td></tr>
+</table>
+
+<p class="sub" style="margin-top:40px;border-top:1px solid var(--border);padding-top:12px">诡秘之主 · 俱乐部管理 使用手册 v1.0 ｜ 配图由项目截图加注生成，原图保留于「项目页面截图 /」 ｜ 文档随版本更新，如与实际界面不符以线上版本为准</p>
+</main>
+</div>
+
+<script>
+/* 左侧目录滚动高亮：滚到哪章，导航就亮哪条 */
+(function () {
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+  var items = [];
+  links.forEach(function (a) {
+    var el = document.getElementById(a.getAttribute('href').slice(1));
+    if (el) items.push({ el: el, a: a });
+  });
+  if (!items.length) return;
+
+  var ticking = false;
+  function update() {
+    ticking = false;
+    var current = items[0];
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].el.getBoundingClientRect().top <= 96) current = items[i];
+    }
+    links.forEach(function (a) { a.classList.remove('active'); });
+    current.a.classList.add('active');
+
+    /* 让高亮项始终留在导航可视范围内（只滚导航自身，不动页面） */
+    var nav = document.querySelector('nav.toc');
+    var r = current.a.getBoundingClientRect();
+    var nr = nav.getBoundingClientRect();
+    if (r.top < nr.top + 60 || r.bottom > nr.bottom - 40) {
+      nav.scrollTop += r.top - nr.top - nr.height / 2 + r.height / 2;
+    }
+  }
+  window.addEventListener('scroll', function () {
+    if (!ticking) { ticking = true; requestAnimationFrame(update); }
+  }, { passive: true });
+  window.addEventListener('resize', update);
+  update();
+})();
+</script>
+</body>
+</html>

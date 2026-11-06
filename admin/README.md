@@ -38,4 +38,5 @@ npm run build
 
 - 微信扫码登录 + 应急账号
 - 成员 CRUD、截图 OCR 导入、邀请码、活动、提醒、公告、俱乐部资料、组队相关 API 对接
+- 侧栏「使用手册」：登录后由 `GET /api/manual` 读取 `docs/使用手册.html`
 - Design Tokens 主题抽离

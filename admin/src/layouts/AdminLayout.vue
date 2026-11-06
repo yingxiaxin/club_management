@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { clearAuth, getUser } from '@/auth/session'
 
 const router = useRouter()
+const route = useRoute()
 const user = computed(() => getUser())
+const isManual = computed(() => route.name === 'manual')
 
 function logout() {
   clearAuth()
@@ -13,7 +15,7 @@ function logout() {
 </script>
 
 <template>
-  <div class="shell">
+  <div class="shell" :class="{ 'shell-manual': isManual }">
     <aside class="sidebar">
       <div class="brand">俱乐部管理</div>
       <nav class="nav">
@@ -25,6 +27,7 @@ function logout() {
         <router-link class="nav-item" to="/gallery">踏云寻芳</router-link>
         <router-link class="nav-item" to="/club">俱乐部资料设置</router-link>
         <router-link class="nav-item" to="/reminders">提醒设置</router-link>
+        <router-link class="nav-item nav-manual" to="/manual">使用手册</router-link>
       </nav>
     </aside>
     <div class="main">
@@ -35,7 +38,7 @@ function logout() {
           <el-button class="logout-btn" text type="primary" @click="logout">退出</el-button>
         </div>
       </header>
-      <main class="content">
+      <main class="content" :class="{ 'content-manual': isManual }">
         <router-view />
       </main>
     </div>
@@ -91,6 +94,19 @@ function logout() {
   box-shadow: inset 2px 0 0 var(--color-brand);
 }
 
+.nav-manual {
+  margin-top: var(--space-3);
+}
+
+.shell-manual {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.shell-manual .main {
+  min-height: 0;
+}
+
 .main {
   flex: 1;
   display: flex;
@@ -132,5 +148,12 @@ function logout() {
 
 .content {
   padding: var(--space-5);
+}
+
+.content-manual {
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  display: flex;
 }
 </style>
